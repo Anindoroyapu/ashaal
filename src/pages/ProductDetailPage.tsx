@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { PRODUCTS_DATA } from '../data/productsData';
 import { ProductCard } from '../components/ProductCard';
@@ -16,11 +16,15 @@ import {
   Share2,
   ThumbsUp,
   ChevronRight,
+  ChevronLeft,
   Zap,
   Coins,
   TicketPercent,
   Plus,
-  Minus
+  Minus,
+  Maximize2,
+  X,
+  CheckCircle2
 } from 'lucide-react';
 
 export const ProductDetailPage: React.FC = () => {
@@ -59,6 +63,22 @@ export const ProductDetailPage: React.FC = () => {
   const [chatLog, setChatLog] = useState<{ sender: 'user' | 'seller'; text: string; time: string }[]>([
     { sender: 'seller', text: `Hello! Welcome to ${product.seller.name}. How can we help you today with ${product.title.slice(0, 30)}?`, time: 'Just now' }
   ]);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [lightboxImageIndex, setLightboxImageIndex] = useState(0);
+
+  // Sync state whenever the product changes so variation preview never gets stuck
+  useEffect(() => {
+    setSelectedImage(product.mainImage);
+    const initial: Record<string, string> = {};
+    if (product.variations) {
+      product.variations.forEach((v) => {
+        initial[v.name] = v.options[0];
+      });
+    }
+    setSelectedVariations(initial);
+    setQuantity(1);
+    setLightboxImageIndex(0);
+  }, [product.id]);
 
   const wishlisted = isWishlisted(product.id);
 
@@ -66,12 +86,22 @@ export const ProductDetailPage: React.FC = () => {
     return '৳' + price.toLocaleString('en-BD');
   };
 
-  const handleVariationSelect = (varName: string, option: string) => {
+  const handleVariationSelect = (varName: string, option: string, optIndex: number) => {
     setSelectedVariations((prev) => ({ ...prev, [varName]: option }));
+    // If selecting a variation, update preview image if matching index exists
+    if (product.images && product.images[optIndex]) {
+      setSelectedImage(product.images[optIndex]);
+    }
   };
 
   const handleAddToCart = (buyNow: boolean = false) => {
     addToCart(product, quantity, selectedVariations, buyNow);
+  };
+
+  const handleOpenLightbox = (imgSrc: string) => {
+    const idx = product.images.indexOf(imgSrc);
+    setLightboxImageIndex(idx >= 0 ? idx : 0);
+    setIsLightboxOpen(true);
   };
 
   const handleHelpfulVote = (reviewId: string) => {
@@ -110,7 +140,7 @@ export const ProductDetailPage: React.FC = () => {
   });
 
   return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 space-y-6">
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 space-y-6 pb-20 sm:pb-6">
       {/* Breadcrumb */}
       <div className="flex items-center gap-1.5 text-xs text-gray-500 overflow-x-auto whitespace-nowrap py-1">
         <button onClick={() => navigate('home')} className="hover:text-[#16a34a] cursor-pointer">
@@ -132,17 +162,24 @@ export const ProductDetailPage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
           {/* 1. Left Gallery (Col 4) */}
           <div className="lg:col-span-4 space-y-3">
-            <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-gray-50 border border-gray-200">
+            <div
+              onClick={() => handleOpenLightbox(selectedImage)}
+              className="relative aspect-square w-full rounded-xl overflow-hidden bg-gray-50 border border-gray-200 cursor-zoom-in group"
+            >
               <img
                 src={selectedImage}
                 alt={product.title}
-                className="w-full h-full object-contain p-4 transition-all duration-300"
+                className="w-full h-full object-contain p-4 transition-transform duration-300 group-hover:scale-105"
               />
               {product.discountPercentage > 0 && (
                 <span className="absolute top-3 left-3 bg-[#16a34a] text-white font-black text-xs px-2 py-1 rounded shadow">
                   -{product.discountPercentage}% OFF
                 </span>
               )}
+              <div className="absolute bottom-3 right-3 bg-black/60 hover:bg-black/80 text-white text-[11px] font-medium px-2.5 py-1 rounded-full flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Maximize2 className="w-3.5 h-3.5" />
+                <span>{t('Click to Zoom', 'জুম করে দেখুন')}</span>
+              </div>
             </div>
 
             {/* Thumbnail selector */}
@@ -152,7 +189,7 @@ export const ProductDetailPage: React.FC = () => {
                   key={idx}
                   onClick={() => setSelectedImage(img)}
                   className={`w-16 h-16 rounded-lg overflow-hidden border-2 bg-gray-50 p-1 shrink-0 transition-all cursor-pointer ${
-                    selectedImage === img ? 'border-[#16a34a] shadow-sm' : 'border-gray-200 hover:border-gray-300'
+                    selectedImage === img ? 'border-[#16a34a] shadow-sm ring-2 ring-green-100' : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
                   <img src={img} alt="thumb" className="w-full h-full object-contain" />
@@ -292,23 +329,30 @@ export const ProductDetailPage: React.FC = () => {
               <div className="space-y-3 pt-2 border-t border-gray-100">
                 {product.variations.map((v) => (
                   <div key={v.id} className="space-y-1.5">
-                    <span className="text-xs font-semibold text-gray-600">
-                      {v.name}: <strong className="text-gray-900">{selectedVariations[v.name] || v.options[0]}</strong>
-                    </span>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-semibold text-gray-600">
+                        {v.name}: <strong className="text-gray-900">{selectedVariations[v.name] || v.options[0]}</strong>
+                      </span>
+                      <span className="text-[11px] text-gray-400">
+                        {v.options.length} {t('options', 'অপশন')}
+                      </span>
+                    </div>
                     <div className="flex flex-wrap gap-2">
-                      {v.options.map((opt) => {
-                        const isSelected = selectedVariations[v.name] === opt;
+                      {v.options.map((opt, optIdx) => {
+                        const isSelected = (selectedVariations[v.name] || v.options[0]) === opt;
                         return (
                           <button
                             key={opt}
-                            onClick={() => handleVariationSelect(v.name, opt)}
-                            className={`px-3 py-1.5 rounded-md text-xs font-medium border transition-all cursor-pointer ${
+                            type="button"
+                            onClick={() => handleVariationSelect(v.name, opt, optIdx)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold border-2 transition-all flex items-center gap-1.5 cursor-pointer ${
                               isSelected
-                                ? 'border-[#16a34a] bg-green-50 text-[#16a34a] font-bold shadow-xs'
-                                : 'border-gray-200 text-gray-700 hover:border-gray-300 bg-white'
+                                ? 'border-[#16a34a] bg-green-50 text-[#16a34a] shadow-xs'
+                                : 'border-gray-200 text-gray-700 hover:border-gray-400 hover:bg-gray-50 bg-white'
                             }`}
                           >
-                            {opt}
+                            {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-[#16a34a]" />}
+                            <span>{opt}</span>
                           </button>
                         );
                       })}
@@ -472,6 +516,97 @@ export const ProductDetailPage: React.FC = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Lightbox Modal for Product Image Full Preview */}
+      {isLightboxOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="relative max-w-3xl w-full bg-white rounded-2xl p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-gray-200">
+              <h3 className="font-bold text-sm text-gray-900">
+                {product.title} - {t('Image Preview', 'ছবি প্রিভিউ')} ({lightboxImageIndex + 1}/{product.images.length})
+              </h3>
+              <button
+                onClick={() => setIsLightboxOpen(false)}
+                className="p-1 rounded-full text-gray-500 hover:text-gray-900 hover:bg-gray-100 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="relative aspect-square max-h-[60vh] mx-auto flex items-center justify-center bg-gray-50 rounded-xl overflow-hidden">
+              <img
+                src={product.images[lightboxImageIndex] || selectedImage}
+                alt="lightbox-zoom"
+                className="max-h-full max-w-full object-contain"
+              />
+
+              {product.images.length > 1 && (
+                <>
+                  <button
+                    onClick={() => setLightboxImageIndex((prev) => (prev > 0 ? prev - 1 : product.images.length - 1))}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/90 shadow hover:bg-white text-gray-800 cursor-pointer"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => setLightboxImageIndex((prev) => (prev < product.images.length - 1 ? prev + 1 : 0))}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/90 shadow hover:bg-white text-gray-800 cursor-pointer"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </>
+              )}
+            </div>
+
+            {/* Lightbox thumbnails */}
+            <div className="flex justify-center gap-2 overflow-x-auto py-1">
+              {product.images.map((img, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setLightboxImageIndex(idx)}
+                  className={`w-14 h-14 rounded-lg overflow-hidden border-2 p-0.5 bg-gray-50 shrink-0 cursor-pointer ${
+                    lightboxImageIndex === idx ? 'border-[#16a34a] ring-2 ring-green-200' : 'border-gray-200 opacity-60 hover:opacity-100'
+                  }`}
+                >
+                  <img src={img} alt="thumb" className="w-full h-full object-contain" />
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sticky Bottom Action Bar for Mobile Devices */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 p-3 sm:hidden shadow-lg flex items-center gap-2">
+        <button
+          onClick={() => setIsChatOpen(true)}
+          className="flex flex-col items-center justify-center p-2 text-gray-600 hover:text-[#16a34a] min-w-[50px]"
+        >
+          <MessageCircle className="w-5 h-5" />
+          <span className="text-[10px] font-semibold">{t('Chat', 'চ্যাট')}</span>
+        </button>
+        <button
+          onClick={() => toggleWishlist(product.id)}
+          className="flex flex-col items-center justify-center p-2 text-gray-600 hover:text-red-500 min-w-[50px]"
+        >
+          <Heart className={`w-5 h-5 ${wishlisted ? 'fill-red-500 text-red-500' : ''}`} />
+          <span className="text-[10px] font-semibold">{t('Wish', 'উইশ')}</span>
+        </button>
+        <button
+          onClick={() => handleAddToCart(false)}
+          className="flex-1 bg-green-50 text-[#16a34a] border border-[#16a34a] font-bold py-2.5 rounded-lg text-xs flex items-center justify-center gap-1.5"
+        >
+          <ShoppingCart className="w-4 h-4" />
+          <span>{t('Add to Cart', 'কার্ট')}</span>
+        </button>
+        <button
+          onClick={() => handleAddToCart(true)}
+          className="flex-1 bg-[#16a34a] text-white font-bold py-2.5 rounded-lg text-xs shadow flex items-center justify-center gap-1.5"
+        >
+          <Zap className="w-4 h-4 fill-white" />
+          <span>{t('Buy Now', 'কিনুন')}</span>
+        </button>
       </div>
 
       {/* Product Specifications & Long Description */}
