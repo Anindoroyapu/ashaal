@@ -221,9 +221,9 @@ interface AppContextType {
 
 const INITIAL_USER: UserProfile = {
   id: 'usr-daraz-1',
-  name: 'Anindo Roy',
+  name: 'Tanvir Ahmed',
   phone: '+880 1712-345678',
-  email: 'anindo.roy@example.com',
+  email: 'tanvir.ahmed@example.com',
   avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80',
   coins: 480,
   memberTier: 'Gold Member',
@@ -233,7 +233,7 @@ const INITIAL_USER: UserProfile = {
 const INITIAL_ADDRESSES: DeliveryAddress[] = [
   {
     id: 'addr-1',
-    fullName: 'Anindo Roy',
+    fullName: 'Tanvir Ahmed',
     phone: '+880 1712-345678',
     division: 'Dhaka',
     district: 'Dhaka North',
@@ -245,7 +245,7 @@ const INITIAL_ADDRESSES: DeliveryAddress[] = [
   },
   {
     id: 'addr-2',
-    fullName: 'Anindo Roy',
+    fullName: 'Tanvir Ahmed',
     phone: '+880 1712-345678',
     division: 'Dhaka',
     district: 'Dhaka South',

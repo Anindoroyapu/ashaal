@@ -7,7 +7,7 @@ export const LoginModal: React.FC = () => {
   const [isRegister, setIsRegister] = useState(false);
   const [phoneOrEmail, setPhoneOrEmail] = useState('+880 1712-345678');
   const [password, setPassword] = useState('ashaal12345');
-  const [fullName, setFullName] = useState('Anindo Roy');
+  const [fullName, setFullName] = useState('Tanvir Ahmed');
   const [otpStep, setOtpStep] = useState(false);
   const [otpCode, setOtpCode] = useState('8492');
 
@@ -20,18 +20,18 @@ export const LoginModal: React.FC = () => {
       return;
     }
     login({
-      name: isRegister ? fullName : 'Anindo Roy',
+      name: isRegister ? fullName : (fullName || 'Tanvir Ahmed'),
       phone: phoneOrEmail.startsWith('+880') ? phoneOrEmail : `+880 ${phoneOrEmail}`,
-      email: phoneOrEmail.includes('@') ? phoneOrEmail : 'anindo.roy@example.com'
+      email: phoneOrEmail.includes('@') ? phoneOrEmail : 'tanvir.ahmed@example.com'
     });
     setOtpStep(false);
   };
 
   const handleQuickDemoLogin = () => {
     login({
-      name: 'Anindo Roy',
+      name: 'Tanvir Ahmed',
       phone: '+880 1712-345678',
-      email: 'anindo.roy@example.com'
+      email: 'tanvir.ahmed@example.com'
     });
   };
 
@@ -115,7 +115,7 @@ export const LoginModal: React.FC = () => {
                       type="text"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
-                      placeholder="e.g. Anindo Roy"
+                      placeholder="e.g. Tanvir Ahmed"
                       className="w-full pl-9 pr-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:border-[#16a34a]"
                       required
                     />
