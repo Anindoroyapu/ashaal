@@ -1,0 +1,322 @@
+import React, { useState } from 'react';
+import { useApp } from '../context/AppContext';
+import { X, CheckCircle, ShieldCheck, MapPin, Smartphone, Mail, Lock, User, ArrowRight } from 'lucide-react';
+
+export const LoginModal: React.FC = () => {
+  const { isLoginModalOpen, setIsLoginModalOpen, login, t } = useApp();
+  const [isRegister, setIsRegister] = useState(false);
+  const [phoneOrEmail, setPhoneOrEmail] = useState('+880 1712-345678');
+  const [password, setPassword] = useState('daraz12345');
+  const [fullName, setFullName] = useState('Anindo Roy');
+  const [otpStep, setOtpStep] = useState(false);
+  const [otpCode, setOtpCode] = useState('8492');
+
+  if (!isLoginModalOpen) return null;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!otpStep && phoneOrEmail.includes('17')) {
+      setOtpStep(true);
+      return;
+    }
+    login({
+      name: isRegister ? fullName : 'Anindo Roy',
+      phone: phoneOrEmail.startsWith('+880') ? phoneOrEmail : `+880 ${phoneOrEmail}`,
+      email: phoneOrEmail.includes('@') ? phoneOrEmail : 'anindo.roy@example.com'
+    });
+    setOtpStep(false);
+  };
+
+  const handleQuickDemoLogin = () => {
+    login({
+      name: 'Anindo Roy',
+      phone: '+880 1712-345678',
+      email: 'anindo.roy@example.com'
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden relative border border-gray-100 animate-in fade-in zoom-in-95 duration-200">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-[#16a34a] to-[#15803d] text-white p-5 flex items-center justify-between">
+          <div>
+            <h3 className="font-extrabold text-lg">
+              {otpStep
+                ? t('Verify OTP Code', 'ওটিপি কোড যাচাই করুন')
+                : isRegister
+                ? t('Create Daraz Account', 'দারাজ একাউন্ট তৈরি করুন')
+                : t('Welcome to Daraz!', 'দারাজে স্বাগতম!')}
+            </h3>
+            <p className="text-xs text-green-100">
+              {otpStep
+                ? t('Enter 4-digit code sent to your phone', 'আপনার ফোনে পাঠানো ৪ ডিজিটের কোডটি দিন')
+                : isRegister
+                ? t('Sign up to enjoy vouchers, rewards & easy tracking', 'সাইন আপ করে উপভোগ করুন বিশেষ ভাউচার ও অফার')
+                : t('Login with your phone number or email', 'আপনার ফোন নম্বর বা ইমেইল দিয়ে লগইন করুন')}
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              setIsLoginModalOpen(false);
+              setOtpStep(false);
+            }}
+            className="p-1 text-white/80 hover:text-white rounded-full hover:bg-white/10 transition-colors cursor-pointer"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Content Form */}
+        <div className="p-6">
+          {otpStep ? (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="text-center py-2">
+                <div className="w-12 h-12 rounded-full bg-green-100 text-[#16a34a] flex items-center justify-center mx-auto mb-2 font-bold text-lg">
+                  SMS
+                </div>
+                <p className="text-xs text-gray-600">
+                  {t('Verification code sent to', 'ভেরিফিকেশন কোড পাঠানো হয়েছে')}{' '}
+                  <span className="font-bold text-gray-900">{phoneOrEmail}</span>
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  {t('4-Digit SMS Code (Pre-filled for Demo)', '৪ ডিজিট কোড (ডেমো কোড দেওয়া আছে)')}
+                </label>
+                <input
+                  type="text"
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value)}
+                  maxLength={6}
+                  className="w-full text-center tracking-widest text-xl font-bold py-2 border-2 border-green-300 rounded-lg focus:outline-none focus:border-[#16a34a]"
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full bg-[#16a34a] hover:bg-[#15803d] text-white font-bold py-2.5 rounded-lg text-sm transition-colors shadow-md shadow-green-600/20 cursor-pointer"
+              >
+                {t('Verify & Continue', 'যাচাই করে এগিয়ে যান')}
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-3.5">
+              {isRegister && (
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                    {t('Full Name', 'পুরো নাম')}
+                  </label>
+                  <div className="relative">
+                    <User className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
+                    <input
+                      type="text"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder="e.g. Anindo Roy"
+                      className="w-full pl-9 pr-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:border-[#16a34a]"
+                      required
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  {t('Phone Number or Email', 'ফোন নম্বর অথবা ইমেইল')}
+                </label>
+                <div className="relative">
+                  <Smartphone className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
+                  <input
+                    type="text"
+                    value={phoneOrEmail}
+                    onChange={(e) => setPhoneOrEmail(e.target.value)}
+                    placeholder="+880 17XXXXXXXX"
+                    className="w-full pl-9 pr-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:border-[#16a34a]"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-semibold text-gray-700">
+                    {t('Password', 'পাসওয়ার্ড')}
+                  </label>
+                  {!isRegister && (
+                    <button
+                      type="button"
+                      className="text-[11px] text-[#16a34a] hover:underline cursor-pointer"
+                    >
+                      {t('Forgot password?', 'পাসওয়ার্ড ভুলে গেছেন?')}
+                    </button>
+                  )}
+                </div>
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full pl-9 pr-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:border-[#16a34a]"
+                    required
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full bg-[#16a34a] hover:bg-[#15803d] text-white font-bold py-2.5 rounded-lg text-xs sm:text-sm transition-colors shadow-md shadow-green-600/20 mt-2 cursor-pointer"
+              >
+                {isRegister ? t('REGISTER ACCOUNT', 'রেজিস্টার করুন') : t('LOGIN TO DARAZ', 'লগইন করুন')}
+              </button>
+
+              {/* Quick 1-Click Demo Login */}
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={handleQuickDemoLogin}
+                  className="w-full bg-green-50 hover:bg-green-100 text-[#16a34a] border border-green-200 font-bold py-2 rounded-lg text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <CheckCircle className="w-4 h-4" />
+                  <span>{t('Instant 1-Click Demo Login (Anindo Roy)', '১-ক্লিকে ডেমো লগইন')}</span>
+                </button>
+              </div>
+
+              <div className="text-center pt-3 border-t border-gray-100">
+                <p className="text-xs text-gray-600">
+                  {isRegister
+                    ? t('Already have an account?', 'ইতিমধ্যে একাউন্ট আছে?')
+                    : t("Don't have an account?", 'কোনো একাউন্ট নেই?')}{' '}
+                  <button
+                    type="button"
+                    onClick={() => setIsRegister(!isRegister)}
+                    className="text-[#16a34a] font-bold hover:underline cursor-pointer"
+                  >
+                    {isRegister ? t('Login Here', 'লগইন করুন') : t('Sign Up Free', 'ফ্রি সাইন আপ')}
+                  </button>
+                </p>
+              </div>
+            </form>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export const LocationModal: React.FC = () => {
+  const { isLocationModalOpen, setIsLocationModalOpen, activeLocation, setActiveLocation, showToast, t } = useApp();
+
+  const DIVISIONS = [
+    { name: 'Dhaka', cities: ['Dhaka North - Gulshan', 'Dhaka North - Uttara', 'Dhaka South - Dhanmondi', 'Dhaka South - Mirpur', 'Gazipur', 'Narayanganj', 'Savar'] },
+    { name: 'Chittagong', cities: ['Chattogram City - Agrabad', 'Chattogram - Nasirabad', 'Cox’s Bazar', 'Comilla'] },
+    { name: 'Sylhet', cities: ['Sylhet Sadar - Zindabazar', 'Moulvibazar', 'Habiganj', 'Sunamganj'] },
+    { name: 'Rajshahi', cities: ['Rajshahi City - Shaheb Bazar', 'Bogra Sadar', 'Pabna'] },
+    { name: 'Khulna', cities: ['Khulna City - Sonadanga', 'Jessore Sadar', 'Kushtia'] },
+    { name: 'Barishal', cities: ['Barishal Sadar - Band Road', 'Patuakhali', 'Bhola'] },
+    { name: 'Rangpur', cities: ['Rangpur City - Jahaj Company Mor', 'Dinajpur'] },
+    { name: 'Mymensingh', cities: ['Mymensingh City - Ganginarpar', 'Jamalpur'] }
+  ];
+
+  const [selectedDiv, setSelectedDiv] = useState(activeLocation.division || 'Dhaka');
+
+  if (!isLocationModalOpen) return null;
+
+  const currentDivObj = DIVISIONS.find((d) => d.name === selectedDiv) || DIVISIONS[0];
+
+  const handleSelectCity = (city: string) => {
+    setActiveLocation({ division: selectedDiv, city });
+    setIsLocationModalOpen(false);
+    showToast(`${t('Delivery address changed to', 'ডেলিভারি লোকেশন পরিবর্তন করা হয়েছে:')} ${city}`);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+      <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full overflow-hidden relative border border-gray-100 animate-in fade-in zoom-in-95 duration-200">
+        <div className="bg-[#16a34a] text-white p-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <MapPin className="w-5 h-5" />
+            <h3 className="font-bold text-base">{t('Choose Your Delivery Location', 'ডেলিভারি এলাকা নির্বাচন করুন')}</h3>
+          </div>
+          <button
+            onClick={() => setIsLocationModalOpen(false)}
+            className="p-1 text-white/80 hover:text-white rounded-full hover:bg-white/10 cursor-pointer"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-5">
+          <p className="text-xs text-gray-500 mb-3">
+            {t('Select your Division and City / Thana to check accurate delivery speed & fees in Bangladesh.', 'সঠিক ডেলিভারি চার্জ ও সময় দেখতে আপনার বিভাগ ও থানা নির্বাচন করুন।')}
+          </p>
+
+          <div className="flex gap-4 min-h-[260px]">
+            {/* Division list */}
+            <div className="w-1/3 border-r border-gray-200 pr-2 space-y-1">
+              <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
+                {t('Division', 'বিভাগ')}
+              </span>
+              {DIVISIONS.map((div) => (
+                <button
+                  key={div.name}
+                  onClick={() => setSelectedDiv(div.name)}
+                  className={`w-full text-left px-2.5 py-1.5 rounded text-xs font-semibold transition-colors flex items-center justify-between cursor-pointer ${
+                    selectedDiv === div.name
+                      ? 'bg-green-50 text-[#16a34a] border-l-4 border-[#16a34a]'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  <span>{div.name}</span>
+                  <span className="text-gray-400 text-xs">›</span>
+                </button>
+              ))}
+            </div>
+
+            {/* City / Thana list */}
+            <div className="flex-1 pl-1 space-y-1 overflow-y-auto max-h-[280px]">
+              <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
+                {t('City / Area in', 'এলাকা/থানা -')} {selectedDiv}
+              </span>
+              <div className="grid grid-cols-1 gap-1.5">
+                {currentDivObj.cities.map((city) => (
+                  <button
+                    key={city}
+                    onClick={() => handleSelectCity(city)}
+                    className={`w-full text-left px-3 py-2 rounded-lg border text-xs font-medium transition-colors flex items-center justify-between cursor-pointer ${
+                      activeLocation.city === city
+                        ? 'border-[#16a34a] bg-green-50/60 text-[#16a34a] font-bold'
+                        : 'border-gray-200 hover:border-green-300 text-gray-700 hover:bg-green-50/20'
+                    }`}
+                  >
+                    <span>{city}</span>
+                    {activeLocation.city === city && <CheckCircle className="w-4 h-4 text-[#16a34a]" />}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export const GlobalToast: React.FC = () => {
+  const { toast } = useApp();
+
+  if (!toast) return null;
+
+  return (
+    <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-5 fade-in duration-200">
+      <div className="bg-gray-900 text-white px-4 py-3 rounded-lg shadow-2xl flex items-center gap-2.5 text-xs sm:text-sm font-semibold border border-gray-700">
+        <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+        <span>{toast}</span>
+      </div>
+    </div>
+  );
+};

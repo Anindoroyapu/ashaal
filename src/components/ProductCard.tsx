@@ -1,0 +1,219 @@
+import React from 'react';
+import { Product } from '../types';
+import { useApp } from '../context/AppContext';
+import { Star, ShoppingCart, Heart, ShieldCheck, Zap, Truck } from 'lucide-react';
+
+interface ProductCardProps {
+  product: Product;
+  variant?: 'standard' | 'compact' | 'flash' | 'horizontal';
+}
+
+export const ProductCard: React.FC<ProductCardProps> = ({ product, variant = 'standard' }) => {
+  const { language, navigate, addToCart, toggleWishlist, isWishlisted, t } = useApp();
+  const wishlisted = isWishlisted(product.id);
+
+  const formatPrice = (price: number) => {
+    return '৳' + price.toLocaleString('en-BD');
+  };
+
+  const handleCardClick = () => {
+    navigate('product-details', { productId: product.id });
+  };
+
+  if (variant === 'horizontal') {
+    return (
+      <div
+        onClick={handleCardClick}
+        className="bg-white rounded border border-[#e2e2e2] hover:shadow-md hover:border-[#16a34a] transition-all p-3 flex gap-4 cursor-pointer group"
+      >
+        <div className="w-28 h-28 shrink-0 relative rounded overflow-hidden bg-[#f8f8f8]">
+          <img
+            src={product.mainImage}
+            alt={product.title}
+            className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+          />
+          {product.discountPercentage > 0 && (
+            <span className="absolute top-1 left-1 bg-[#16a34a] text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
+              -{product.discountPercentage}%
+            </span>
+          )}
+        </div>
+        <div className="flex-1 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center gap-1.5 mb-1">
+              {product.isDarazMall && (
+                <span className="bg-[#0f136d] text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
+                  Mall
+                </span>
+              )}
+              {product.isFreeDelivery && (
+                <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9px] font-semibold px-1 rounded flex items-center gap-0.5">
+                  <Truck className="w-2.5 h-2.5" /> Free Shipping
+                </span>
+              )}
+            </div>
+            <h3 className="text-xs font-semibold text-[#212121] line-clamp-2 leading-tight group-hover:text-[#16a34a] transition-colors">
+              {language === 'BN' ? product.titleBn : product.title}
+            </h3>
+          </div>
+
+          <div className="flex items-end justify-between mt-2">
+            <div>
+              <div className="text-[#16a34a] font-bold text-base">{formatPrice(product.price)}</div>
+              {product.discountPercentage > 0 && (
+                <div className="text-[11px] text-gray-400 line-through">
+                  {formatPrice(product.originalPrice)}
+                </div>
+              )}
+            </div>
+            <div className="flex items-center gap-1 text-[11px] text-gray-500">
+              <div className="flex text-amber-400">
+                <Star className="w-3.5 h-3.5 fill-amber-400" />
+              </div>
+              <span className="font-semibold text-[#212121]">{product.rating}</span>
+              <span>({product.reviewsCount})</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      onClick={handleCardClick}
+      className="bg-white rounded border border-[#e2e2e2] hover:border-[#16a34a] hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col cursor-pointer group relative"
+    >
+      {/* Product Image Container */}
+      <div className="relative aspect-square w-full bg-[#f8f8f8] overflow-hidden">
+        <img
+          src={product.mainImage}
+          alt={product.title}
+          className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-300"
+          loading="lazy"
+        />
+
+        {/* Top Floating Badges */}
+        <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
+          {product.isDarazMall && (
+            <span className="bg-[#0f136d] text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow-xs flex items-center gap-0.5">
+              <ShieldCheck className="w-3 h-3 text-emerald-400" /> Mall
+            </span>
+          )}
+          {product.isFlashSale && (
+            <span className="bg-gradient-to-r from-emerald-600 to-[#16a34a] text-white text-[9px] font-black px-1.5 py-0.5 rounded shadow-xs flex items-center gap-0.5">
+              <Zap className="w-2.5 h-2.5 fill-white" /> FLASH
+            </span>
+          )}
+        </div>
+
+        {/* Discount Badge */}
+        {product.discountPercentage > 0 && (
+          <div className="absolute top-2 right-2 bg-[#16a34a] text-white font-bold text-[10px] px-1.5 py-0.5 rounded shadow-xs">
+            -{product.discountPercentage}%
+          </div>
+        )}
+
+        {/* Wishlist Button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleWishlist(product.id);
+          }}
+          className={`absolute bottom-2 right-2 p-1.5 rounded-full bg-white shadow-xs hover:bg-white transition-colors z-10 ${
+            wishlisted ? 'text-red-500 fill-red-500' : 'text-gray-400 hover:text-red-500'
+          }`}
+          title="Add to Wishlist"
+        >
+          <Heart className={`w-4 h-4 ${wishlisted ? 'fill-red-500' : ''}`} />
+        </button>
+      </div>
+
+      {/* Product Details Info */}
+      <div className="p-3 flex-1 flex flex-col justify-between bg-white">
+        <div>
+          {/* Free Shipping / Tag */}
+          <div className="flex items-center gap-1.5 mb-1.5 min-h-[18px]">
+            {product.isFreeDelivery && (
+              <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1">
+                <Truck className="w-3 h-3 text-emerald-600" /> {t('Free Delivery', 'ফ্রি ডেলিভারি')}
+              </span>
+            )}
+            {product.coinsCashback && (
+              <span className="text-[10px] text-amber-700 bg-amber-50 font-semibold px-1 py-0.5 rounded">
+                +{product.coinsCashback} {t('Coins', 'কয়েন')}
+              </span>
+            )}
+          </div>
+
+          {/* Title */}
+          <h3 className="text-xs sm:text-[12px] font-semibold text-[#212121] line-clamp-2 leading-tight group-hover:text-[#16a34a] transition-colors">
+            {language === 'BN' ? product.titleBn : product.title}
+          </h3>
+        </div>
+
+        {/* Price & Rating */}
+        <div className="mt-2.5 pt-2 border-t border-[#e2e2e2]">
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-[#16a34a] font-bold text-base sm:text-[17px]">
+              {formatPrice(product.price)}
+            </span>
+            {product.discountPercentage > 0 && (
+              <span className="text-[11px] text-gray-400 line-through">
+                {formatPrice(product.originalPrice)}
+              </span>
+            )}
+          </div>
+
+          {/* Stock Meter for Flash Sale */}
+          {product.isFlashSale && variant === 'flash' && (
+            <div className="mt-1.5">
+              <div className="w-full bg-[#dcfce7] rounded-full h-1.5 overflow-hidden">
+                <div
+                  className="bg-[#16a34a] h-full rounded-full transition-all"
+                  style={{ width: `${Math.min(95, Math.max(25, (product.soldCount % 100) + 15))}%` }}
+                ></div>
+              </div>
+              <div className="flex justify-between text-[10px] text-gray-500 mt-0.5 font-medium">
+                <span>{product.soldCount} {t('Sold', 'বিক্রি')}</span>
+                <span className="text-[#16a34a] font-semibold">{product.inStock} {t('Left', 'বাকি')}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Rating & Sold count */}
+          <div className="flex items-center justify-between mt-2 text-[11px] text-gray-500">
+            <div className="flex items-center gap-1">
+              <div className="flex items-center text-amber-400">
+                <Star className="w-3 h-3 fill-amber-400" />
+              </div>
+              <span className="font-bold text-[#212121]">{product.rating}</span>
+              <span>({product.reviewsCount})</span>
+            </div>
+            <span className="text-gray-400 font-medium">
+              {product.soldCount > 1000 ? `${(product.soldCount / 1000).toFixed(1)}k` : product.soldCount} {t('sold', 'বিক্রিত')}
+            </span>
+          </div>
+
+          {/* Quick Add to Cart Button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              const defaultVars: Record<string, string> = {};
+              if (product.variations) {
+                product.variations.forEach((v) => {
+                  defaultVars[v.name] = v.options[0];
+                });
+              }
+              addToCart(product, 1, defaultVars);
+            }}
+            className="w-full mt-2.5 bg-[#eff0f5] hover:bg-[#16a34a] text-[#212121] hover:text-white border border-[#e2e2e2] hover:border-[#16a34a] font-semibold py-1.5 rounded text-xs flex items-center justify-center gap-1.5 transition-all duration-150"
+          >
+            <ShoppingCart className="w-3.5 h-3.5" />
+            <span>{t('Add to Cart', 'কার্টে নিন')}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
