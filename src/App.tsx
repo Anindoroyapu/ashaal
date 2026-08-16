@@ -15,6 +15,7 @@ import { CheckoutPage } from './pages/CheckoutPage';
 import { OrderConfirmationPage, TrackOrderPage } from './pages/OrderConfirmationPage';
 import { MyAccountPage, CustomerCarePage } from './pages/MyAccountPage';
 import { SellerCenterPage, CoinsRewardsPage } from './pages/SellerCenterPage';
+import { NotFoundPage } from './pages/NotFoundPage';
 
 /**
  * Scroll to top on route change automatically
@@ -60,8 +61,8 @@ const AppLayout: React.FC = () => {
           <Route path="/customer-care" element={<CustomerCarePage />} />
           <Route path="/seller-center" element={<SellerCenterPage />} />
           <Route path="/coins-rewards" element={<CoinsRewardsPage />} />
-          {/* Fallback route */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          {/* 404 Fallback route with Header and Footer intact */}
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
 
