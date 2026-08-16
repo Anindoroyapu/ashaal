@@ -42,15 +42,15 @@ export const CartPage: React.FC = () => {
   const handleApplyVoucher = (e: React.FormEvent) => {
     e.preventDefault();
     const code = voucherCode.trim().toUpperCase();
-    if (code === 'DARAZBD100' || code === 'DARAZ100') {
+    if (code === 'ASHAALBD100' || code === 'DARAZBD100' || code === 'ASHAAL100' || code === 'DARAZ100') {
       setAppliedDiscount(100);
-      showToast(t('Voucher DARAZBD100 applied! ৳100 discount', 'DARAZBD100 ভাউচার সফল! ১০০ টাকা ছাড়'));
+      showToast(t('Voucher ASHAALBD100 applied! ৳100 discount', 'ASHAALBD100 ভাউচার সফল! ১০০ টাকা ছাড়'));
     } else if (code === 'BKASH15') {
       const disc = Math.round(subtotal * 0.15);
       setAppliedDiscount(disc);
       showToast(t(`bKash 15% voucher applied! ৳${disc} discount`, `বিকাশ ১৫% ভাউচার সফল! ৳${disc} ছাড়`));
     } else {
-      showToast(t('Invalid or expired voucher code. Try DARAZBD100 or BKASH15', 'ভাউচার কোডটি সঠিক নয়। DARAZBD100 বা BKASH15 চেষ্টা করুন'));
+      showToast(t('Invalid or expired voucher code. Try ASHAALBD100 or BKASH15', 'ভাউচার কোডটি সঠিক নয়। ASHAALBD100 বা BKASH15 চেষ্টা করুন'));
     }
   };
 
@@ -78,7 +78,7 @@ export const CartPage: React.FC = () => {
             {t('Your Cart is Empty', 'আপনার কার্টটি খালি')}
           </h2>
           <p className="text-xs text-gray-500">
-            {t('Looks like you haven’t added anything to your cart yet. Explore Flash Sales, DarazMall and best deals today!', 'দারাজের হাজারো সেরা পণ্য ও ফ্ল্যাশ সেল অফার থেকে এখনই পছন্দের পণ্য যোগ করুন।')}
+            {t('Looks like you haven’t added anything to your cart yet. Explore Flash Sales, AshaalMall and best deals today!', 'আশালের হাজারো সেরা পণ্য ও ফ্ল্যাশ সেল অফার থেকে এখনই পছন্দের পণ্য যোগ করুন।')}
           </p>
           <button
             onClick={() => navigate('home')}
@@ -241,7 +241,7 @@ export const CartPage: React.FC = () => {
               <div className="flex gap-2">
                 <input
                   type="text"
-                  placeholder="e.g. DARAZBD100"
+                  placeholder="e.g. ASHAALBD100"
                   value={voucherCode}
                   onChange={(e) => setVoucherCode(e.target.value)}
                   className="flex-1 text-xs border border-gray-300 rounded-lg px-3 py-2 uppercase focus:outline-none focus:border-[#16a34a]"
@@ -260,7 +260,7 @@ export const CartPage: React.FC = () => {
               <div className="flex items-center gap-2">
                 <Coins className="w-4 h-4 text-amber-600 shrink-0" />
                 <div>
-                  <p className="font-bold text-amber-900">{t('Redeem Daraz Coins', 'দারাজ কয়েন ব্যবহার করুন')}</p>
+                  <p className="font-bold text-amber-900">{t('Redeem Ashaal Coins', 'আশাল কয়েন ব্যবহার করুন')}</p>
                   <p className="text-[11px] text-amber-700">{user.coins} {t('coins available (Save up to ৳48)', 'কয়েন আছে (৳৪৮ পর্যন্ত ছাড়)')}</p>
                 </div>
               </div>
@@ -330,7 +330,7 @@ export const CartPage: React.FC = () => {
           <div className="bg-gray-50 p-3.5 rounded-xl border border-gray-200 text-xs text-gray-500 space-y-1.5">
             <div className="flex items-center gap-1.5 font-bold text-gray-800">
               <ShieldCheck className="w-4 h-4 text-blue-600" />
-              <span>Daraz Buyer Protection Guarantee</span>
+              <span>Ashaal Buyer Protection Guarantee</span>
             </div>
             <p className="text-[11px]">
               Full refund if item is not as described, damaged, or not received within promised delivery date.

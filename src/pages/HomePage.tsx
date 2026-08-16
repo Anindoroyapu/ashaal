@@ -177,7 +177,7 @@ export const HomePage: React.FC = () => {
                   {t('Get ৳100 OFF First Order!', 'প্রথম অর্ডারে ১০০ টাকা ছাড়!')}
                 </h3>
                 <p className="text-[11px] text-emerald-100 mt-1">
-                  {t('Use code: DARAZBD100 on checkout', 'কুপন কোড: DARAZBD100 ব্যবহার করুন')}
+                  {t('Use code: ASHAALBD100 on checkout', 'কুপন কোড: ASHAALBD100 ব্যবহার করুন')}
                 </p>
               </div>
 
@@ -195,11 +195,11 @@ export const HomePage: React.FC = () => {
             {/* App Promotion Box */}
             <div className="bg-white p-3.5 rounded-xl border border-gray-200 shadow-sm flex items-center gap-3">
               <div className="w-12 h-12 bg-green-100 text-[#16a34a] rounded-lg flex items-center justify-center font-black text-xl shrink-0">
-                d
+                a
               </div>
               <div className="flex-1">
                 <h4 className="font-bold text-xs text-gray-900 leading-tight">
-                  {t('Try Daraz App', 'দারাজ অ্যাপ ব্যবহার করুন')}
+                  {t('Try Ashaal App', 'আশাল অ্যাপ ব্যবহার করুন')}
                 </h4>
                 <p className="text-[10px] text-gray-500 mt-0.5">
                   {t('Faster checkout & exclusive flash deals', 'দ্রুত কেনাকাটা ও এক্সক্লুসিভ অফার')}
@@ -324,7 +324,7 @@ export const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* 4. DarazMall Flagship Brands */}
+      {/* 4. AshaalMall Flagship Brands */}
       <section className="max-w-7xl mx-auto px-3 sm:px-6">
         <div className="bg-white rounded shadow-xs border border-[#e2e2e2] p-4 sm:p-5">
           <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#e2e2e2]">
@@ -332,7 +332,7 @@ export const HomePage: React.FC = () => {
               <ShieldCheck className="w-6 h-6 text-blue-600" />
               <div>
                 <h2 className="text-lg sm:text-xl font-bold text-[#0f136d] tracking-tight">
-                  DarazMall
+                  AshaalMall
                 </h2>
                 <p className="text-xs text-gray-500">
                   {t('100% Authentic Brands | 14 Days Return Guarantee', '১০০% আসল ব্র্যান্ড পণ্য | ১৪ দিনের সহজ রিটার্ন')}
@@ -348,7 +348,7 @@ export const HomePage: React.FC = () => {
             </button>
           </div>
 
-          {/* DarazMall Products Showcase */}
+          {/* AshaalMall Products Showcase */}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
             {darazMallProducts.slice(0, 6).map((product) => (
               <ProductCard key={product.id} product={product} />

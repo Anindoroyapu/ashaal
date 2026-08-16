@@ -133,7 +133,7 @@ const INITIAL_ORDERS: Order[] = [
     coinDiscount: 40,
     total: 2800,
     trackingNumber: 'DEX-BD-948201',
-    courier: 'Daraz Express (DEX)',
+    courier: 'Ashaal Express (DEX)',
     timeline: [
       {
         title: 'Order Placed & Verified',
@@ -145,10 +145,10 @@ const INITIAL_ORDERS: Order[] = [
         current: false
       },
       {
-        title: 'Package Processed by Daraz Hub',
-        titleBn: 'দারাজ হাব থেকে প্যাকেট প্রস্তুত',
+        title: 'Package Processed by Ashaal Hub',
+        titleBn: 'আশাল হাব থেকে প্যাকেট প্রস্তুত',
         description: 'Packed with bubble wrap & handed over to DEX sorting facility',
-        descriptionBn: 'দারাজ তেজগাঁও সেন্টারে পাঠানো হয়েছে',
+        descriptionBn: 'আশাল তেজগাঁও সেন্টারে পাঠানো হয়েছে',
         timestamp: '15 Aug 2026, 09:15 AM',
         completed: true,
         current: false
@@ -373,7 +373,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       coinDiscount,
       total,
       trackingNumber: trackingNum,
-      courier: 'Daraz Express (DEX)',
+      courier: 'Ashaal Express (DEX)',
       timeline: [
         {
           title: 'Order Placed & Confirmed',
@@ -385,8 +385,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           current: true
         },
         {
-          title: 'Processing at Daraz Fulfillment Hub',
-          titleBn: 'দারাজ ফুলফিলমেন্ট সেন্টারে প্রস্তুত হচ্ছে',
+          title: 'Processing at Ashaal Fulfillment Hub',
+          titleBn: 'আশাল ফুলফিলমেন্ট সেন্টারে প্রস্তুত হচ্ছে',
           description: 'Seller is packaging your goods for transit',
           descriptionBn: 'সেলার পণ্য প্যাকেজিং করছেন',
           timestamp: 'Expected within 12 hours',
@@ -394,8 +394,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           current: false
         },
         {
-          title: 'Handed to Daraz Express Courier',
-          titleBn: 'দারাজ এক্সপ্রেস কুরিয়ারে হস্তান্তর',
+          title: 'Handed to Ashaal Express Courier',
+          titleBn: 'আশাল এক্সপ্রেস কুরিয়ারে হস্তান্তর',
           description: 'Dispatched to delivery hub near your location',
           descriptionBn: 'নিকটস্থ ডেলিভারি হাবে পাঠানো হবে',
           timestamp: 'Expected tomorrow',

@@ -72,7 +72,7 @@ export const Header: React.FC = () => {
               onClick={() => navigate('seller-center')}
               className="hover:text-[#16a34a] hidden sm:flex items-center gap-1 transition-colors"
             >
-              <span>{t('Sell on Daraz', 'দারাজে বিক্রি করুন')}</span>
+              <span>{t('Sell on Ashaal', 'আশালে বিক্রি করুন')}</span>
             </button>
             <span className="text-gray-300 hidden md:inline">|</span>
             <button
@@ -163,7 +163,7 @@ export const Header: React.FC = () => {
                       className="w-full text-left px-3 py-2 hover:bg-green-50 flex items-center gap-2 text-[#212121]"
                     >
                       <Coins className="w-3.5 h-3.5 text-amber-500" />
-                      <span>{t('Daraz Coins & Rewards', 'দারাজ কয়েন ও রিওয়ার্ড')}</span>
+                      <span>{t('Ashaal Coins & Rewards', 'আশাল কয়েন ও রিওয়ার্ড')}</span>
                     </button>
                     <div className="border-t border-[#e2e2e2] my-1"></div>
                     <button
@@ -207,11 +207,11 @@ export const Header: React.FC = () => {
           <div className="flex items-center gap-4">
             <button
               onClick={() => navigate('home')}
-              className="flex items-center gap-1.5 focus:outline-none group text-left"
+              className="flex items-center gap-1.5 focus:outline-none group text-left cursor-pointer"
             >
               <div className="flex flex-col">
-                <span className="text-3xl sm:text-[34px] font-black italic text-[#16a34a] tracking-tighter leading-none">
-                  daraz
+                <span className="text-3xl sm:text-[34px] font-black italic text-[#16a34a] tracking-tight leading-none">
+                  ashaal
                 </span>
                 <span className="text-[9px] text-[#212121]/60 font-semibold tracking-wider uppercase">BANGLADESH</span>
               </div>
@@ -220,7 +220,7 @@ export const Header: React.FC = () => {
             {/* Location selector */}
             <button
               onClick={() => setIsLocationModalOpen(true)}
-              className="hidden lg:flex items-center gap-1.5 text-xs text-[#212121] bg-[#eff0f5] hover:bg-gray-200/80 border border-[#e2e2e2] px-2.5 py-1.5 rounded transition-colors"
+              className="hidden lg:flex items-center gap-1.5 text-xs text-[#212121] bg-[#eff0f5] hover:bg-gray-200/80 border border-[#e2e2e2] px-2.5 py-1.5 rounded transition-colors cursor-pointer"
             >
               <MapPin className="w-3.5 h-3.5 text-[#16a34a]" />
               <div className="text-left leading-tight">
@@ -238,7 +238,7 @@ export const Header: React.FC = () => {
                 type="text"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                placeholder={t('Search in Daraz', 'দারাজে খুঁজুন')}
+                placeholder={t('Search in Ashaal', 'আশালে খুঁজুন')}
                 className="w-full py-2 sm:py-2.5 px-4 text-xs sm:text-sm bg-[#eff0f5] focus:bg-white border border-[#e2e2e2] border-r-0 rounded-l focus:outline-none focus:border-[#16a34a] text-[#212121] placeholder:text-gray-400 transition-all"
               />
               <button
@@ -393,7 +393,7 @@ export const Header: React.FC = () => {
               }`}
             >
               <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
-              <span>DarazMall</span>
+              <span>AshaalMall</span>
             </button>
 
             <button
@@ -421,7 +421,7 @@ export const Header: React.FC = () => {
               }`}
             >
               <Coins className="w-3.5 h-3.5 text-amber-500" />
-              <span>{t('Daraz Coins & Rewards', 'কয়েন ও রিওয়ার্ড')}</span>
+              <span>{t('Ashaal Coins', 'আশাল কয়েন')}</span>
             </button>
           </div>
 

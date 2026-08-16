@@ -124,7 +124,7 @@ export const ProductDetailPage: React.FC = () => {
         ...prev,
         {
           sender: 'seller',
-          text: `Thank you for asking about "${product.title.slice(0, 25)}". Yes, this item is 100% in stock with official warranty and ready to dispatch via Daraz Express!`,
+          text: `Thank you for asking about "${product.title.slice(0, 25)}". Yes, this item is 100% in stock with official warranty and ready to dispatch via Ashaal Express!`,
           time: 'Just now'
         }
       ]);
@@ -227,7 +227,7 @@ export const ProductDetailPage: React.FC = () => {
             <div>
               {product.isDarazMall && (
                 <span className="inline-flex items-center gap-1 bg-[#0f136d] text-white text-[10px] font-bold px-2 py-0.5 rounded mr-2 align-middle">
-                  <ShieldCheck className="w-3 h-3 text-emerald-400" /> DarazMall Flagship
+                  <ShieldCheck className="w-3 h-3 text-emerald-400" /> AshaalMall Flagship
                 </span>
               )}
               <h1 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 leading-snug mt-1">
@@ -488,7 +488,7 @@ export const ProductDetailPage: React.FC = () => {
                   <Store className="w-4 h-4 text-gray-600" />
                   <span>{product.seller.name}</span>
                 </h4>
-                <p className="text-[10px] text-gray-500">{product.seller.location} • {product.seller.joinedYears} {t('years on Daraz', 'বছর ধরে দারাজে')}</p>
+                <p className="text-[10px] text-gray-500">{product.seller.location} • {product.seller.joinedYears} {t('years on Ashaal', 'বছর ধরে আশালে')}</p>
               </div>
 
               {/* Seller metrics */}

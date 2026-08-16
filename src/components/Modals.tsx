@@ -6,7 +6,7 @@ export const LoginModal: React.FC = () => {
   const { isLoginModalOpen, setIsLoginModalOpen, login, t } = useApp();
   const [isRegister, setIsRegister] = useState(false);
   const [phoneOrEmail, setPhoneOrEmail] = useState('+880 1712-345678');
-  const [password, setPassword] = useState('daraz12345');
+  const [password, setPassword] = useState('ashaal12345');
   const [fullName, setFullName] = useState('Anindo Roy');
   const [otpStep, setOtpStep] = useState(false);
   const [otpCode, setOtpCode] = useState('8492');
@@ -45,8 +45,8 @@ export const LoginModal: React.FC = () => {
               {otpStep
                 ? t('Verify OTP Code', 'ওটিপি কোড যাচাই করুন')
                 : isRegister
-                ? t('Create Daraz Account', 'দারাজ একাউন্ট তৈরি করুন')
-                : t('Welcome to Daraz!', 'দারাজে স্বাগতম!')}
+                ? t('Create Ashaal Account', 'আশাল একাউন্ট তৈরি করুন')
+                : t('Welcome to Ashaal!', 'আশালে স্বাগতম!')}
             </h3>
             <p className="text-xs text-green-100">
               {otpStep
@@ -171,7 +171,7 @@ export const LoginModal: React.FC = () => {
                 type="submit"
                 className="w-full bg-[#16a34a] hover:bg-[#15803d] text-white font-bold py-2.5 rounded-lg text-xs sm:text-sm transition-colors shadow-md shadow-green-600/20 mt-2 cursor-pointer"
               >
-                {isRegister ? t('REGISTER ACCOUNT', 'রেজিস্টার করুন') : t('LOGIN TO DARAZ', 'লগইন করুন')}
+                {isRegister ? t('REGISTER ACCOUNT', 'রেজিস্টার করুন') : t('LOGIN TO ASHAAL', 'লগইন করুন')}
               </button>
 
               {/* Quick 1-Click Demo Login */}

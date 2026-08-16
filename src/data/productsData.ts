@@ -67,10 +67,10 @@ export const PRODUCTS_DATA: Product[] = [
       chatResponse: 97,
       joinedYears: 5,
       location: 'Dhaka, Bangladesh',
-      badge: 'DarazMall Flagship'
+      badge: 'AshaalMall Flagship'
     },
     warranty: '1 Year Brand Official Warranty by Xiaomi Bangladesh',
-    returnPolicy: '14 Days Easy Return from DarazMall',
+    returnPolicy: '14 Days Easy Return from AshaalMall',
     deliveryFee: 0,
     estimatedDeliveryDays: '2-3 Days in Dhaka, 3-5 Days outside Dhaka',
     tags: ['Best Seller', 'Official Warranty', '5G Smartphone']
@@ -137,7 +137,7 @@ export const PRODUCTS_DATA: Product[] = [
       chatResponse: 95,
       joinedYears: 4,
       location: 'Dhaka, Bangladesh',
-      badge: 'DarazMall Flagship'
+      badge: 'AshaalMall Flagship'
     },
     warranty: '6 Months Brand Warranty',
     returnPolicy: '14 Days Free Return',
@@ -403,13 +403,13 @@ export const PRODUCTS_DATA: Product[] = [
       chatResponse: 98,
       joinedYears: 5,
       location: 'Dhaka, Bangladesh',
-      badge: 'DarazMall Flagship'
+      badge: 'AshaalMall Flagship'
     },
     warranty: '2 Years Official Service Warranty',
     returnPolicy: '14 Days Free Return',
     deliveryFee: 0,
     estimatedDeliveryDays: '1-3 Days',
-    tags: ['Kitchen Appliance', 'Air Fryer', 'DarazMall']
+    tags: ['Kitchen Appliance', 'Air Fryer', 'AshaalMall']
   },
 
   // 7. TV - Walton Smart 43"
@@ -469,7 +469,7 @@ export const PRODUCTS_DATA: Product[] = [
       chatResponse: 96,
       joinedYears: 7,
       location: 'Gazipur, Bangladesh',
-      badge: 'DarazMall Flagship'
+      badge: 'AshaalMall Flagship'
     },
     warranty: '5 Years Panel Guarantee + 3 Years Free Service',
     returnPolicy: '14 Days Free Return',
@@ -515,7 +515,7 @@ export const PRODUCTS_DATA: Product[] = [
     descriptionBn: [
       'ভিটামিন এ ও ডি সমৃদ্ধ বিশুদ্ধ তীর সয়াবিন তেল ৫ লিটার।',
       'ঝরঝরে দীর্ঘ দানার বাছাইকৃত মিনিকেট চাল ৫ কেজি।',
-      'দারাজ মার্ট এর দ্রুত ডেলিভারি সুবিধা।'
+      'আশাল মার্ট এর দ্রুত ডেলিভারি সুবিধা।'
     ],
     specifications: {
       'Oil Quantity': '5 Liters Poly Can',
@@ -528,20 +528,20 @@ export const PRODUCTS_DATA: Product[] = [
     ],
     seller: {
       id: 'sel-8',
-      name: 'Daraz Mart Official Express',
+      name: 'Ashaal Mart Official Express',
       isOfficial: true,
       rating: 99,
       shipOnTime: 100,
       chatResponse: 99,
       joinedYears: 5,
       location: 'Tejgaon, Dhaka',
-      badge: 'DarazMart 2-Hour Delivery'
+      badge: 'AshaalMart 2-Hour Delivery'
     },
     warranty: '100% Freshness & Authenticity Guaranteed',
     returnPolicy: '7 Days Return',
     deliveryFee: 0,
     estimatedDeliveryDays: 'Next Day Delivery in Dhaka',
-    tags: ['DarazMart', 'Grocery', 'Cooking Oil']
+    tags: ['AshaalMart', 'Grocery', 'Cooking Oil']
   },
 
   // 9. Skincare & Beauty - COSRX Snail Mucin Power Essence
@@ -598,7 +598,7 @@ export const PRODUCTS_DATA: Product[] = [
       chatResponse: 95,
       joinedYears: 4,
       location: 'Banani, Dhaka',
-      badge: 'DarazMall Flagship'
+      badge: 'AshaalMall Flagship'
     },
     warranty: '100% Authentic Product Guarantee',
     returnPolicy: '14 Days Free Return',
@@ -664,7 +664,7 @@ export const PRODUCTS_DATA: Product[] = [
       chatResponse: 97,
       joinedYears: 6,
       location: 'Dhaka, Bangladesh',
-      badge: 'DarazMall Flagship'
+      badge: 'AshaalMall Flagship'
     },
     warranty: '3 Months Brand Warranty',
     returnPolicy: '14 Days Free Return & Size Exchange',
@@ -731,7 +731,7 @@ export const PRODUCTS_DATA: Product[] = [
       chatResponse: 98,
       joinedYears: 6,
       location: 'IDB Bhaban, Dhaka',
-      badge: 'DarazMall Flagship'
+      badge: 'AshaalMall Flagship'
     },
     warranty: '2 Years Global Brand Warranty',
     returnPolicy: '14 Days Free Return',
@@ -794,7 +794,7 @@ export const PRODUCTS_DATA: Product[] = [
       chatResponse: 96,
       joinedYears: 5,
       location: 'Dhaka, Bangladesh',
-      badge: 'DarazMall Flagship'
+      badge: 'AshaalMall Flagship'
     },
     warranty: '6 Months Replacement Warranty',
     returnPolicy: '14 Days Free Return',
@@ -814,7 +814,7 @@ PRODUCTS_DATA.forEach(p => {
         userAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&q=80',
         rating: 5,
         date: '3 days ago',
-        comment: 'অসাধারণ প্রোডাক্ট! যেমন ছবিতে দেখেছি ঠিক তেমনই পেয়েছি। ডেলিভারিও খুব ফাস্ট ছিল মাত্র ২ দিনে হাতে পেয়েছি। প্যাকেজিংও খুব ভালো ছিল। দারাজকে ধন্যবাদ!',
+        comment: 'অসাধারণ প্রোডাক্ট! যেমন ছবিতে দেখেছি ঠিক তেমনই পেয়েছি। ডেলিভারিও খুব ফাস্ট ছিল মাত্র ২ দিনে হাতে পেয়েছি। প্যাকেজিংও খুব ভালো ছিল। আশালকে ধন্যবাদ!',
         verified: true,
         helpfulCount: 24,
         variantPurchased: p.variations?.[0]?.options?.[0]

@@ -11,11 +11,11 @@ export const HERO_BANNERS: Banner[] = [
   },
   {
     id: 'b-2',
-    title: 'DarazMall Brand Festival 2025',
+    title: 'AshaalMall Brand Festival 2025',
     subtitle: '100% Authentic Brands | 14 Days Free Return Guarantee',
     image: 'https://images.unsplash.com/photo-1555421689-491a97ff2040?w=1200&q=80',
     linkType: 'daraz-mall',
-    badge: 'DARAZMALL'
+    badge: 'ASHAALMALL'
   },
   {
     id: 'b-3',
@@ -37,20 +37,20 @@ export const HERO_BANNERS: Banner[] = [
   },
   {
     id: 'b-5',
-    title: 'Daraz Mart: Grocery Express Delivery in 2 Hours',
+    title: 'Ashaal Mart: Grocery Express Delivery in 2 Hours',
     subtitle: 'Fresh Food, Cooking Essentials & Household Care at Best Prices',
     image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=1200&q=80',
     linkType: 'category',
     targetId: 'groceries-pets',
-    badge: 'DARAZ MART'
+    badge: 'ASHAAL MART'
   }
 ];
 
 export const PROMO_CHANNELS = [
   {
     id: 'ch-1',
-    title: 'DarazMall',
-    titleBn: 'দারাজমল',
+    title: 'AshaalMall',
+    titleBn: 'আশালমল',
     subtitle: '100% Authentic',
     icon: 'ShieldCheck',
     color: 'from-orange-500 to-red-600',
@@ -77,8 +77,8 @@ export const PROMO_CHANNELS = [
   },
   {
     id: 'ch-4',
-    title: 'Daraz Coins',
-    titleBn: 'দারাজ কয়েন',
+    title: 'Ashaal Coins',
+    titleBn: 'আশাল কয়েন',
     subtitle: 'Earn & Redeem',
     icon: 'Coins',
     color: 'from-yellow-400 to-amber-500',
@@ -115,8 +115,8 @@ export const PROMO_CHANNELS = [
   },
   {
     id: 'ch-8',
-    title: 'Sell on Daraz',
-    titleBn: 'দারাজে বিক্রি করুন',
+    title: 'Sell on Ashaal',
+    titleBn: 'আশালে বিক্রি করুন',
     subtitle: 'Open Online Shop',
     icon: 'Store',
     color: 'from-orange-600 to-amber-600',
@@ -127,7 +127,7 @@ export const PROMO_CHANNELS = [
 export const VOUCHERS_DATA: Voucher[] = [
   {
     id: 'v-1',
-    code: 'DARAZBD100',
+    code: 'ASHAALBD100',
     title: '৳100 OFF Welcome Voucher',
     titleBn: '৳১০০ ছাড় স্বাগতম ভাউচার',
     discountAmount: 100,

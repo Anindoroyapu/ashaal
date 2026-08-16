@@ -26,7 +26,7 @@ export const Footer: React.FC = () => {
             </div>
             <div>
               <h4 className="font-bold text-[#212121] text-xs sm:text-sm">{t('100% Authentic Products', '১০০% আসল পণ্যের নিশ্চয়তা')}</h4>
-              <p className="text-[11px] text-gray-500">{t('DarazMall official brand warranty', 'অফিশিয়াল ব্র্যান্ড ওয়ারেন্টি')}</p>
+              <p className="text-[11px] text-gray-500">{t('AshaalMall official brand warranty', 'অফিশিয়াল ব্র্যান্ড ওয়ারেন্টি')}</p>
             </div>
           </div>
 
@@ -66,7 +66,7 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <button onClick={() => navigate('customer-care')} className="hover:text-[#16a34a] transition-colors text-left">
-                  {t('How to Buy on Daraz', 'দারাজে যেভাবে কিনবেন')}
+                  {t('How to Buy on Ashaal', 'আশালে যেভাবে কিনবেন')}
                 </button>
               </li>
               <li>
@@ -87,23 +87,23 @@ export const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* Col 2: Daraz */}
+          {/* Col 2: Ashaal */}
           <div>
-            <h4 className="font-bold text-xs text-[#212121] mb-3 uppercase tracking-wider">Daraz Bangladesh</h4>
+            <h4 className="font-bold text-xs text-[#212121] mb-3 uppercase tracking-wider">Ashaal Bangladesh</h4>
             <ul className="space-y-2 text-[12px] text-gray-500">
               <li>
                 <button onClick={() => navigate('daraz-mall')} className="hover:text-[#16a34a] transition-colors text-left">
-                  About DarazMall
+                  About AshaalMall
                 </button>
               </li>
               <li>
                 <button onClick={() => navigate('seller-center')} className="hover:text-[#16a34a] transition-colors text-[#16a34a] font-semibold text-left">
-                  {t('Sell on Daraz (Earn Money)', 'দারাজে বিক্রি করুন')}
+                  {t('Sell on Ashaal (Earn Money)', 'আশালে বিক্রি করুন')}
                 </button>
               </li>
               <li>
                 <button onClick={() => navigate('coins-rewards')} className="hover:text-[#16a34a] transition-colors text-left">
-                  {t('Daraz Coins & Rewards', 'দারাজ কয়েন ও ভাউচার')}
+                  {t('Ashaal Coins & Rewards', 'আশাল কয়েন ও ভাউচার')}
                 </button>
               </li>
               <li>
@@ -119,7 +119,7 @@ export const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* Col 3: Payment Methods & Daraz International */}
+          {/* Col 3: Payment Methods & Ashaal International */}
           <div>
             <h4 className="font-bold text-xs text-[#212121] mb-3 uppercase tracking-wider">{t('Payment Methods', 'পেমেন্ট মাধ্যমসমূহ')}</h4>
             <div className="flex flex-wrap gap-1.5 mb-4">
@@ -143,7 +143,7 @@ export const Footer: React.FC = () => {
               </span>
             </div>
 
-            <h5 className="font-bold text-[11px] text-[#212121] mb-1.5 uppercase">{t('Daraz International', 'দারাজ আন্তর্জাতিক')}</h5>
+            <h5 className="font-bold text-[11px] text-[#212121] mb-1.5 uppercase">{t('Ashaal International', 'আশাল আন্তর্জাতিক')}</h5>
             <div className="flex items-center gap-2 text-xs text-gray-500">
               <span className="hover:text-[#16a34a] cursor-pointer">🇧🇩 Bangladesh</span>
               <span>•</span>
@@ -157,7 +157,7 @@ export const Footer: React.FC = () => {
 
           {/* Col 4: Download App & Follow */}
           <div>
-            <h4 className="font-bold text-xs text-[#212121] mb-3 uppercase tracking-wider">{t('Exclusive Mobile Deals', 'দারাজ অ্যাপ ডাউনলোড')}</h4>
+            <h4 className="font-bold text-xs text-[#212121] mb-3 uppercase tracking-wider">{t('Exclusive Mobile Deals', 'আশাল অ্যাপ ডাউনলোড')}</h4>
             <p className="text-[11px] text-gray-500 mb-3">
               {t('Scan QR or download the app for extra ৳200 voucher discount on your first order!', 'প্রথম অর্ডারে অতিরিক্ত ২০০ টাকা ভাউচার পেতে অ্যাপ ডাউনলোড করুন!')}
             </p>
@@ -165,19 +165,19 @@ export const Footer: React.FC = () => {
               <div className="w-14 h-14 bg-[#eff0f5] rounded border border-[#e2e2e2] p-1 flex items-center justify-center">
                 <div className="w-full h-full bg-[#212121] rounded flex flex-col items-center justify-center text-white text-[8px] font-mono">
                   <span>[QR]</span>
-                  <span className="text-[7px]">DARAZ</span>
+                  <span className="text-[7px]">ASHAAL</span>
                 </div>
               </div>
               <div className="space-y-1.5 flex-1">
                 <button
-                  onClick={() => alert('Download Daraz App on Google Play Store')}
+                  onClick={() => alert('Download Ashaal App on Google Play Store')}
                   className="w-full bg-[#212121] hover:bg-[#16a34a] text-white text-[10px] font-semibold py-1.5 px-2 rounded flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                 >
                   <Smartphone className="w-3 h-3" />
                   <span>Google Play</span>
                 </button>
                 <button
-                  onClick={() => alert('Download Daraz App on Apple App Store')}
+                  onClick={() => alert('Download Ashaal App on Apple App Store')}
                   className="w-full bg-[#212121] hover:bg-[#16a34a] text-white text-[10px] font-semibold py-1.5 px-2 rounded flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                 >
                   <Smartphone className="w-3 h-3" />
@@ -191,8 +191,8 @@ export const Footer: React.FC = () => {
         {/* Bottom Copyright */}
         <div className="pt-6 border-t border-[#e2e2e2] flex flex-col sm:flex-row items-center justify-between gap-4 text-gray-500 text-[11px]">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-[#16a34a]">daraz.com.bd</span>
-            <span>© 2026 Daraz Bangladesh Ltd. An Alibaba Group Company. All Rights Reserved.</span>
+            <span className="font-bold text-[#16a34a]">ashaal.com.bd</span>
+            <span>© 2026 Ashaal Bangladesh Ltd. All Rights Reserved.</span>
           </div>
           <div className="flex items-center gap-4">
             <span className="hover:underline cursor-pointer">DBID: 749204821</span>

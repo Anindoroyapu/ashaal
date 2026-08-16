@@ -138,7 +138,7 @@ export const MyAccountPage: React.FC = () => {
             >
               <span className="flex items-center gap-2.5">
                 <Coins className="w-4 h-4 text-amber-500" />
-                {t('Daraz Coins & Rewards', 'দারাজ কয়েন ও রিওয়ার্ড')}
+                {t('Ashaal Coins & Rewards', 'আশাল কয়েন ও রিওয়ার্ড')}
               </span>
               <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
             </button>
@@ -338,7 +338,7 @@ export const CustomerCarePage: React.FC = () => {
   const [chatLog, setChatLog] = useState<{ sender: 'bot' | 'user'; text: string }[]>([
     {
       sender: 'bot',
-      text: 'Hello! I am Daraz Virtual Customer Assistant (CLEO). How can I assist you with orders, returns, refunds, or vouchers today?'
+      text: 'Hello! I am Ashaal Virtual Customer Assistant (CLEO). How can I assist you with orders, returns, refunds, or vouchers today?'
     }
   ]);
 
@@ -352,11 +352,11 @@ export const CustomerCarePage: React.FC = () => {
     setTimeout(() => {
       let reply = 'Thank you for reaching out! You can easily manage your orders or request a refund in the "My Orders" tab within 14 days of delivery.';
       if (msg.toLowerCase().includes('refund') || msg.toLowerCase().includes('return')) {
-        reply = 'For refunds, Daraz processes bKash refunds within 24 hours and card refunds within 5-7 business days after item pickup.';
+        reply = 'For refunds, Ashaal processes bKash refunds within 24 hours and card refunds within 5-7 business days after item pickup.';
       } else if (msg.toLowerCase().includes('delivery') || msg.toLowerCase().includes('track')) {
-        reply = 'You can track real-time Daraz Express packages using the "Track My Order" page with your 9-digit DEX code!';
+        reply = 'You can track real-time Ashaal Express packages using the "Track My Order" page with your 9-digit DEX code!';
       } else if (msg.toLowerCase().includes('voucher') || msg.toLowerCase().includes('coupon')) {
-        reply = 'Use code DARAZBD100 to get ৳100 OFF on your next order above ৳500!';
+        reply = 'Use code ASHAALBD100 to get ৳100 OFF on your next order above ৳500!';
       }
 
       setChatLog((prev) => [...prev, { sender: 'bot', text: reply }]);
@@ -364,17 +364,17 @@ export const CustomerCarePage: React.FC = () => {
   };
 
   const faqs = [
-    { q: 'How do I return an item on Daraz?', a: 'Go to My Account > My Orders > Select Order > Click "Initiate Return". Choose your reason and handover package to Daraz Drop-off point or request home pickup.' },
-    { q: 'What payment methods are supported in Bangladesh?', a: 'Daraz supports bKash, Nagad, Rocket, Visa/Mastercard debit and credit cards, and Cash on Delivery (COD).' },
-    { q: 'How long does Daraz Express (DEX) take to deliver?', a: 'Within Dhaka: 1 to 2 business days. Outside Dhaka (Chittagong, Sylhet, etc.): 2 to 4 business days.' },
-    { q: 'What is DarazMall 100% Authentic Guarantee?', a: 'DarazMall products are supplied directly by authorized brand owners. If proven fake, you get 2x money back.' }
+    { q: 'How do I return an item on Ashaal?', a: 'Go to My Account > My Orders > Select Order > Click "Initiate Return". Choose your reason and handover package to Ashaal Drop-off point or request home pickup.' },
+    { q: 'What payment methods are supported in Bangladesh?', a: 'Ashaal supports bKash, Nagad, Rocket, Visa/Mastercard debit and credit cards, and Cash on Delivery (COD).' },
+    { q: 'How long does Ashaal Express (DEX) take to deliver?', a: 'Within Dhaka: 1 to 2 business days. Outside Dhaka (Chittagong, Sylhet, etc.): 2 to 4 business days.' },
+    { q: 'What is AshaalMall 100% Authentic Guarantee?', a: 'AshaalMall products are supplied directly by authorized brand owners. If proven fake, you get 2x money back.' }
   ];
 
   return (
     <div className="max-w-6xl mx-auto px-3 sm:px-6 py-8 space-y-8">
       {/* Hero Header */}
       <div className="bg-gradient-to-r from-[#16a34a] to-[#15803d] text-white rounded-2xl p-6 sm:p-8 text-center space-y-2">
-        <h1 className="text-2xl sm:text-3xl font-black">{t('Daraz Bangladesh Help Center', 'দারাজ কাস্টমার কেয়ার ও সাপোর্ট')}</h1>
+        <h1 className="text-2xl sm:text-3xl font-black">{t('Ashaal Bangladesh Help Center', 'আশাল কাস্টমার কেয়ার ও সাপোর্ট')}</h1>
         <p className="text-xs sm:text-sm text-green-100">
           {t('24/7 Live Support, FAQs, and instant self-service assistance', '২৪/৭ সহায়তা, রিটার্ন ও রিফান্ড নীতি')}
         </p>
@@ -388,7 +388,7 @@ export const CustomerCarePage: React.FC = () => {
               CLEO
             </div>
             <div>
-              <h3 className="font-bold text-xs sm:text-sm text-gray-900">Daraz Smart AI Assistant</h3>
+              <h3 className="font-bold text-xs sm:text-sm text-gray-900">Ashaal Smart AI Assistant</h3>
               <p className="text-[10px] text-emerald-600">● Online & Ready to Help</p>
             </div>
           </div>
@@ -448,7 +448,7 @@ export const CustomerCarePage: React.FC = () => {
           <div className="bg-green-50 p-4 rounded-xl border border-green-200 text-xs space-y-2">
             <h4 className="font-bold text-[#16a34a]">{t('Need Official Telephone Support?', 'সরাসরি কথা বলুন')}</h4>
             <p className="text-gray-700">Customer Helpline: <strong>16492</strong> (9:00 AM - 9:00 PM)</p>
-            <p className="text-gray-700">Email: <strong>customer.support@daraz.com.bd</strong></p>
+            <p className="text-gray-700">Email: <strong>customer.support@ashaal.com.bd</strong></p>
           </div>
         </div>
       </div>

@@ -52,7 +52,7 @@ export const SellerCenterPage: React.FC = () => {
       return;
     }
     setIsRegistered(true);
-    showToast('Congratulations! Your Daraz BD seller shop has been submitted for review.');
+    showToast('Congratulations! Your Ashaal BD seller shop has been submitted for review.');
   };
 
   return (
@@ -62,13 +62,13 @@ export const SellerCenterPage: React.FC = () => {
         <div className="max-w-2xl space-y-4 relative z-10">
           <span className="inline-flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
             <Store className="w-4 h-4 text-amber-300" />
-            {t('DARAZ SELLER CENTER BANGLADESH', 'দারাজ সেলার সেন্টার বাংলাদেশ')}
+            {t('ASHAAL SELLER CENTER BANGLADESH', 'আশাল সেলার সেন্টার বাংলাদেশ')}
           </span>
           <h1 className="text-3xl sm:text-5xl font-black leading-tight tracking-tight">
             {t('Reach Millions of Customers Across Bangladesh', 'আপনার ব্যবসা ছড়িয়ে দিন দেশজুড়ে লক্ষাধিক ক্রেতার কাছে')}
           </h1>
           <p className="text-sm sm:text-base text-green-100 leading-relaxed">
-            {t('Join 50,000+ active sellers. Enjoy low commission rates, automated Daraz Express logistics, and weekly payments directly to your bank account.', 'সহজ রেজিস্ট্রেশন, দেশব্যাপী দ্রুত ডেলিভারি সুবিধা ও সরাসরি ব্যাংক অ্যাকাউন্টে সাপ্তাহিক পেমেন্ট।')}
+            {t('Join 50,000+ active sellers. Enjoy low commission rates, automated Ashaal Express logistics, and weekly payments directly to your bank account.', 'সহজ রেজিস্ট্রেশন, দেশব্যাপী দ্রুত ডেলিভারি সুবিধা ও সরাসরি ব্যাংক অ্যাকাউন্টে সাপ্তাহিক পেমেন্ট।')}
           </p>
         </div>
       </div>
@@ -76,12 +76,12 @@ export const SellerCenterPage: React.FC = () => {
       {/* 4-Step How It Works Grid */}
       <div className="space-y-4">
         <h2 className="text-xl sm:text-2xl font-black text-gray-900 text-center">
-          {t('How to Sell on Daraz in 4 Simple Steps', 'দারাজে বিক্রি করার সহজ ৪টি ধাপ')}
+          {t('How to Sell on Ashaal in 4 Simple Steps', 'আশালে বিক্রি করার সহজ ৪টি ধাপ')}
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[
             { step: '01', title: 'Register Shop', desc: 'Sign up with NID, Trade License, and Bangladeshi Bank Account details.' },
-            { step: '02', title: 'List Products', desc: 'Upload photos, descriptions, and pricing using the Daraz Seller Hub.' },
+            { step: '02', title: 'List Products', desc: 'Upload photos, descriptions, and pricing using the Ashaal Seller Hub.' },
             { step: '03', title: 'Receive & Pack Orders', desc: 'Get order notifications, pack products, and drop off at nearby DEX Hub.' },
             { step: '04', title: 'Get Paid Weekly', desc: 'Receive secure payouts directly transferred to your bank every 7 days.' }
           ].map((s) => (
@@ -107,7 +107,7 @@ export const SellerCenterPage: React.FC = () => {
               <CheckCircle2 className="w-12 h-12 text-emerald-600 mx-auto" />
               <h3 className="font-bold text-emerald-900">Application Submitted!</h3>
               <p className="text-xs text-emerald-700">
-                Your shop "{shopName}" is now under review by Daraz Verification Team. You will receive an SMS within 24 hours.
+                Your shop "{shopName}" is now under review by Ashaal Verification Team. You will receive an SMS within 24 hours.
               </p>
               <button
                 onClick={() => navigate('home')}
@@ -220,7 +220,7 @@ export const SellerCenterPage: React.FC = () => {
                 <span className="font-bold text-gray-900">৳{itemPrice}</span>
               </div>
               <div className="flex justify-between text-gray-600">
-                <span>Daraz Marketplace Fee:</span>
+                <span>Ashaal Marketplace Fee:</span>
                 <span className="text-red-500 font-semibold">-৳{commission}</span>
               </div>
               <div className="flex justify-between text-gray-600">
@@ -261,7 +261,7 @@ export const CoinsRewardsPage: React.FC = () => {
     }
     setHasCheckedInToday(true);
     addCoins(40);
-    showToast(t('🎉 Claimed 40 Daraz Coins successfully!', '🎉 সফলভাবে ৪০ কয়েন সংগ্রহ করেছেন!'));
+    showToast(t('🎉 Claimed 40 Ashaal Coins successfully!', '🎉 সফলভাবে ৪০ কয়েন সংগ্রহ করেছেন!'));
   };
 
   return (
@@ -271,10 +271,10 @@ export const CoinsRewardsPage: React.FC = () => {
         <div className="space-y-2 text-center sm:text-left">
           <span className="inline-flex items-center gap-1.5 bg-black/20 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider">
             <Coins className="w-4 h-4 text-amber-200" />
-            {t('DARAZ CLUB REWARDS', 'দারাজ ক্লাব রিওয়ার্ডস')}
+            {t('ASHAAL CLUB REWARDS', 'আশাল ক্লাব রিওয়ার্ডস')}
           </span>
           <h1 className="text-3xl sm:text-4xl font-black">
-            {user.coins} {t('Daraz Coins', 'দারাজ কয়েন')}
+            {user.coins} {t('Ashaal Coins', 'আশাল কয়েন')}
           </h1>
           <p className="text-xs text-green-100 max-w-sm">
             {t('10 Coins = ৳1 discount. Use coins directly at checkout to save extra cash!', '১০ কয়েন = ১ টাকা ছাড়। চেকআউটে কয়েন রিডিম করে অতিরিক্ত ডিসকাউন্ট পান!')}
@@ -332,7 +332,7 @@ export const CoinsRewardsPage: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
             { id: 'cv-1', cost: 150, title: '৳50 OFF Voucher', min: 400, desc: 'Valid on All Fashion items' },
-            { id: 'cv-2', cost: 300, title: '৳120 OFF Voucher', min: 1000, desc: 'Valid on DarazMall Brands' },
+            { id: 'cv-2', cost: 300, title: '৳120 OFF Voucher', min: 1000, desc: 'Valid on AshaalMall Brands' },
             { id: 'cv-3', cost: 500, title: 'Free Delivery Voucher', min: 500, desc: 'Nationwide Free Delivery' }
           ].map((v) => (
             <div key={v.id} className="p-4 rounded-xl border border-dashed border-emerald-300 bg-emerald-50/40 flex flex-col justify-between space-y-3">

@@ -183,7 +183,7 @@ export const TrackOrderPage: React.FC = () => {
   const steps = [
     { titleEn: 'Order Placed', titleBn: 'অর্ডার গ্রহণ', desc: 'Order verified and sent to seller', time: 'Aug 16, 09:30 AM', done: true },
     { titleEn: 'Packed & Dispatched', titleBn: 'প্যাকিং সম্পন্ন', desc: 'Seller packed the item with protective bubble wrap', time: 'Aug 16, 02:15 PM', done: true },
-    { titleEn: 'In Transit (DEX Sorting Hub)', titleBn: 'ট্রানজিটে আছে', desc: 'Arrived at Daraz Tejgaon Sorting Hub', time: 'Aug 17, 08:40 AM', done: true },
+    { titleEn: 'In Transit (DEX Sorting Hub)', titleBn: 'ট্রানজিটে আছে', desc: 'Arrived at Ashaal Tejgaon Sorting Hub', time: 'Aug 17, 08:40 AM', done: true },
     { titleEn: 'Out for Delivery', titleBn: 'ডেলিভারির জন্য বের হয়েছে', desc: 'Rider Md. Tanvir is on the way to your address', time: 'Today, 11:20 AM', done: true, current: true },
     { titleEn: 'Delivered', titleBn: 'ডেলিভারি সম্পন্ন', desc: 'Package handed over to recipient', time: 'Expected by 05:00 PM', done: false }
   ];
@@ -216,7 +216,7 @@ export const TrackOrderPage: React.FC = () => {
           <h2 className="text-lg sm:text-xl font-bold">
             Expected Delivery: {order.estimatedDelivery}
           </h2>
-          <p className="text-xs text-green-100">Carrier: Daraz Express DEX Bangladesh</p>
+          <p className="text-xs text-green-100">Carrier: Ashaal Express DEX Bangladesh</p>
         </div>
 
         {/* Courier Rider Call Card */}

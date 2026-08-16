@@ -40,7 +40,7 @@ export const FlashSalePage: React.FC = () => {
             <Flame className="w-3.5 h-3.5 fill-amber-300" /> {t('LIMITED TIME CRAZY DEALS', 'সীমিত সময়ের মেগা অফার')}
           </span>
           <h1 className="text-2xl sm:text-4xl font-black tracking-tight leading-tight">
-            {t('Daraz Flash Sale Hub', 'দারাজ ফ্ল্যাশ সেল হাব')}
+            {t('Ashaal Flash Sale Hub', 'আশাল ফ্ল্যাশ সেল হাব')}
           </h1>
           <p className="text-xs sm:text-sm text-green-100">
             {t('Up to 70% Discount on top Bangladeshi brands + Free Delivery. Stocks replenish every few hours!', 'সেরা ব্র্যান্ড পণ্যে ৭০% পর্যন্ত বিশেষ ছাড় ও দ্রুত ফ্রি ডেলিভারি!')}
@@ -165,7 +165,7 @@ export const DarazMallPage: React.FC = () => {
             <span>{t('OFFICIAL BRAND STORES', 'অফিশিয়াল ব্র্যান্ড স্টোর')}</span>
           </div>
           <h1 className="text-2xl sm:text-4xl font-black tracking-tight">
-            DarazMall Bangladesh
+            AshaalMall Bangladesh
           </h1>
           <p className="text-xs sm:text-sm text-gray-200 leading-relaxed">
             {t('Guaranteed 100% Authentic products sourced directly from official brand manufacturers. Enjoy 14 Days Free Return & Brand Service Warranty.', '১০০% আসল পণ্যের গ্যারান্টি, ১৪ দিনের সহজ রিটার্ন এবং অফিশিয়াল ব্র্যান্ড ওয়ারেন্টি।')}
@@ -206,11 +206,11 @@ export const DarazMallPage: React.FC = () => {
         </div>
       </div>
 
-      {/* DarazMall Brand Products Feed */}
+      {/* AshaalMall Brand Products Feed */}
       <div className="space-y-4">
         <div className="flex items-center justify-between pb-2 border-b border-gray-200">
           <h2 className="text-xl font-black text-gray-900">
-            {t('All DarazMall Products', 'সকল দারাজমল পণ্য')}
+            {t('All AshaalMall Products', 'সকল আশালমল পণ্য')}
           </h2>
           <span className="text-xs text-gray-500">{mallProducts.length} {t('Verified items', 'যাচাইকৃত পণ্য')}</span>
         </div>

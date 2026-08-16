@@ -64,7 +64,7 @@ const AppContent: React.FC = () => {
       {/* 2. Dynamic Main Content Page */}
       <main className="flex-1 w-full">{renderCurrentPage()}</main>
 
-      {/* 3. Footer (Authentic Daraz Footer, Helpline, Payment Brands, App Links) */}
+      {/* 3. Footer (Authentic Ashaal Footer, Helpline, Payment Brands, App Links) */}
       <Footer />
 
       {/* 4. Global Interactive Modals */}

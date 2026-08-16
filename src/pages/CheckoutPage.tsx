@@ -296,7 +296,7 @@ export const CheckoutPage: React.FC = () => {
               <div className="flex items-center gap-2">
                 <Truck className="w-5 h-5 text-emerald-600" />
                 <h3 className="font-extrabold text-sm sm:text-base text-gray-900">
-                  {t('Delivery Package (Daraz Express DEX)', 'প্যাকেজ ও ডেলিভারি')}
+                  {t('Delivery Package (Ashaal Express DEX)', 'প্যাকেজ ও ডেলিভারি')}
                 </h3>
               </div>
               <span className="text-xs text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
@@ -523,7 +523,7 @@ export const CheckoutPage: React.FC = () => {
                 ৳
               </div>
               <h3 className="font-black text-lg">bKash Payment Gateway</h3>
-              <p className="text-xs text-pink-100 mt-0.5">Merchant: Daraz Bangladesh Limited</p>
+              <p className="text-xs text-pink-100 mt-0.5">Merchant: Ashaal Bangladesh Limited</p>
               <p className="text-sm font-extrabold text-amber-300 mt-1">Amount: {formatPrice(total)}</p>
             </div>
 

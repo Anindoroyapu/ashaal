@@ -221,7 +221,7 @@ export const SearchListingPage: React.FC = () => {
                   className="rounded text-[#16a34a] focus:ring-[#16a34a]"
                 />
                 <span className="flex items-center gap-1 font-semibold text-[#0f136d]">
-                  <ShieldCheck className="w-3.5 h-3.5 text-blue-600" /> DarazMall Flagship
+                  <ShieldCheck className="w-3.5 h-3.5 text-blue-600" /> AshaalMall Flagship
                 </span>
               </label>
 
@@ -377,7 +377,7 @@ export const SearchListingPage: React.FC = () => {
               <span className="text-gray-500">{t('Active Filters:', 'সক্রিয় ফিল্টার:')}</span>
               {onlyDarazMall && (
                 <span className="bg-blue-50 text-blue-800 border border-blue-200 px-2 py-0.5 rounded-full flex items-center gap-1">
-                  DarazMall <button onClick={() => setOnlyDarazMall(false)} className="cursor-pointer"><X className="w-3 h-3" /></button>
+                  AshaalMall <button onClick={() => setOnlyDarazMall(false)} className="cursor-pointer"><X className="w-3 h-3" /></button>
                 </span>
               )}
               {onlyFreeDelivery && (
