@@ -108,7 +108,7 @@ export const OrderConfirmationPage: React.FC = () => {
             </p>
             <div className="pt-2 flex items-center gap-1.5 text-emerald-700 font-semibold">
               <Truck className="w-3.5 h-3.5" />
-              <span>Estimated Delivery: {order.estimatedDelivery}</span>
+              <span>Estimated Delivery: {order.items[0]?.product?.estimatedDeliveryDays || '2-3 Business Days'}</span>
             </div>
           </div>
 
@@ -131,9 +131,15 @@ export const OrderConfirmationPage: React.FC = () => {
                 <span>-{formatPrice(order.voucherDiscount)}</span>
               </div>
             )}
+            {order.coinDiscount > 0 && (
+              <div className="flex justify-between text-amber-600">
+                <span>Coin Discount:</span>
+                <span>-{formatPrice(order.coinDiscount)}</span>
+              </div>
+            )}
             <div className="flex justify-between text-sm font-black text-gray-900 pt-2 border-t border-gray-200">
               <span>Total Paid:</span>
-              <span className="text-[#16a34a]">{formatPrice(order.totalAmount)}</span>
+              <span className="text-[#16a34a]">{formatPrice(order.total)}</span>
             </div>
           </div>
         </div>
@@ -152,10 +158,10 @@ export const OrderConfirmationPage: React.FC = () => {
                   />
                   <div>
                     <p className="font-bold text-gray-900 line-clamp-1">{item.product.title}</p>
-                    <p className="text-[11px] text-gray-500">Qty: {item.quantity} × {formatPrice(item.price)}</p>
+                    <p className="text-[11px] text-gray-500">Qty: {item.quantity} × {formatPrice(item.product.price)}</p>
                   </div>
                 </div>
-                <span className="font-bold text-gray-900">{formatPrice(item.price * item.quantity)}</span>
+                <span className="font-bold text-gray-900">{formatPrice(item.product.price * item.quantity)}</span>
               </div>
             ))}
           </div>
@@ -219,7 +225,7 @@ export const TrackOrderPage: React.FC = () => {
             ● Current Status: Out for Delivery
           </span>
           <h2 className="text-lg sm:text-xl font-bold">
-            Expected Delivery: {order.estimatedDelivery}
+            Expected Delivery: {order.items[0]?.product?.estimatedDeliveryDays || '2-3 Business Days'}
           </h2>
           <p className="text-xs text-green-100">Carrier: Ashaal Express DEX Bangladesh</p>
         </div>

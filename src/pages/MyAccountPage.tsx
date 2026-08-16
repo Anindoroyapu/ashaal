@@ -41,7 +41,7 @@ export const MyAccountPage: React.FC = () => {
 
   const filteredOrders = orders.filter((o) => {
     if (orderStatusFilter === 'all') return true;
-    return o.status === orderStatusFilter;
+    return o.orderStatus.toLowerCase() === orderStatusFilter;
   });
 
   const formatPrice = (price: number) => {
@@ -196,9 +196,9 @@ export const MyAccountPage: React.FC = () => {
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="bg-green-100 text-[#16a34a] font-bold px-2 py-0.5 rounded uppercase text-[10px]">
-                            {ord.status}
+                            {ord.orderStatus}
                           </span>
-                          <span className="font-bold text-gray-900">{formatPrice(ord.totalAmount)}</span>
+                          <span className="font-bold text-gray-900">{formatPrice(ord.total)}</span>
                         </div>
                       </div>
 
@@ -213,11 +213,11 @@ export const MyAccountPage: React.FC = () => {
                               />
                               <div>
                                 <p className="font-semibold text-gray-900 line-clamp-1">{item.product.title}</p>
-                                <p className="text-[11px] text-gray-500">Qty: {item.quantity} × {formatPrice(item.price)}</p>
+                                <p className="text-[11px] text-gray-500">Qty: {item.quantity} × {formatPrice(item.product.price)}</p>
                               </div>
                             </div>
                             <button
-                              onClick={() => navigate('track-order')}
+                              onClick={() => navigate('track-order', { orderId: ord.id })}
                               className="text-xs text-[#16a34a] hover:underline font-bold whitespace-nowrap cursor-pointer"
                             >
                               {t('Track', 'ট্র্যাক করুন')} →

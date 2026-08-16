@@ -273,17 +273,17 @@ export const Header: React.FC = () => {
             {/* Cart Button */}
             <button
               onClick={() => navigate('cart')}
-              className="relative flex items-center gap-2 p-2 sm:px-3 sm:py-2 text-[#212121] hover:text-[#16a34a] bg-[#eff0f5] hover:bg-green-50 rounded transition-colors border border-[#e2e2e2]"
+              className="relative flex items-center gap-2 p-2 sm:px-3 sm:py-2 text-[#212121] hover:text-[#16a34a]   hover:bg-green-50 rounded transition-colors  "
             >
               <div className="relative">
                 <ShoppingCart className="w-6 h-6 text-[#212121]" />
                 {cartCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-[#16a34a] text-white text-[10px] font-extrabold w-5 h-5 rounded-full flex items-center justify-center shadow-xs">
+                  <span className="absolute -top-3 -right-3 bg-[#16a34a] text-white text-[10px] font-extrabold w-5 h-5 rounded-full flex items-center justify-center  ">
                     {cartCount}
                   </span>
                 )}
               </div>
-              <span className="hidden md:inline font-bold text-xs text-[#212121]">{t('Cart', 'কার্ট')}</span>
+
             </button>
           </div>
         </div>
