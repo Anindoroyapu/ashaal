@@ -25,7 +25,10 @@ import {
   Minus,
   Maximize2,
   X,
-  CheckCircle2
+  CheckCircle2,
+  Copy,
+  Send,
+  MessageSquare
 } from 'lucide-react';
 
 export const ProductDetailPage: React.FC = () => {
@@ -67,6 +70,8 @@ export const ProductDetailPage: React.FC = () => {
   ]);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [lightboxImageIndex, setLightboxImageIndex] = useState(0);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
 
   // Sync state whenever the product changes so variation preview never gets stuck
   useEffect(() => {
@@ -86,6 +91,84 @@ export const ProductDetailPage: React.FC = () => {
 
   const formatPrice = (price: number) => {
     return '৳' + price.toLocaleString('en-BD');
+  };
+
+  const getProductShareUrl = () => {
+    if (typeof window !== 'undefined') {
+      const origin = window.location.origin;
+      return `${origin}/product/${product.id}`;
+    }
+    return `https://ashall.com/product/${product.id}`;
+  };
+
+  const handleCopyLink = async () => {
+    const shareUrl = getProductShareUrl();
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+      } else {
+        const textArea = document.createElement('textarea');
+        textArea.value = shareUrl;
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      }
+      setIsCopied(true);
+      showToast(t('Link copied to clipboard!', 'প্রোডাক্টের লিংক কপি করা হয়েছে!'));
+      setTimeout(() => setIsCopied(false), 2500);
+    } catch {
+      showToast(t('Link copied to clipboard!', 'প্রোডাক্টের লিংক কপি করা হয়েছে!'));
+    }
+  };
+
+  const handleShareClick = async () => {
+    const shareUrl = getProductShareUrl();
+    const shareTitle = language === 'BN' ? product.titleBn : product.title;
+    const shareText = `Check out ${product.title} on Ashaal for ${formatPrice(product.price)}!`;
+
+    // Try native Web Share API if supported
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: shareUrl
+        });
+        return;
+      } catch (err: any) {
+        if (err.name !== 'AbortError') {
+          setIsShareModalOpen(true);
+        }
+        return;
+      }
+    }
+
+    // Open custom share popup modal
+    setIsShareModalOpen(true);
+  };
+
+  const handleSocialShare = (platform: 'facebook' | 'whatsapp' | 'twitter' | 'telegram') => {
+    const shareUrl = encodeURIComponent(getProductShareUrl());
+    const shareText = encodeURIComponent(`Check out ${product.title} on Ashaal (${formatPrice(product.price)}): `);
+    let targetUrl = '';
+
+    if (platform === 'whatsapp') {
+      targetUrl = `https://api.whatsapp.com/send?text=${shareText}${shareUrl}`;
+    } else if (platform === 'facebook') {
+      targetUrl = `https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`;
+    } else if (platform === 'twitter') {
+      targetUrl = `https://twitter.com/intent/tweet?text=${shareText}&url=${shareUrl}`;
+    } else if (platform === 'telegram') {
+      targetUrl = `https://t.me/share/url?url=${shareUrl}&text=${shareText}`;
+    }
+
+    if (targetUrl) {
+      window.open(targetUrl, '_blank', 'noopener,noreferrer');
+    }
   };
 
   const handleVariationSelect = (varName: string, option: string, optIndex: number) => {
@@ -202,14 +285,11 @@ export const ProductDetailPage: React.FC = () => {
             {/* Share & Wishlist quick actions */}
             <div className="flex items-center justify-between pt-2 text-xs text-gray-500 border-t border-gray-100">
               <button
-                onClick={() => {
-                  navigator.clipboard.writeText(window.location.href);
-                  showToast(t('Product link copied to clipboard!', 'প্রোডাক্টের লিংক কপি করা হয়েছে!'));
-                }}
-                className="flex items-center gap-1.5 hover:text-[#16a34a] transition-colors cursor-pointer"
+                onClick={handleShareClick}
+                className="flex items-center gap-1.5 hover:text-[#16a34a] transition-colors cursor-pointer group"
               >
-                <Share2 className="w-4 h-4" />
-                <span>{t('Share Product', 'শেয়ার করুন')}</span>
+                <Share2 className="w-4 h-4 text-[#16a34a]" />
+                <span className="font-semibold text-gray-700 group-hover:text-[#16a34a]">{t('Share Product', 'শেয়ার করুন')}</span>
               </button>
               <button
                 onClick={() => toggleWishlist(product.id)}
@@ -844,6 +924,131 @@ export const ProductDetailPage: React.FC = () => {
               Send
             </button>
           </form>
+        </div>
+      )}
+
+      {/* Share Product Dialog Modal */}
+      {isShareModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="relative max-w-md w-full bg-white p-6 shadow-2xl space-y-5 border border-gray-150 animate-in fade-in zoom-in duration-150">
+            {/* Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-gray-150">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-green-50 text-[#16a34a] flex items-center justify-center">
+                  <Share2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-gray-900">
+                    {t('Share this product', 'পণ্যটি শেয়ার করুন')}
+                  </h3>
+                  <p className="text-[11px] text-gray-500">
+                    {t('Share with your friends and family', 'বন্ধুবান্ধব ও পরিবারের সাথে শেয়ার করুন')}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsShareModalOpen(false)}
+                className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Product Mini Preview */}
+            <div className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200">
+              <img
+                src={product.mainImage}
+                alt={product.title}
+                className="w-14 h-14 object-contain bg-white p-1 border border-gray-200 shrink-0"
+              />
+              <div className="min-w-0 flex-1">
+                <h4 className="text-xs font-bold text-gray-900 line-clamp-1">{product.title}</h4>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-xs font-black text-[#16a34a]">{formatPrice(product.price)}</span>
+                  {product.originalPrice > product.price && (
+                    <span className="text-[10px] text-gray-400 line-through">
+                      {formatPrice(product.originalPrice)}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Direct Social Share Channels */}
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-2">
+                {t('Share via social platforms', 'সোশ্যাল প্ল্যাটফর্মে শেয়ার করুন')}
+              </label>
+              <div className="grid grid-cols-4 gap-2 text-center">
+                <button
+                  onClick={() => handleSocialShare('whatsapp')}
+                  className="flex flex-col items-center justify-center gap-1.5 p-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition-colors cursor-pointer"
+                >
+                  <MessageSquare className="w-5 h-5 text-emerald-600" />
+                  <span className="text-[10px] font-bold">WhatsApp</span>
+                </button>
+
+                <button
+                  onClick={() => handleSocialShare('facebook')}
+                  className="flex flex-col items-center justify-center gap-1.5 p-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 transition-colors cursor-pointer"
+                >
+                  <span className="text-base font-black leading-none text-blue-600">f</span>
+                  <span className="text-[10px] font-bold">Facebook</span>
+                </button>
+
+                <button
+                  onClick={() => handleSocialShare('twitter')}
+                  className="flex flex-col items-center justify-center gap-1.5 p-2.5 bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 transition-colors cursor-pointer"
+                >
+                  <span className="text-xs font-black text-sky-600">𝕏</span>
+                  <span className="text-[10px] font-bold">X (Twitter)</span>
+                </button>
+
+                <button
+                  onClick={() => handleSocialShare('telegram')}
+                  className="flex flex-col items-center justify-center gap-1.5 p-2.5 bg-cyan-50 hover:bg-cyan-100 text-cyan-700 border border-cyan-200 transition-colors cursor-pointer"
+                >
+                  <Send className="w-5 h-5 text-cyan-600" />
+                  <span className="text-[10px] font-bold">Telegram</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Copy Link Input Section */}
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                {t('Or copy direct link', 'অথবা ডিরেক্ট লিংক কপি করুন')}
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={getProductShareUrl()}
+                  className="flex-1 bg-gray-50 border border-gray-300 text-xs px-3 py-2 text-gray-600 select-all focus:outline-none"
+                />
+                <button
+                  onClick={handleCopyLink}
+                  className={`px-4 py-2 text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
+                    isCopied
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-[#16a34a] hover:bg-[#15803d] text-white shadow-xs'
+                  }`}
+                >
+                  {isCopied ? (
+                    <>
+                      <Check className="w-3.5 h-3.5" />
+                      <span>{t('Copied!', 'কপি হয়েছে!')}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>{t('Copy', 'কপি করুন')}</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
