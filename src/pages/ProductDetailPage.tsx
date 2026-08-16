@@ -160,13 +160,13 @@ export const ProductDetailPage: React.FC = () => {
       </div>
 
       {/* Main Product Presentation */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-150 p-4 sm:p-6">
+      <div className="bg-white shadow-xs p-4 sm:p-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
           {/* 1. Left Gallery (Col 4) */}
           <div className="lg:col-span-4 space-y-3">
             <div
               onClick={() => handleOpenLightbox(selectedImage)}
-              className="relative aspect-square w-full rounded-xl overflow-hidden bg-gray-50 border border-gray-200 cursor-zoom-in group"
+              className="relative aspect-square w-full overflow-hidden bg-gray-50 cursor-zoom-in group"
             >
               <img
                 src={selectedImage}
@@ -174,11 +174,11 @@ export const ProductDetailPage: React.FC = () => {
                 className="w-full h-full object-contain p-4 transition-transform duration-300 group-hover:scale-105"
               />
               {product.discountPercentage > 0 && (
-                <span className="absolute top-3 left-3 bg-[#16a34a] text-white font-black text-xs px-2 py-1 rounded shadow">
+                <span className="absolute top-3 left-3 bg-[#16a34a] text-white font-black text-xs px-2 py-1 shadow">
                   -{product.discountPercentage}% OFF
                 </span>
               )}
-              <div className="absolute bottom-3 right-3 bg-black/60 hover:bg-black/80 text-white text-[11px] font-medium px-2.5 py-1 rounded-full flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="absolute bottom-3 right-3 bg-black/60 hover:bg-black/80 text-white text-[11px] font-medium px-2.5 py-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <Maximize2 className="w-3.5 h-3.5" />
                 <span>{t('Click to Zoom', 'জুম করে দেখুন')}</span>
               </div>
@@ -190,8 +190,8 @@ export const ProductDetailPage: React.FC = () => {
                 <button
                   key={idx}
                   onClick={() => setSelectedImage(img)}
-                  className={`w-16 h-16 rounded-lg overflow-hidden border-2 bg-gray-50 p-1 shrink-0 transition-all cursor-pointer ${
-                    selectedImage === img ? 'border-[#16a34a] shadow-sm ring-2 ring-green-100' : 'border-gray-200 hover:border-gray-300'
+                  className={`w-16 h-16 overflow-hidden bg-gray-50 p-1 shrink-0 transition-all cursor-pointer ${
+                    selectedImage === img ? 'outline-2 outline-[#16a34a] shadow-xs' : 'opacity-70 hover:opacity-100'
                   }`}
                 >
                   <img src={img} alt="thumb" className="w-full h-full object-contain" />
@@ -228,7 +228,7 @@ export const ProductDetailPage: React.FC = () => {
             {/* Title & Brand */}
             <div>
               {product.isDarazMall && (
-                <span className="inline-flex items-center gap-1 bg-[#0f136d] text-white text-[10px] font-bold px-2 py-0.5 rounded mr-2 align-middle">
+                <span className="inline-flex items-center gap-1 bg-[#0f136d] text-white text-[10px] font-bold px-2 py-0.5 mr-2 align-middle">
                   <ShieldCheck className="w-3 h-3 text-emerald-400" /> AshaalMall Flagship
                 </span>
               )}
@@ -260,7 +260,7 @@ export const ProductDetailPage: React.FC = () => {
             </div>
 
             {/* Price Block */}
-            <div className="bg-green-50/60 p-3.5 rounded-xl border border-green-200/60 space-y-1.5">
+            <div className="bg-green-50/60 p-3.5 space-y-1.5">
               <div className="flex items-baseline gap-2.5">
                 <span className="text-2xl sm:text-3xl font-black text-[#16a34a]">
                   {formatPrice(product.price)}
@@ -270,7 +270,7 @@ export const ProductDetailPage: React.FC = () => {
                     <span className="text-xs sm:text-sm text-gray-400 line-through">
                       {formatPrice(product.originalPrice)}
                     </span>
-                    <span className="bg-[#16a34a] text-white text-[11px] font-bold px-1.5 py-0.5 rounded">
+                    <span className="bg-[#16a34a] text-white text-[11px] font-bold px-1.5 py-0.5">
                       -{product.discountPercentage}%
                     </span>
                   </>
@@ -280,13 +280,13 @@ export const ProductDetailPage: React.FC = () => {
               {/* Coins & Promo notes */}
               <div className="flex flex-wrap items-center gap-2 pt-1">
                 {product.coinsCashback && (
-                  <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-900 text-xs font-semibold px-2 py-0.5 rounded-md">
+                  <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-900 text-xs font-semibold px-2 py-0.5">
                     <Coins className="w-3 h-3 text-amber-600" />
                     <span>{t('Earn', 'আয় করুন')} {product.coinsCashback} {t('Coins on purchase', 'কয়েন')}</span>
                   </span>
                 )}
                 {product.isFreeDelivery && (
-                  <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-900 text-xs font-semibold px-2 py-0.5 rounded-md">
+                  <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-900 text-xs font-semibold px-2 py-0.5">
                     <Truck className="w-3 h-3 text-emerald-600" />
                     <span>{t('Free Delivery Available', 'ফ্রি ডেলিভারি প্রযোজ্য')}</span>
                   </span>
@@ -295,7 +295,7 @@ export const ProductDetailPage: React.FC = () => {
             </div>
 
             {/* Claimable Promotions Box */}
-            <div className="bg-white p-3 rounded-lg border border-gray-200 space-y-2">
+            <div className="bg-white p-3 space-y-2">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-bold text-gray-700 flex items-center gap-1">
                   <TicketPercent className="w-3.5 h-3.5 text-[#16a34a]" />
@@ -307,13 +307,13 @@ export const ProductDetailPage: React.FC = () => {
                 {vouchers.slice(0, 2).map((v) => (
                   <div
                     key={v.id}
-                    className="flex items-center justify-between gap-2 bg-green-50 border border-dashed border-[#16a34a] px-2.5 py-1 rounded text-xs"
+                    className="flex items-center justify-between gap-2 bg-green-50 px-2.5 py-1 text-xs"
                   >
                     <span className="font-bold text-[#16a34a]">{v.title}</span>
                     <button
                       onClick={() => claimVoucher(v.id)}
                       disabled={v.isClaimed}
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded cursor-pointer ${
+                      className={`text-[10px] font-bold px-2 py-0.5 cursor-pointer ${
                         v.isClaimed
                           ? 'bg-gray-200 text-gray-500 cursor-default'
                           : 'bg-[#16a34a] hover:bg-[#15803d] text-white'
@@ -347,13 +347,13 @@ export const ProductDetailPage: React.FC = () => {
                             key={opt}
                             type="button"
                             onClick={() => handleVariationSelect(v.name, opt, optIdx)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold border-2 transition-all flex items-center gap-1.5 cursor-pointer ${
+                            className={`px-3 py-1.5 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
                               isSelected
-                                ? 'border-[#16a34a] bg-green-50 text-[#16a34a] shadow-xs'
-                                : 'border-gray-200 text-gray-700 hover:border-gray-400 hover:bg-gray-50 bg-white'
+                                ? 'bg-[#16a34a] text-white'
+                                : 'text-gray-700 hover:bg-gray-100 bg-gray-100'
                             }`}
                           >
-                            {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-[#16a34a]" />}
+                            {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
                             <span>{opt}</span>
                           </button>
                         );
@@ -367,17 +367,17 @@ export const ProductDetailPage: React.FC = () => {
             {/* Quantity Selector */}
             <div className="flex items-center gap-4 pt-2">
               <span className="text-xs font-semibold text-gray-600">{t('Quantity', 'পরিমাণ')}:</span>
-              <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden bg-white">
+              <div className="flex items-center bg-gray-100">
                 <button
                   onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                  className="p-2 hover:bg-gray-100 text-gray-600 cursor-pointer"
+                  className="p-2 hover:bg-gray-200 text-gray-600 cursor-pointer"
                 >
                   <Minus className="w-3.5 h-3.5" />
                 </button>
                 <span className="w-12 text-center text-xs font-bold text-gray-900">{quantity}</span>
                 <button
                   onClick={() => setQuantity((q) => Math.min(product.inStock, q + 1))}
-                  className="p-2 hover:bg-gray-100 text-gray-600 cursor-pointer"
+                  className="p-2 hover:bg-gray-200 text-gray-600 cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
                 </button>
@@ -391,7 +391,7 @@ export const ProductDetailPage: React.FC = () => {
             <div className="grid grid-cols-2 gap-3 pt-3">
               <button
                 onClick={() => handleAddToCart(true)}
-                className="bg-[#16a34a] hover:bg-[#15803d] text-white font-extrabold py-3 px-4 rounded-lg text-sm shadow-md shadow-green-600/20 transition-all text-center flex items-center justify-center gap-2 cursor-pointer"
+                className="bg-[#16a34a] hover:bg-[#15803d] text-white font-extrabold py-3 px-4 text-sm shadow-md transition-all text-center flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Zap className="w-4 h-4 fill-white" />
                 <span>{t('Buy Now', 'এখনই কিনুন')}</span>
@@ -399,7 +399,7 @@ export const ProductDetailPage: React.FC = () => {
 
               <button
                 onClick={() => handleAddToCart(false)}
-                className="bg-green-50 hover:bg-green-100 text-[#16a34a] border-2 border-[#16a34a] font-extrabold py-3 px-4 rounded-lg text-sm transition-all text-center flex items-center justify-center gap-2 cursor-pointer"
+                className="bg-green-50 hover:bg-green-100 text-[#16a34a] font-extrabold py-3 px-4 text-sm transition-all text-center flex items-center justify-center gap-2 cursor-pointer"
               >
                 <ShoppingCart className="w-4 h-4" />
                 <span>{t('Add to Cart', 'কার্টে যোগ করুন')}</span>
@@ -410,7 +410,7 @@ export const ProductDetailPage: React.FC = () => {
           {/* 3. Right Sidebar: Delivery, Warranty & Seller Info (Col 3) */}
           <div className="lg:col-span-3 space-y-4">
             {/* Delivery Box */}
-            <div className="bg-[#fafafa] rounded-xl p-4 border border-gray-200 space-y-3">
+            <div className="bg-[#fafafa] p-4 space-y-3">
               <div className="flex items-center justify-between pb-2 border-b border-gray-200">
                 <span className="text-xs font-bold text-gray-700">{t('Delivery Options', 'ডেলিভারি অপশন')}</span>
                 <button
@@ -443,14 +443,14 @@ export const ProductDetailPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 text-[11px] text-gray-600 bg-white p-2 rounded border border-gray-150">
+              <div className="flex items-center gap-2 text-[11px] text-gray-600 bg-white p-2">
                 <Check className="w-3.5 h-3.5 text-emerald-600" />
                 <span>{t('Cash on Delivery Available', 'ক্যাশ অন ডেলিভারি প্রযোজ্য')}</span>
               </div>
             </div>
 
             {/* Return & Warranty Box */}
-            <div className="bg-[#fafafa] rounded-xl p-4 border border-gray-200 space-y-2.5 text-xs">
+            <div className="bg-[#fafafa] p-4 space-y-2.5 text-xs">
               <span className="font-bold text-gray-700 block pb-1 border-b border-gray-200">
                 {t('Return & Warranty', 'রিটার্ন ও ওয়ারেন্টি')}
               </span>
@@ -473,7 +473,7 @@ export const ProductDetailPage: React.FC = () => {
             </div>
 
             {/* Seller Information Card */}
-            <div className="bg-white rounded-xl p-4 border border-gray-200 space-y-3 shadow-xs">
+            <div className="bg-white p-4 space-y-3 shadow-xs">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] text-gray-400 font-semibold">{t('Sold by', 'বিক্রেতা:')}</span>
                 <button
@@ -494,7 +494,7 @@ export const ProductDetailPage: React.FC = () => {
               </div>
 
               {/* Seller metrics */}
-              <div className="grid grid-cols-3 gap-2 py-2 px-2 bg-gray-50 rounded-lg text-center text-xs">
+              <div className="grid grid-cols-3 gap-2 py-2 px-2 bg-gray-50 text-center text-xs">
                 <div>
                   <p className="font-extrabold text-emerald-600">{product.seller.rating}%</p>
                   <p className="text-[9px] text-gray-500 leading-tight">{t('Positive Rating', 'পজিটিভ রেটিং')}</p>
@@ -511,7 +511,7 @@ export const ProductDetailPage: React.FC = () => {
 
               <button
                 onClick={() => navigate('search', { searchQuery: product.brand })}
-                className="w-full bg-white hover:bg-gray-50 text-gray-800 border border-gray-300 font-bold py-1.5 rounded-lg text-xs transition-colors cursor-pointer"
+                className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-2 text-xs transition-colors cursor-pointer"
               >
                 {t('VISIT STORE', 'দোকান ভিজিট করুন')}
               </button>
@@ -612,7 +612,7 @@ export const ProductDetailPage: React.FC = () => {
       </div>
 
       {/* Product Specifications & Long Description */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-150 p-4 sm:p-6 space-y-6">
+      <div className="bg-white shadow-xs p-4 sm:p-6 space-y-6">
         <div>
           <h2 className="text-base sm:text-lg font-black text-gray-900 pb-3 border-b border-gray-150">
             {t('Product Details & Highlights', 'পণ্যের বিস্তারিত বিবরণ')}
@@ -644,7 +644,7 @@ export const ProductDetailPage: React.FC = () => {
       </div>
 
       {/* Customer Ratings & Reviews */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-150 p-4 sm:p-6 space-y-6">
+      <div className="bg-white shadow-xs p-4 sm:p-6 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-150">
           <div>
             <h2 className="text-base sm:text-lg font-black text-gray-900">
@@ -657,7 +657,7 @@ export const ProductDetailPage: React.FC = () => {
           <div className="flex items-center gap-1.5 flex-wrap">
             <button
               onClick={() => setReviewFilter('all')}
-              className={`px-3 py-1 rounded-full text-xs font-bold transition-colors cursor-pointer ${
+              className={`px-3 py-1 text-xs font-bold transition-colors cursor-pointer ${
                 reviewFilter === 'all' ? 'bg-[#16a34a] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
@@ -667,7 +667,7 @@ export const ProductDetailPage: React.FC = () => {
               <button
                 key={stars}
                 onClick={() => setReviewFilter(stars)}
-                className={`px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer ${
+                className={`px-2.5 py-1 text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer ${
                   reviewFilter === stars ? 'bg-[#16a34a] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
@@ -678,7 +678,7 @@ export const ProductDetailPage: React.FC = () => {
         </div>
 
         {/* Rating Score Breakdown */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 bg-gray-50 p-4 rounded-xl border border-gray-200">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 bg-gray-50 p-4">
           <div className="md:col-span-4 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-gray-200 pb-4 md:pb-0">
             <span className="text-4xl font-black text-gray-900">{product.rating}</span>
             <div className="flex text-amber-400 my-1">
@@ -699,8 +699,8 @@ export const ProductDetailPage: React.FC = () => {
             ].map((row) => (
               <div key={row.stars} className="flex items-center gap-3 text-xs text-gray-600">
                 <span className="w-8 font-semibold">{row.stars} ★</span>
-                <div className="flex-1 bg-gray-200 rounded-full h-2 overflow-hidden">
-                  <div className="bg-[#16a34a] h-full rounded-full" style={{ width: `${row.pct}%` }} />
+                <div className="flex-1 bg-gray-200 h-2 overflow-hidden">
+                  <div className="bg-[#16a34a] h-full" style={{ width: `${row.pct}%` }} />
                 </div>
                 <span className="w-8 text-right text-gray-400 text-[11px]">{row.pct}%</span>
               </div>
@@ -716,7 +716,7 @@ export const ProductDetailPage: React.FC = () => {
             </p>
           ) : (
             filteredReviews.map((rev) => (
-              <div key={rev.id} className="p-4 rounded-xl border border-gray-100 bg-gray-50/40 space-y-2">
+              <div key={rev.id} className="p-4 bg-gray-50/60 space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <img
@@ -728,7 +728,7 @@ export const ProductDetailPage: React.FC = () => {
                       <div className="flex items-center gap-1.5">
                         <span className="font-bold text-xs text-gray-900">{rev.userName}</span>
                         {rev.verified && (
-                          <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.2 rounded flex items-center gap-0.5">
+                          <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.2 flex items-center gap-0.5">
                             <Check className="w-2.5 h-2.5" /> Verified Purchase
                           </span>
                         )}
@@ -755,7 +755,7 @@ export const ProductDetailPage: React.FC = () => {
                 {rev.images && rev.images.length > 0 && (
                   <div className="flex gap-2 pt-1">
                     {rev.images.map((im, i) => (
-                      <img key={i} src={im} alt="review" className="w-16 h-16 object-cover rounded-lg border border-gray-200" />
+                      <img key={i} src={im} alt="review" className="w-16 h-16 object-cover" />
                     ))}
                   </div>
                 )}
