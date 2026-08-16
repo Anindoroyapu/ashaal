@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useNavigate as useRouterNavigate, useLocation } from 'react-router-dom';
 import { Product, CartItem, Voucher, DeliveryAddress, Order, PageView, Language } from '../types';
 import { PRODUCTS_DATA } from '../data/productsData';
 import { VOUCHERS_DATA } from '../data/bannersData';
@@ -13,6 +14,161 @@ interface UserProfile {
   coins: number;
   memberTier: 'Silver Member' | 'Gold Member' | 'Diamond Club';
   joinDate: string;
+}
+
+export interface RouteState {
+  page: PageView;
+  productId?: string | null;
+  categorySlug?: string | null;
+  searchQuery?: string;
+  searchFilter?: string | null;
+  orderId?: string | null;
+}
+
+export function parseRouteFromBrowserLocation(): RouteState {
+  if (typeof window === 'undefined') {
+    return { page: 'home' };
+  }
+
+  let rawPath = window.location.pathname;
+  let rawSearch = window.location.search;
+
+  // Support Hash Routing as well (e.g. #/product/prod-1)
+  if (window.location.hash && window.location.hash.startsWith('#/')) {
+    const hashContent = window.location.hash.slice(1);
+    const [hPath, hQuery] = hashContent.split('?');
+    rawPath = hPath || '/';
+    if (hQuery) rawSearch = '?' + hQuery;
+  }
+
+  const searchParams = new URLSearchParams(rawSearch);
+  const path = rawPath.replace(/\/+$/, '') || '/';
+
+  // Match /product/:id or /products/:id or /product?id=...
+  const productMatch = path.match(/^\/products?\/([^/]+)$/i);
+  if (productMatch) {
+    return {
+      page: 'product-details',
+      productId: productMatch[1]
+    };
+  }
+  if (path === '/product' || path === '/products') {
+    const qId = searchParams.get('id') || searchParams.get('productId');
+    return {
+      page: 'product-details',
+      productId: qId || PRODUCTS_DATA[0].id
+    };
+  }
+
+  // Match /category/:slug
+  const categoryMatch = path.match(/^\/category\/([^/]+)$/i);
+  if (categoryMatch) {
+    return {
+      page: 'search',
+      categorySlug: categoryMatch[1],
+      searchQuery: searchParams.get('q') || ''
+    };
+  }
+
+  // Match /search
+  if (path === '/search') {
+    return {
+      page: 'search',
+      searchQuery: searchParams.get('q') || '',
+      categorySlug: searchParams.get('category') || null,
+      searchFilter: searchParams.get('filter') || null
+    };
+  }
+
+  if (path === '/flash-sale' || path === '/flashsale' || path === '/deals') {
+    return { page: 'flash-sale' };
+  }
+
+  if (path === '/ashaalmall' || path === '/daraz-mall' || path === '/mall') {
+    return { page: 'daraz-mall' };
+  }
+
+  if (path === '/cart') {
+    return { page: 'cart' };
+  }
+
+  if (path === '/checkout') {
+    return { page: 'checkout' };
+  }
+
+  if (path === '/order-confirmation' || path === '/order-success') {
+    return {
+      page: 'order-confirmation',
+      orderId: searchParams.get('orderId') || null
+    };
+  }
+
+  if (path === '/track-order' || path === '/track') {
+    return {
+      page: 'track-order',
+      orderId: searchParams.get('orderId') || null
+    };
+  }
+
+  if (path === '/seller-center' || path === '/seller') {
+    return { page: 'seller-center' };
+  }
+
+  if (path === '/customer-care' || path === '/help' || path === '/support') {
+    return { page: 'customer-care' };
+  }
+
+  if (path === '/my-account' || path === '/account' || path === '/profile') {
+    return { page: 'my-account' };
+  }
+
+  if (path === '/coins-rewards' || path === '/coins' || path === '/rewards') {
+    return { page: 'coins-rewards' };
+  }
+
+  return { page: 'home' };
+}
+
+export function buildRouteUrl(
+  page: PageView,
+  params?: { productId?: string; categorySlug?: string; searchQuery?: string; orderId?: string; filter?: string }
+): string {
+  switch (page) {
+    case 'home':
+      return '/';
+    case 'product-details':
+      return params?.productId ? `/product/${params.productId}` : '/product';
+    case 'search': {
+      const searchParams = new URLSearchParams();
+      if (params?.searchQuery) searchParams.set('q', params.searchQuery);
+      if (params?.categorySlug) searchParams.set('category', params.categorySlug);
+      if (params?.filter) searchParams.set('filter', params.filter);
+      const qs = searchParams.toString();
+      return qs ? `/search?${qs}` : '/search';
+    }
+    case 'flash-sale':
+      return '/flash-sale';
+    case 'daraz-mall':
+      return '/ashaalmall';
+    case 'cart':
+      return '/cart';
+    case 'checkout':
+      return '/checkout';
+    case 'order-confirmation':
+      return params?.orderId ? `/order-confirmation?orderId=${params.orderId}` : '/order-confirmation';
+    case 'track-order':
+      return params?.orderId ? `/track-order?orderId=${params.orderId}` : '/track-order';
+    case 'seller-center':
+      return '/seller-center';
+    case 'customer-care':
+      return '/customer-care';
+    case 'my-account':
+      return '/my-account';
+    case 'coins-rewards':
+      return '/coins-rewards';
+    default:
+      return '/';
+  }
 }
 
 interface AppContextType {
@@ -46,6 +202,7 @@ interface AppContextType {
   claimVoucher: (id: string) => void;
   orders: Order[];
   currentOrderId: string | null;
+  currentOrder: Order | null;
   setCurrentOrderId: (id: string | null) => void;
   placeOrder: (paymentMethod: 'bkash' | 'nagad' | 'rocket' | 'card' | 'cod', address: DeliveryAddress, voucherDiscount?: number, coinDiscount?: number) => Order;
   cancelOrder: (orderId: string) => void;
@@ -178,28 +335,47 @@ const INITIAL_ORDERS: Order[] = [
 const AppContext = createContext<AppContextType | null>(null);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [language, setLanguage] = useState<Language>('EN');
-  const [currentPage, setCurrentPage] = useState<PageView>('home');
-  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
-  const [selectedCategorySlug, setSelectedCategorySlug] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [searchFilter, setSearchFilter] = useState<string | null>(null);
-  const [cart, setCart] = useState<CartItem[]>([
-    {
-      id: 'cart-item-default-1',
-      productId: 'prod-1',
-      product: PRODUCTS_DATA[0],
-      quantity: 1,
-      selectedVariations: { Color: 'Midnight Black', Storage: '8GB/256GB' },
-      selected: true
+  const routerNavigate = useRouterNavigate();
+  const location = useLocation();
+
+  // Initialize route from current browser URL
+  const initialRoute = parseRouteFromBrowserLocation();
+
+  // Retrieve stored language, cart, wishlist, orders if available in localStorage
+  const getStoredItem = <T,>(key: string, fallback: T): T => {
+    if (typeof window === 'undefined') return fallback;
+    try {
+      const item = localStorage.getItem(key);
+      return item ? JSON.parse(item) : fallback;
+    } catch {
+      return fallback;
     }
-  ]);
-  const [wishlist, setWishlist] = useState<string[]>(['prod-1', 'prod-3']);
+  };
+
+  const [language, setLanguageState] = useState<Language>(() => getStoredItem<Language>('ash_lang', 'EN'));
+  const [currentPage, setCurrentPage] = useState<PageView>(initialRoute.page);
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(initialRoute.productId || null);
+  const [selectedCategorySlug, setSelectedCategorySlug] = useState<string | null>(initialRoute.categorySlug || null);
+  const [searchQuery, setSearchQuery] = useState<string>(initialRoute.searchQuery || '');
+  const [searchFilter, setSearchFilter] = useState<string | null>(initialRoute.searchFilter || null);
+  const [cart, setCart] = useState<CartItem[]>(() =>
+    getStoredItem<CartItem[]>('ash_cart', [
+      {
+        id: 'cart-item-default-1',
+        productId: 'prod-1',
+        product: PRODUCTS_DATA[0],
+        quantity: 1,
+        selectedVariations: { Color: 'Midnight Black', Storage: '8GB/256GB' },
+        selected: true
+      }
+    ])
+  );
+  const [wishlist, setWishlist] = useState<string[]>(() => getStoredItem<string[]>('ash_wishlist', ['prod-1', 'prod-3']));
   const [user, setUser] = useState<UserProfile>(INITIAL_USER);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(true);
   const [vouchers, setVouchers] = useState<Voucher[]>(VOUCHERS_DATA);
-  const [orders, setOrders] = useState<Order[]>(INITIAL_ORDERS);
-  const [currentOrderId, setCurrentOrderId] = useState<string | null>('ord-bd-98421');
+  const [orders, setOrders] = useState<Order[]>(() => getStoredItem<Order[]>('ash_orders', INITIAL_ORDERS));
+  const [currentOrderId, setCurrentOrderId] = useState<string | null>(initialRoute.orderId || 'ord-bd-98421');
   const [addresses, setAddresses] = useState<DeliveryAddress[]>(INITIAL_ADDRESSES);
   const [activeLocation, setActiveLocation] = useState<{ division: string; city: string }>({
     division: 'Dhaka',
@@ -208,6 +384,44 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(false);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState<boolean>(false);
   const [toast, setToast] = useState<string | null>(null);
+
+  // Sync language with storage
+  const setLanguage = (lang: Language) => {
+    setLanguageState(lang);
+    try {
+      localStorage.setItem('ash_lang', JSON.stringify(lang));
+    } catch {}
+  };
+
+  // Sync cart, wishlist, orders with localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('ash_cart', JSON.stringify(cart));
+    } catch {}
+  }, [cart]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('ash_wishlist', JSON.stringify(wishlist));
+    } catch {}
+  }, [wishlist]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('ash_orders', JSON.stringify(orders));
+    } catch {}
+  }, [orders]);
+
+  // Keep state synced with router location changes
+  useEffect(() => {
+    const route = parseRouteFromBrowserLocation();
+    setCurrentPage(route.page);
+    if (route.productId !== undefined) setSelectedProductId(route.productId);
+    if (route.categorySlug !== undefined) setSelectedCategorySlug(route.categorySlug);
+    if (route.searchQuery !== undefined) setSearchQuery(route.searchQuery);
+    if (route.searchFilter !== undefined) setSearchFilter(route.searchFilter);
+    if (route.orderId !== undefined) setCurrentOrderId(route.orderId);
+  }, [location.pathname, location.search]);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -225,15 +439,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     params?: { productId?: string; categorySlug?: string; searchQuery?: string; orderId?: string; filter?: string }
   ) => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    if (params?.productId) setSelectedProductId(params.productId);
+    const targetUrl = buildRouteUrl(page, params);
+
+    if (params?.productId !== undefined) setSelectedProductId(params.productId);
     if (params?.categorySlug !== undefined) setSelectedCategorySlug(params.categorySlug);
     if (params?.searchQuery !== undefined) setSearchQuery(params.searchQuery);
-    if (params?.orderId) setCurrentOrderId(params.orderId);
+    if (params?.orderId !== undefined) setCurrentOrderId(params.orderId);
     if (params?.filter !== undefined) setSearchFilter(params.filter);
     setCurrentPage(page);
+
+    routerNavigate(targetUrl);
   };
 
   const selectedProduct = PRODUCTS_DATA.find((p) => p.id === selectedProductId) || null;
+  const currentOrder = orders.find((o) => o.id === currentOrderId) || orders[0] || null;
 
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
@@ -487,6 +706,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         claimVoucher,
         orders,
         currentOrderId,
+        currentOrder,
         setCurrentOrderId,
         placeOrder,
         cancelOrder,

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { PRODUCTS_DATA } from '../data/productsData';
 import { ProductCard } from '../components/ProductCard';
@@ -43,7 +44,8 @@ export const ProductDetailPage: React.FC = () => {
     t
   } = useApp();
 
-  const product = selectedProduct || PRODUCTS_DATA[0];
+  const { id: routeProductId } = useParams<{ id: string }>();
+  const product = (routeProductId ? PRODUCTS_DATA.find((p) => p.id === routeProductId) : null) || selectedProduct || PRODUCTS_DATA[0];
 
   const [selectedImage, setSelectedImage] = useState<string>(product.mainImage);
   const [selectedVariations, setSelectedVariations] = useState<Record<string, string>>(() => {

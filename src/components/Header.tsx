@@ -45,6 +45,10 @@ export const Header: React.FC = () => {
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [searchInput, setSearchInput] = useState(searchQuery);
 
+  React.useEffect(() => {
+    setSearchInput(searchQuery);
+  }, [searchQuery]);
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchInput.trim()) {

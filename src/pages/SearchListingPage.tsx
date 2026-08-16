@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { PRODUCTS_DATA } from '../data/productsData';
 import { CATEGORIES_DATA } from '../data/categoriesData';
@@ -29,6 +30,12 @@ export const SearchListingPage: React.FC = () => {
     t
   } = useApp();
 
+  const { slug: routeCategorySlug } = useParams<{ slug: string }>();
+  const [searchParams] = useSearchParams();
+  const effectiveCategorySlug = routeCategorySlug || selectedCategorySlug || searchParams.get('category');
+  const effectiveSearchQuery = searchParams.get('q') || searchQuery;
+  const effectiveFilter = searchParams.get('filter') || searchFilter;
+
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState<'match' | 'price-asc' | 'price-desc' | 'rating' | 'popular'>('match');
   const [minPrice, setMinPrice] = useState<string>('');
@@ -36,7 +43,7 @@ export const SearchListingPage: React.FC = () => {
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [ratingFilter, setRatingFilter] = useState<number | null>(null);
   const [onlyDarazMall, setOnlyDarazMall] = useState<boolean>(false);
-  const [onlyFreeDelivery, setOnlyFreeDelivery] = useState<boolean>(searchFilter === 'free-delivery');
+  const [onlyFreeDelivery, setOnlyFreeDelivery] = useState<boolean>(effectiveFilter === 'free-delivery');
   const [onlyFlashSale, setOnlyFlashSale] = useState<boolean>(false);
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
 
@@ -47,14 +54,14 @@ export const SearchListingPage: React.FC = () => {
     return Array.from(set);
   }, []);
 
-  const activeCategory = CATEGORIES_DATA.find((c) => c.slug === selectedCategorySlug);
+  const activeCategory = CATEGORIES_DATA.find((c) => c.slug === effectiveCategorySlug);
 
   // Filter products
   const filteredProducts = useMemo(() => {
     return PRODUCTS_DATA.filter((p) => {
       // Search text query
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
+      if (effectiveSearchQuery.trim()) {
+        const q = effectiveSearchQuery.toLowerCase();
         const matchTitle = p.title.toLowerCase().includes(q) || p.titleBn.toLowerCase().includes(q);
         const matchBrand = p.brand.toLowerCase().includes(q);
         const matchCat = p.category.toLowerCase().includes(q);
@@ -62,7 +69,7 @@ export const SearchListingPage: React.FC = () => {
       }
 
       // Category slug filter
-      if (selectedCategorySlug && p.categorySlug !== selectedCategorySlug) {
+      if (effectiveCategorySlug && p.categorySlug !== effectiveCategorySlug) {
         return false;
       }
 

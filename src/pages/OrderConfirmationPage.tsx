@@ -1,11 +1,14 @@
 import React from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { CheckCircle, Package, Truck, Printer, ArrowRight, ShieldCheck, ShoppingBag } from 'lucide-react';
 
 export const OrderConfirmationPage: React.FC = () => {
   const { currentOrder, orders, navigate, language, t } = useApp();
+  const [searchParams] = useSearchParams();
+  const routeOrderId = searchParams.get('orderId');
 
-  const order = currentOrder || orders[0];
+  const order = (routeOrderId ? orders.find((o) => o.id === routeOrderId) : null) || currentOrder || orders[0];
 
   if (!order) {
     return (
@@ -164,7 +167,9 @@ export const OrderConfirmationPage: React.FC = () => {
 
 export const TrackOrderPage: React.FC = () => {
   const { currentOrder, orders, navigate, t } = useApp();
-  const order = currentOrder || orders[0];
+  const [searchParams] = useSearchParams();
+  const routeOrderId = searchParams.get('orderId');
+  const order = (routeOrderId ? orders.find((o) => o.id === routeOrderId) : null) || currentOrder || orders[0];
 
   if (!order) {
     return (
