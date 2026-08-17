@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
-import { Product, Order, Banner } from '../types';
+import { Product, Order, Banner, UserProfile } from '../types';
 import { CATEGORIES_DATA } from '../data/categoriesData';
 import {
   saveProductToFirestore,
@@ -9,7 +9,9 @@ import {
   updateOrderStatusInFirestore,
   deleteOrderFromFirestore,
   saveBannerToFirestore,
-  deleteBannerFromFirestore
+  deleteBannerFromFirestore,
+  saveUserToFirestore,
+  seedInitialUsers
 } from '../services/firestoreService';
 import { SEO } from '../components/SEO';
 import {
@@ -23,8 +25,6 @@ import {
   Search,
   CheckCircle,
   Clock,
-  Truck,
-  XCircle,
   Eye,
   Printer,
   Sparkles,
@@ -54,14 +54,11 @@ import {
   Users,
   Mail,
   HelpCircle,
-  Palette,
   Folder,
-  HardDrive,
-  FileText,
   Settings,
   Globe,
-  Sliders,
-  Maximize2
+  Copy,
+  Code
 } from 'lucide-react';
 
 const ADMIN_STORAGE_KEY = 'ash_admin_auth';
@@ -94,7 +91,7 @@ const INITIAL_VISITORS: VisitorLog[] = [
 ];
 
 export const AdminManagePage: React.FC = () => {
-  const { products, orders, banners, showToast, t, language } = useApp();
+  const { products, orders, banners, allUsers, showToast, t, language, deleteUserAccount } = useApp();
 
   // Authentication State
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
@@ -114,6 +111,8 @@ export const AdminManagePage: React.FC = () => {
   type NavRoute =
     | 'dashboard'
     | 'visitors'
+    | 'users'
+    | 'api-docs'
     | 'projects'
     | 'events'
     | 'donations'
@@ -123,11 +122,6 @@ export const AdminManagePage: React.FC = () => {
     | 'products'
     | 'orders'
     | 'banners'
-    | 'categories'
-    | 'vouchers'
-    | 'room-decoration'
-    | 'gdrive'
-    | 'documents'
     | 'profile';
 
   const [activeRoute, setActiveRoute] = useState<NavRoute>('visitors');
@@ -137,9 +131,7 @@ export const AdminManagePage: React.FC = () => {
     management: true,
     ashalenscraft: true,
     bettermorning: true,
-    ashaal: true,
-    rongmohol: false,
-    personal: false
+    ashaal: true
   });
 
   const toggleSection = (section: string) => {
@@ -148,6 +140,12 @@ export const AdminManagePage: React.FC = () => {
 
   // Global Table Search query
   const [tableSearch, setTableSearch] = useState<string>('');
+
+  // User Filter & Management State
+  const [userRoleFilter, setUserRoleFilter] = useState<string>('all');
+  const [isUserModalOpen, setIsUserModalOpen] = useState<boolean>(false);
+  const [editingUser, setEditingUser] = useState<Partial<UserProfile> | null>(null);
+  const [isSavingUser, setIsSavingUser] = useState<boolean>(false);
 
   // Product Modal (Add / Edit)
   const [isProductModalOpen, setIsProductModalOpen] = useState<boolean>(false);
@@ -188,15 +186,15 @@ export const AdminManagePage: React.FC = () => {
     showToast('Admin logged out');
   };
 
-  // Seed Firestore
+  // Seed Firestore Products & Users
   const handleSeedProducts = async () => {
-    if (!window.confirm('Sync & seed all authentic marketplace products into Firestore database?')) return;
+    if (!window.confirm('Sync & seed all authentic marketplace products and sample users into Firestore?')) return;
     setIsSeeding(true);
     try {
-      await seedInitialProducts(true);
-      showToast('Successfully seeded default products into Firestore!');
+      await Promise.all([seedInitialProducts(true), seedInitialUsers(true)]);
+      showToast('Successfully synced Cloud Firestore with fresh data!');
     } catch (err) {
-      showToast('Failed to seed products: ' + String(err));
+      showToast('Failed to seed: ' + String(err));
     } finally {
       setIsSeeding(false);
     }
@@ -231,6 +229,37 @@ export const AdminManagePage: React.FC = () => {
       showToast('Product deleted successfully');
     } catch (err) {
       alert('Error deleting product: ' + String(err));
+    }
+  };
+
+  // Save User
+  const handleSaveUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser?.name || !editingUser?.email) {
+      alert('Name and Email are required.');
+      return;
+    }
+    setIsSavingUser(true);
+    try {
+      await saveUserToFirestore(editingUser);
+      showToast(editingUser.id ? 'User profile updated in Firestore!' : 'New user created successfully!');
+      setIsUserModalOpen(false);
+      setEditingUser(null);
+    } catch (err) {
+      alert('Error saving user: ' + String(err));
+    } finally {
+      setIsSavingUser(false);
+    }
+  };
+
+  // Delete User
+  const handleDeleteUser = async (userId: string, name: string) => {
+    if (!window.confirm(`Delete user account "${name}" (${userId})?`)) return;
+    try {
+      await deleteUserAccount(userId);
+      showToast('User account deleted');
+    } catch (err) {
+      alert('Error deleting user: ' + String(err));
     }
   };
 
@@ -287,6 +316,30 @@ export const AdminManagePage: React.FC = () => {
     }
   };
 
+  // Copy helper
+  const copyToClipboard = (text: string, label: string) => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      showToast(`Copied ${label} to clipboard!`);
+    }
+  };
+
+  // Filtered Users
+  const filteredUsers = useMemo(() => {
+    return allUsers.filter((u) => {
+      const q = tableSearch.toLowerCase();
+      const matchesRole = userRoleFilter === 'all' || u.role === userRoleFilter;
+      const matchesSearch =
+        !q ||
+        u.name.toLowerCase().includes(q) ||
+        u.email.toLowerCase().includes(q) ||
+        u.phone.includes(q) ||
+        u.id.toLowerCase().includes(q) ||
+        (u.token && u.token.toLowerCase().includes(q));
+      return matchesRole && matchesSearch;
+    });
+  }, [allUsers, tableSearch, userRoleFilter]);
+
   // Filtered Products
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
@@ -332,7 +385,7 @@ export const AdminManagePage: React.FC = () => {
   // Analytics Metrics
   const totalRevenue = orders.reduce((sum, o) => (o.orderStatus !== 'CANCELLED' ? sum + o.total : sum), 0);
   const pendingOrdersCount = orders.filter((o) => o.orderStatus === 'PLACED' || o.orderStatus === 'PROCESSING').length;
-  const outOfStockCount = products.filter((p) => p.inStock <= 0).length;
+  const totalCoinsInCirculation = allUsers.reduce((sum, u) => sum + (u.coins || 0), 0);
 
   // Title getter for main card based on activeRoute
   const getCardTitle = () => {
@@ -341,6 +394,10 @@ export const AdminManagePage: React.FC = () => {
         return 'AshaLensCraft — Visitors';
       case 'dashboard':
         return 'Overview Dashboard — Live Analytics';
+      case 'users':
+        return `Registered Users & Customer Accounts (${allUsers.length})`;
+      case 'api-docs':
+        return 'Developer API Docs & External Embed Integration';
       case 'products':
         return `Ashaal Commerce — Products (${products.length})`;
       case 'orders':
@@ -359,98 +416,79 @@ export const AdminManagePage: React.FC = () => {
         return 'BetterMorning — Contact Messages';
       case 'help-want':
         return 'BetterMorning — Help Want';
-      case 'room-decoration':
-        return 'Personal — Room Decoration';
-      case 'gdrive':
-        return 'Personal — Google Drive Sync';
-      case 'documents':
-        return 'Personal — Documents Archive';
-      case 'profile':
-        return 'Account — Admin Profile & Security';
       default:
-        return 'BetterMorning — Management';
+        return 'BetterMorning Management';
     }
   };
 
-  // -------------------------------------------------------------
-  // 1. PIN Login Screen if not authenticated
-  // -------------------------------------------------------------
+  // If Not Authenticated, Show Clean Passcode Entry Gate
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-[#f4f6f8] text-slate-800">
-        <SEO title="Admin Portal - Secure Login" noindex={true} />
-        <div className="max-w-md w-full bg-white rounded-2xl p-8 border border-gray-200/90 shadow-sm space-y-6">
-          <div className="text-center space-y-3">
-            <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto border border-emerald-100 shadow-xs">
-              {/* Sprout Icon */}
-              <svg className="w-8 h-8 fill-current" viewBox="0 0 24 24">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" />
-              </svg>
-            </div>
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">BetterMorning</h1>
-            <p className="text-xs text-gray-500">AshaLensCraft & Ashaal Cloud Control Center</p>
+      <div className="min-h-screen bg-[#f3f4f6] flex items-center justify-center p-4">
+        <SEO title="Admin Login — Ashaal Management" />
+        <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-8 border border-gray-200 text-center space-y-6">
+          <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-2xl mx-auto flex items-center justify-center border border-emerald-100 shadow-xs">
+            <Lock className="w-8 h-8" />
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-4">
+          <div>
+            <h1 className="text-2xl font-black text-gray-900 tracking-tight">BetterMorning & Ashaal</h1>
+            <p className="text-xs text-gray-500 mt-1">Management Portal & Cloud Firestore Control</p>
+          </div>
+
+          <form onSubmit={handleLogin} className="space-y-4 text-left">
             <div>
-              <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
                 Admin Passcode
               </label>
               <input
                 type="password"
                 value={passcode}
-                onChange={(e) => setPasscode(e.target.value)}
-                placeholder="Enter passcode (123456)"
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-gray-900 text-center text-lg font-mono tracking-widest focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
+                onChange={(e) => {
+                  setPasscode(e.target.value);
+                  setAuthError('');
+                }}
+                placeholder="Enter 6-digit passcode (Default: 123456)"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all text-center tracking-widest"
                 autoFocus
               />
+              {authError && <p className="text-xs text-red-600 mt-1.5 font-medium">{authError}</p>}
             </div>
-
-            {authError && (
-              <div className="p-3 bg-red-50 text-red-600 rounded-xl text-xs flex items-center gap-2 font-medium">
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                {authError}
-              </div>
-            )}
 
             <button
               type="submit"
-              className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-xs transition-all cursor-pointer flex items-center justify-center gap-2 text-sm"
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-sm transition-all shadow-md shadow-emerald-600/20 cursor-pointer flex items-center justify-center gap-2"
             >
+              <span>Unlock Management Portal</span>
               <ShieldCheck className="w-4 h-4" />
-              Sign In to Management
             </button>
 
-            <div className="text-center text-xs text-gray-400 pt-2">
-              Default passcode: <span className="font-mono font-bold text-gray-600">123456</span>
-            </div>
+            <p className="text-[11px] text-gray-400 text-center">
+              Authorized personnel only. Direct Firestore DB connection active.
+            </p>
           </form>
         </div>
       </div>
     );
   }
 
-  // -------------------------------------------------------------
-  // 2. Main Authenticated Admin Management Interface
-  // -------------------------------------------------------------
   return (
-    <div className="min-h-screen bg-[#f4f6f8] text-slate-800 flex flex-col antialiased selection:bg-emerald-500 selection:text-white font-sans">
-      <SEO title="BetterMorning — Management Dashboard" noindex={true} />
+    <div className="min-h-screen bg-[#f3f4f6] flex flex-col font-sans text-gray-800">
+      <SEO title="Admin Manage Portal — BetterMorning & Ashaal" />
 
-      {/* Top Navbar Header */}
-      <header className="bg-white border-b border-gray-200/80 sticky top-0 z-30 h-16 flex items-center justify-between px-4 sm:px-6 shadow-xs">
+      {/* ========================================================================= */}
+      {/* TOP NAVBAR */}
+      {/* ========================================================================= */}
+      <header className="bg-white border-b border-gray-200/90 sticky top-0 z-30 px-4 sm:px-6 py-3 flex items-center justify-between shadow-2xs">
+        {/* Left: Brand + Hamburger */}
         <div className="flex items-center gap-4">
-          {/* Logo & Brand Name */}
-          <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => setActiveRoute('visitors')}>
-            <div className="w-9 h-9 bg-emerald-50 border border-emerald-100 rounded-xl flex items-center justify-center text-emerald-600 shadow-2xs">
-              <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24">
-                <path d="M12 3a9 9 0 0 0-9 9c0 4.97 4.03 9 9 9s9-4.03 9-9a9 9 0 0 0-9-9zm-1 14.93c-3.14-.46-5.59-2.98-5.93-6.13L8 14.5v1.43zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" />
-              </svg>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-[#16a34a] flex items-center justify-center text-white font-bold text-sm shadow-xs">
+              BM
             </div>
             <span className="text-xl font-bold text-gray-900 tracking-tight">BetterMorning</span>
           </div>
 
-          {/* Hamburger Menu button */}
           <button
             onClick={() => setSidebarOpen((prev) => !prev)}
             className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
@@ -462,13 +500,11 @@ export const AdminManagePage: React.FC = () => {
 
         {/* Top Right Utilities */}
         <div className="flex items-center gap-2 sm:gap-4">
-          {/* Firestore indicator pill */}
           <div className="hidden md:flex items-center gap-1.5 px-3 py-1 bg-emerald-50 border border-emerald-200/80 rounded-full text-emerald-700 text-xs font-semibold">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
             <span>Firestore Live</span>
           </div>
 
-          {/* Calendar Icon */}
           <button
             onClick={() => {
               const today = new Date().toLocaleDateString('en-US', {
@@ -485,16 +521,14 @@ export const AdminManagePage: React.FC = () => {
             <Calendar className="w-5 h-5" />
           </button>
 
-          {/* User Profile Icon */}
           <button
-            onClick={() => setActiveRoute('profile')}
+            onClick={() => setActiveRoute('users')}
             className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
-            title="Admin Profile"
+            title="Manage Users"
           >
             <User className="w-5 h-5" />
           </button>
 
-          {/* Logout Icon */}
           <button
             onClick={handleLogout}
             className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
@@ -505,10 +539,10 @@ export const AdminManagePage: React.FC = () => {
         </div>
       </header>
 
-      {/* Main Body Area: Left Sidebar + Center Card Container */}
+      {/* Main Body Area */}
       <div className="flex-1 max-w-[1700px] w-full mx-auto p-4 sm:p-6 flex flex-col md:flex-row gap-5 items-start">
         {/* ========================================================================= */}
-        {/* LEFT SIDEBAR (Matching the screenshot exactly) */}
+        {/* LEFT SIDEBAR */}
         {/* ========================================================================= */}
         {sidebarOpen && (
           <aside className="w-full md:w-64 shrink-0 bg-white rounded-2xl border border-gray-200/90 shadow-xs p-4 space-y-6 text-sm text-gray-600">
@@ -560,6 +594,108 @@ export const AdminManagePage: React.FC = () => {
                     >
                       <Globe className="w-3.5 h-3.5" />
                       <span>Visitors</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Ashaal E-Commerce group */}
+              <div>
+                <button
+                  onClick={() => toggleSection('ashaal')}
+                  className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer font-medium"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Package className="w-4 h-4 text-gray-500" />
+                    <span>Ashaal Commerce</span>
+                  </div>
+                  {expandedSections.ashaal ? (
+                    <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
+                  ) : (
+                    <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
+                  )}
+                </button>
+                {expandedSections.ashaal && (
+                  <div className="ml-5 pl-3 border-l border-gray-100 space-y-0.5 mt-1">
+                    <button
+                      onClick={() => setActiveRoute('users')}
+                      className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition-colors cursor-pointer ${
+                        activeRoute === 'users'
+                          ? 'bg-purple-50 text-purple-700 font-semibold'
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Users className="w-3.5 h-3.5 text-purple-600" />
+                        <span className="font-semibold text-purple-900">Users & Accounts</span>
+                      </div>
+                      <span className="text-[10px] font-bold bg-purple-100 text-purple-700 px-1.5 py-0.2 rounded-full">
+                        {allUsers.length}
+                      </span>
+                    </button>
+
+                    <button
+                      onClick={() => setActiveRoute('products')}
+                      className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition-colors cursor-pointer ${
+                        activeRoute === 'products'
+                          ? 'bg-emerald-50 text-emerald-700 font-semibold'
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Box className="w-3.5 h-3.5" />
+                        <span>Products</span>
+                      </div>
+                      <span className="text-[10px] font-bold bg-gray-100 px-1.5 py-0.2 rounded-full">
+                        {products.length}
+                      </span>
+                    </button>
+
+                    <button
+                      onClick={() => setActiveRoute('orders')}
+                      className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition-colors cursor-pointer ${
+                        activeRoute === 'orders'
+                          ? 'bg-emerald-50 text-emerald-700 font-semibold'
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <ShoppingCart className="w-3.5 h-3.5" />
+                        <span>Orders</span>
+                      </div>
+                      {pendingOrdersCount > 0 ? (
+                        <span className="text-[10px] font-bold bg-emerald-600 text-white px-1.5 py-0.2 rounded-full">
+                          {pendingOrdersCount}
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-bold bg-gray-100 px-1.5 py-0.2 rounded-full">
+                          {orders.length}
+                        </span>
+                      )}
+                    </button>
+
+                    <button
+                      onClick={() => setActiveRoute('api-docs')}
+                      className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs transition-colors cursor-pointer ${
+                        activeRoute === 'api-docs'
+                          ? 'bg-indigo-50 text-indigo-700 font-semibold'
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      }`}
+                    >
+                      <Code className="w-3.5 h-3.5 text-indigo-600" />
+                      <span className="font-semibold text-indigo-900">API Docs & Embed</span>
+                    </button>
+
+                    <button
+                      onClick={() => setActiveRoute('banners')}
+                      className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs transition-colors cursor-pointer ${
+                        activeRoute === 'banners'
+                          ? 'bg-emerald-50 text-emerald-700 font-semibold'
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      }`}
+                    >
+                      <ImageIcon className="w-3.5 h-3.5" />
+                      <span>Hero Banners</span>
                     </button>
                   </div>
                 )}
@@ -652,199 +788,82 @@ export const AdminManagePage: React.FC = () => {
                   </div>
                 )}
               </div>
-
-              {/* Ashaal E-Commerce group */}
-              <div>
-                <button
-                  onClick={() => toggleSection('ashaal')}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer font-medium"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Package className="w-4 h-4 text-gray-500" />
-                    <span>Ashaal Commerce</span>
-                  </div>
-                  {expandedSections.ashaal ? (
-                    <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
-                  ) : (
-                    <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
-                  )}
-                </button>
-                {expandedSections.ashaal && (
-                  <div className="ml-5 pl-3 border-l border-gray-100 space-y-0.5 mt-1">
-                    <button
-                      onClick={() => setActiveRoute('products')}
-                      className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition-colors cursor-pointer ${
-                        activeRoute === 'products'
-                          ? 'bg-emerald-50 text-emerald-700 font-semibold'
-                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <Box className="w-3.5 h-3.5" />
-                        <span>Products</span>
-                      </div>
-                      <span className="text-[10px] font-bold bg-gray-100 px-1.5 py-0.2 rounded-full">
-                        {products.length}
-                      </span>
-                    </button>
-                    <button
-                      onClick={() => setActiveRoute('orders')}
-                      className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition-colors cursor-pointer ${
-                        activeRoute === 'orders'
-                          ? 'bg-emerald-50 text-emerald-700 font-semibold'
-                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <ShoppingCart className="w-3.5 h-3.5" />
-                        <span>Orders</span>
-                      </div>
-                      {pendingOrdersCount > 0 ? (
-                        <span className="text-[10px] font-bold bg-emerald-600 text-white px-1.5 py-0.2 rounded-full">
-                          {pendingOrdersCount}
-                        </span>
-                      ) : (
-                        <span className="text-[10px] font-bold bg-gray-100 px-1.5 py-0.2 rounded-full">
-                          {orders.length}
-                        </span>
-                      )}
-                    </button>
-                    <button
-                      onClick={() => setActiveRoute('banners')}
-                      className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs transition-colors cursor-pointer ${
-                        activeRoute === 'banners'
-                          ? 'bg-emerald-50 text-emerald-700 font-semibold'
-                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                      }`}
-                    >
-                      <ImageIcon className="w-3.5 h-3.5" />
-                      <span>Hero Banners</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* RongMohol group */}
-              <div>
-                <button
-                  onClick={() => toggleSection('rongmohol')}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer font-medium"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Palette className="w-4 h-4 text-gray-500" />
-                    <span>RongMohol</span>
-                  </div>
-                  {expandedSections.rongmohol ? (
-                    <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
-                  ) : (
-                    <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
-                  )}
-                </button>
-              </div>
             </div>
 
-            {/* Section: PERSONAL */}
-            <div className="space-y-1">
-              <p className="px-3 text-[11px] font-bold text-gray-400 uppercase tracking-wider">PERSONAL</p>
-              <div>
-                <button
-                  onClick={() => toggleSection('personal')}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer font-medium"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Layers className="w-4 h-4 text-gray-500" />
-                    <span>Room Decoration</span>
-                  </div>
-                  {expandedSections.personal ? (
-                    <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
-                  ) : (
-                    <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
-                  )}
-                </button>
-              </div>
-              <button
-                onClick={() => setActiveRoute('gdrive')}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium transition-colors cursor-pointer ${
-                  activeRoute === 'gdrive'
-                    ? 'bg-emerald-50 text-emerald-700 font-semibold'
-                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                }`}
+            {/* Storefront Link */}
+            <div className="pt-4 border-t border-gray-100">
+              <a
+                href="/"
+                target="_blank"
+                rel="noreferrer"
+                className="w-full flex items-center justify-between px-3 py-2 bg-gray-50 hover:bg-emerald-50 hover:text-emerald-700 rounded-xl text-xs font-semibold text-gray-700 transition-colors"
               >
-                <HardDrive className="w-4 h-4 shrink-0" />
-                <span>G-Drive</span>
-              </button>
-              <button
-                onClick={() => setActiveRoute('documents')}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium transition-colors cursor-pointer ${
-                  activeRoute === 'documents'
-                    ? 'bg-emerald-50 text-emerald-700 font-semibold'
-                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                }`}
-              >
-                <FileText className="w-4 h-4 shrink-0" />
-                <span>Documents</span>
-              </button>
-            </div>
-
-            {/* Section: ACCOUNT */}
-            <div className="space-y-1">
-              <p className="px-3 text-[11px] font-bold text-gray-400 uppercase tracking-wider">ACCOUNT</p>
-              <button
-                onClick={() => setActiveRoute('profile')}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium transition-colors cursor-pointer ${
-                  activeRoute === 'profile'
-                    ? 'bg-emerald-50 text-emerald-700 font-semibold'
-                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                }`}
-              >
-                <User className="w-4 h-4 shrink-0" />
-                <span>My Profile</span>
-              </button>
-            </div>
-
-            {/* Bottom Brand Badge */}
-            <div className="pt-2 border-t border-gray-100 flex items-center gap-2">
-              <span className="text-[11px] font-semibold text-blue-600 flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                Prime Blocks
-              </span>
+                <div className="flex items-center gap-2">
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>Open Storefront</span>
+                </div>
+                <span className="text-[10px] text-gray-400">Live</span>
+              </a>
             </div>
           </aside>
         )}
 
         {/* ========================================================================= */}
-        {/* MAIN CARD CONTAINER (White card layout matching the screenshot) */}
+        {/* CENTER MAIN CARD CONTAINER */}
         {/* ========================================================================= */}
-        <main className="flex-1 min-w-0 bg-white rounded-2xl border border-gray-200/90 shadow-xs p-5 sm:p-6 space-y-6">
-          {/* Card Top Header: Title on Left, Search & Actions on Right */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-gray-100">
+        <main className="flex-1 bg-white rounded-2xl border border-gray-200/90 shadow-xs p-5 sm:p-6 w-full space-y-5">
+          {/* Card Top Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-gray-100">
             <div>
-              <h2 className="text-lg sm:text-xl font-bold text-gray-900 tracking-tight">{getCardTitle()}</h2>
-              <p className="text-xs text-gray-400 mt-0.5">Real-time dynamic data synced with cloud backend</p>
+              <h2 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight">
+                {getCardTitle()}
+              </h2>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Real-time Firestore DB synchronized | Instant updates
+              </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
-              {/* Search Bar matching screenshot */}
-              <div className="relative min-w-[240px] sm:min-w-[280px]">
-                <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            {/* Header Right Actions */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3 top-2.5" />
                 <input
                   type="text"
                   value={tableSearch}
                   onChange={(e) => setTableSearch(e.target.value)}
-                  placeholder="Search..."
-                  className="w-full pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
+                  placeholder="Search table..."
+                  className="pl-8 pr-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:bg-white w-36 sm:w-48 transition-all"
                 />
-                {tableSearch && (
-                  <button
-                    onClick={() => setTableSearch('')}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
               </div>
 
-              {/* Contextual Action Button */}
+              {activeRoute === 'users' && (
+                <button
+                  onClick={() => {
+                    const newId = `usr-${Date.now()}`;
+                    setEditingUser({
+                      id: newId,
+                      name: '',
+                      email: '',
+                      phone: '+880 17',
+                      password: 'password123',
+                      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80',
+                      coins: 500,
+                      memberTier: 'Silver Member',
+                      role: 'customer',
+                      status: 'active',
+                      token: `usr_tok_${newId}_${Math.random().toString(36).substring(2, 8)}`,
+                      totalOrders: 0,
+                      totalSpent: 0
+                    });
+                    setIsUserModalOpen(true);
+                  }}
+                  className="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg text-xs flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add User</span>
+                </button>
+              )}
+
               {activeRoute === 'products' && (
                 <button
                   onClick={() => {
@@ -905,31 +924,354 @@ export const AdminManagePage: React.FC = () => {
           </div>
 
           {/* ========================================================================= */}
-          {/* VIEW 1: VISITORS TABLE (Matching screenshot exactly) */}
+          {/* VIEW: USERS MANAGEMENT TABLE */}
+          {/* ========================================================================= */}
+          {activeRoute === 'users' && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="p-3 bg-purple-50 border border-purple-100 rounded-xl">
+                  <p className="text-[11px] font-semibold text-purple-700">Total Registered</p>
+                  <p className="text-xl font-bold text-purple-900 mt-0.5">{allUsers.length}</p>
+                </div>
+                <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-xl">
+                  <p className="text-[11px] font-semibold text-emerald-700">Active Accounts</p>
+                  <p className="text-xl font-bold text-emerald-900 mt-0.5">
+                    {allUsers.filter((u) => u.status !== 'suspended').length}
+                  </p>
+                </div>
+                <div className="p-3 bg-amber-50 border border-amber-100 rounded-xl">
+                  <p className="text-[11px] font-semibold text-amber-700">Coins Distributed</p>
+                  <p className="text-xl font-bold text-amber-900 mt-0.5">{totalCoinsInCirculation} 🪙</p>
+                </div>
+                <div className="p-3 bg-blue-50 border border-blue-100 rounded-xl">
+                  <p className="text-[11px] font-semibold text-blue-700">VIP Members</p>
+                  <p className="text-xl font-bold text-blue-900 mt-0.5">
+                    {allUsers.filter((u) => u.memberTier === 'Gold Member' || u.memberTier === 'Diamond Club').length}
+                  </p>
+                </div>
+              </div>
+
+              {/* Filter Tabs */}
+              <div className="flex items-center justify-between flex-wrap gap-2 pt-2">
+                <div className="flex items-center gap-1.5">
+                  {(['all', 'customer', 'admin', 'seller'] as const).map((r) => (
+                    <button
+                      key={r}
+                      onClick={() => setUserRoleFilter(r)}
+                      className={`px-3 py-1 text-xs rounded-lg font-semibold capitalize transition-colors cursor-pointer ${
+                        userRoleFilter === r
+                          ? 'bg-purple-600 text-white shadow-2xs'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      {r === 'all' ? 'All Roles' : `${r}s`}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500">Showing {filteredUsers.length} users</p>
+              </div>
+
+              {/* Table */}
+              <div className="overflow-x-auto -mx-2 sm:mx-0">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-gray-200 text-gray-700 font-semibold">
+                      <th className="py-3 px-3 whitespace-nowrap">User Profile</th>
+                      <th className="py-3 px-3 whitespace-nowrap">Phone & Contact</th>
+                      <th className="py-3 px-3 whitespace-nowrap">Tier & Coins</th>
+                      <th className="py-3 px-3 whitespace-nowrap">Role</th>
+                      <th className="py-3 px-3 whitespace-nowrap">Orders / Spent</th>
+                      <th className="py-3 px-3 whitespace-nowrap">Token (API Key)</th>
+                      <th className="py-3 px-3 whitespace-nowrap">Status</th>
+                      <th className="py-3 px-3 whitespace-nowrap text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {filteredUsers.map((usr) => (
+                      <tr key={usr.id} className="hover:bg-purple-50/40 transition-colors">
+                        <td className="py-3 px-3">
+                          <div className="flex items-center gap-2.5">
+                            <img
+                              src={usr.avatar}
+                              alt={usr.name}
+                              className="w-9 h-9 rounded-full object-cover border border-purple-200 shrink-0"
+                            />
+                            <div>
+                              <p className="font-bold text-gray-900">{usr.name}</p>
+                              <p className="text-[11px] text-gray-500 truncate max-w-[150px]">{usr.email}</p>
+                              <span className="text-[9px] font-mono text-gray-400">ID: {usr.id}</span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-3 px-3 font-mono text-gray-800">
+                          {usr.phone || '—'}
+                        </td>
+                        <td className="py-3 px-3">
+                          <span className="px-2 py-0.5 bg-amber-50 text-amber-800 border border-amber-200 rounded text-[10px] font-bold block w-max">
+                            {usr.memberTier || 'Silver Member'}
+                          </span>
+                          <span className="text-[11px] text-amber-700 font-semibold mt-0.5 block">
+                            🪙 {usr.coins || 0} Coins
+                          </span>
+                        </td>
+                        <td className="py-3 px-3">
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                              usr.role === 'admin'
+                                ? 'bg-red-100 text-red-700'
+                                : usr.role === 'seller'
+                                ? 'bg-blue-100 text-blue-700'
+                                : 'bg-gray-100 text-gray-700'
+                            }`}
+                          >
+                            {usr.role || 'customer'}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3">
+                          <p className="font-bold text-gray-800">{usr.totalOrders || 0} orders</p>
+                          <p className="text-[10px] text-emerald-700 font-semibold">
+                            ৳{(usr.totalSpent || 0).toLocaleString('en-BD')}
+                          </p>
+                        </td>
+                        <td className="py-3 px-3">
+                          <div className="flex items-center gap-1.5">
+                            <code className="font-mono text-[10px] bg-gray-100 px-1.5 py-0.5 rounded text-gray-600 max-w-[110px] truncate">
+                              {usr.token || 'No Token'}
+                            </code>
+                            {usr.token && (
+                              <button
+                                onClick={() => copyToClipboard(usr.token!, 'User Token')}
+                                className="p-1 text-gray-400 hover:text-purple-600 rounded cursor-pointer"
+                                title="Copy Token"
+                              >
+                                <Copy className="w-3 h-3" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-3 px-3">
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              usr.status === 'active' || !usr.status
+                                ? 'bg-emerald-100 text-emerald-700'
+                                : 'bg-red-100 text-red-700'
+                            }`}
+                          >
+                            {usr.status === 'suspended' ? 'Suspended' : 'Active'}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              onClick={() => {
+                                setEditingUser(usr);
+                                setIsUserModalOpen(true);
+                              }}
+                              className="p-1.5 text-purple-600 hover:bg-purple-50 rounded cursor-pointer"
+                              title="Edit User"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteUser(usr.id, usr.name)}
+                              className="p-1.5 text-red-500 hover:bg-red-50 rounded cursor-pointer"
+                              title="Delete User"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* VIEW: DEVELOPER API DOCS & EMBED */}
+          {/* ========================================================================= */}
+          {activeRoute === 'api-docs' && (
+            <div className="space-y-6">
+              <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-xl space-y-2">
+                <div className="flex items-center gap-2 text-indigo-900 font-bold text-sm">
+                  <Code className="w-4 h-4 text-indigo-600" />
+                  <span>Developer REST API & Firestore Integration</span>
+                </div>
+                <p className="text-xs text-indigo-700">
+                  Ashaal & BetterMorning offers live REST HTTP endpoints and direct Firestore queries for external apps, mobile apps, POS systems, and third-party integrations.
+                </p>
+              </div>
+
+              {/* REST API 1: Live User List REST API */}
+              <div className="border border-emerald-200 bg-emerald-50/40 rounded-xl p-4 space-y-3 shadow-2xs">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-1 bg-emerald-600 text-white rounded font-bold text-[10px] tracking-wider">REST GET</span>
+                    <code className="font-mono text-xs font-bold text-emerald-950 bg-emerald-100 px-2 py-0.5 rounded">/api/users</code>
+                    <span className="text-[11px] text-emerald-800 font-medium">User List REST API</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() =>
+                        copyToClipboard(
+                          `curl -X GET "${window.location.origin}/api/users"`,
+                          'cURL command'
+                        )
+                      }
+                      className="px-2.5 py-1 bg-white border border-emerald-300 text-emerald-700 hover:bg-emerald-50 rounded text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                    >
+                      <Copy className="w-3 h-3" />
+                      <span>Copy cURL</span>
+                    </button>
+                    <a
+                      href="/api/users"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-2.5 py-1 bg-emerald-600 text-white hover:bg-emerald-700 rounded text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                      <span>Open /api/users</span>
+                    </a>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                  <div className="bg-white p-3 rounded-lg border border-emerald-100 space-y-1.5">
+                    <p className="font-bold text-gray-800">Query Parameters Supported:</p>
+                    <ul className="space-y-1 text-gray-600 text-[11px]">
+                      <li><code className="font-mono bg-gray-100 px-1 rounded">?role=customer|admin|seller</code> — Filter by user role</li>
+                      <li><code className="font-mono bg-gray-100 px-1 rounded">?status=active|suspended</code> — Filter by status</li>
+                      <li><code className="font-mono bg-gray-100 px-1 rounded">?search=name|email|phone</code> — Global text search</li>
+                      <li><code className="font-mono bg-gray-100 px-1 rounded">?limit=10</code> — Limit maximum records returned</li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-white p-3 rounded-lg border border-emerald-100 space-y-1.5">
+                    <p className="font-bold text-gray-800">Direct Lookup Endpoints:</p>
+                    <ul className="space-y-1 text-gray-600 text-[11px]">
+                      <li><code className="font-mono bg-gray-100 px-1 rounded">GET /api/users/:id</code> — Single user by ID</li>
+                      <li><code className="font-mono bg-gray-100 px-1 rounded">GET /api/users/by-token/:token</code> — By Session Token</li>
+                      <li><code className="font-mono bg-gray-100 px-1 rounded">POST /api/users</code> — Register / Create User</li>
+                      <li><code className="font-mono bg-gray-100 px-1 rounded">GET /api/health</code> — API Status & Health Check</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <pre className="p-3 bg-gray-900 text-emerald-400 font-mono text-[11px] rounded-lg overflow-x-auto">
+{`// 1. JavaScript Fetch (User List API)
+fetch("${window.location.origin}/api/users")
+  .then(res => res.json())
+  .then(data => {
+    console.log("Total Users:", data.total);
+    console.log("Users List:", data.users);
+  });
+
+// 2. JavaScript Fetch with Query Parameters (e.g. only customers)
+fetch("${window.location.origin}/api/users?role=customer&limit=20")
+  .then(res => res.json())
+  .then(data => console.log(data.users));
+
+// 3. User Register / Sign Up POST API
+fetch("${window.location.origin}/api/users", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    name: "Rahim Uddin",
+    email: "rahim@example.com",
+    phone: "+880 1800000000",
+    role: "customer"
+  })
+});`}
+                </pre>
+              </div>
+
+              {/* API 2: Firestore SDK Direct Query */}
+              <div className="border border-gray-200 rounded-xl p-4 space-y-3 bg-white shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 bg-purple-100 text-purple-800 rounded font-bold text-[10px]">FIRESTORE SDK</span>
+                    <span className="font-mono text-xs font-bold text-gray-800">users / Firestore Collection (Real-Time)</span>
+                  </div>
+                  <button
+                    onClick={() =>
+                      copyToClipboard(
+                        `// Fetch all users via Firestore JS SDK\nimport { collection, getDocs } from "firebase/firestore";\nconst querySnapshot = await getDocs(collection(db, "users"));\nconst users = querySnapshot.docs.map(d => ({ id: d.id, ...d.data() }));\nconsole.log(users);`,
+                        'Fetch Users Snippet'
+                      )
+                    }
+                    className="flex items-center gap-1 text-xs text-indigo-600 hover:underline font-semibold cursor-pointer"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>Copy JS Code</span>
+                  </button>
+                </div>
+                <pre className="p-3 bg-gray-900 text-purple-300 font-mono text-[11px] rounded-lg overflow-x-auto">
+{`// 1. Fetch Users List in Real-Time
+import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { db } from "./firebase";
+
+// Subscribe to all users
+onSnapshot(collection(db, "users"), (snapshot) => {
+  const users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  console.log("Live Users from Firestore:", users);
+});
+
+// 2. Query user by session token
+const q = query(collection(db, "users"), where("token", "==", "usr_tok_anindo_55102"));`}
+                </pre>
+              </div>
+
+              {/* API 3: Token-based Cart and Wishlist Control */}
+              <div className="border border-gray-200 rounded-xl p-4 space-y-3 bg-white shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 bg-amber-100 text-amber-800 rounded font-bold text-[10px]">LOCALSTORAGE</span>
+                    <span className="font-mono text-xs font-bold text-gray-800">Token-Controlled Cart & Favorites</span>
+                  </div>
+                  <button
+                    onClick={() =>
+                      copyToClipboard(
+                        `// Token Scoped Cart & Wishlist Helper\nconst token = localStorage.getItem("ash_user_token") || "guest_123";\n// Save Cart:\nlocalStorage.setItem(\`ash_cart_tok_\${token}\`, JSON.stringify(cartItems));\n// Load Cart:\nconst cart = JSON.parse(localStorage.getItem(\`ash_cart_tok_\${token}\`) || "[]");`,
+                        'Token Storage Snippet'
+                      )
+                    }
+                    className="flex items-center gap-1 text-xs text-indigo-600 hover:underline font-semibold cursor-pointer"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>Copy Snippet</span>
+                  </button>
+                </div>
+                <pre className="p-3 bg-gray-900 text-amber-300 font-mono text-[11px] rounded-lg overflow-x-auto">
+{`// Token-based isolated Cart and Favorites
+const userToken = localStorage.getItem("ash_user_token");
+
+// Get active cart for current user's token
+const getCart = (token) => JSON.parse(localStorage.getItem(\`ash_cart_tok_\${token}\`) || "[]");
+
+// Save cart items for this specific token
+const saveCart = (token, items) => localStorage.setItem(\`ash_cart_tok_\${token}\`, JSON.stringify(items));
+
+// Wishlist / Favorites
+const getFavorites = (token) => JSON.parse(localStorage.getItem(\`ash_wishlist_tok_\${token}\`) || "[]");
+const saveFavorites = (token, ids) => localStorage.setItem(\`ash_wishlist_tok_\${token}\`, JSON.stringify(ids));`}
+                </pre>
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* VIEW 1: VISITORS TABLE */}
           {/* ========================================================================= */}
           {activeRoute === 'visitors' && (
             <div className="overflow-x-auto -mx-2 sm:mx-0">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="border-b border-gray-200 text-gray-700 font-semibold">
-                    <th className="py-3 px-3 whitespace-nowrap">
-                      <div className="flex items-center gap-1 cursor-pointer hover:text-gray-900">
-                        <span>ID</span>
-                        <span className="text-[10px] text-gray-400">↑↓</span>
-                      </div>
-                    </th>
-                    <th className="py-3 px-3 whitespace-nowrap">
-                      <div className="flex items-center gap-1 cursor-pointer hover:text-gray-900">
-                        <span>IP Address</span>
-                        <span className="text-[10px] text-gray-400">↑↓</span>
-                      </div>
-                    </th>
-                    <th className="py-3 px-3 whitespace-nowrap">
-                      <div className="flex items-center gap-1 cursor-pointer hover:text-gray-900">
-                        <span>Name</span>
-                        <span className="text-[10px] text-gray-400">↑↓</span>
-                      </div>
-                    </th>
+                    <th className="py-3 px-3 whitespace-nowrap">ID</th>
+                    <th className="py-3 px-3 whitespace-nowrap">IP Address</th>
+                    <th className="py-3 px-3 whitespace-nowrap">Name</th>
                     <th className="py-3 px-3 whitespace-nowrap">Phone</th>
                     <th className="py-3 px-3 whitespace-nowrap">Location</th>
                     <th className="py-3 px-3 whitespace-nowrap">Page</th>
@@ -949,14 +1291,12 @@ export const AdminManagePage: React.FC = () => {
                           href={vis.page}
                           target="_blank"
                           rel="noreferrer"
-                          className="text-gray-600 hover:text-emerald-600 hover:underline max-w-[280px] sm:max-w-md truncate block"
+                          className="text-emerald-600 hover:underline max-w-[200px] truncate block"
                         >
                           {vis.page}
                         </a>
                       </td>
-                      <td className="py-3 px-3 text-right font-medium text-gray-700 whitespace-nowrap">
-                        {vis.platform}
-                      </td>
+                      <td className="py-3 px-3 text-right font-mono text-gray-500">{vis.platform}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -965,57 +1305,60 @@ export const AdminManagePage: React.FC = () => {
           )}
 
           {/* ========================================================================= */}
-          {/* VIEW 2: DASHBOARD METRICS */}
+          {/* VIEW 2: OVERVIEW DASHBOARD */}
           {/* ========================================================================= */}
           {activeRoute === 'dashboard' && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="p-4 rounded-xl border border-gray-200 bg-gray-50/50 space-y-1">
-                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Total Sales Revenue</p>
-                  <p className="text-2xl font-bold text-gray-900">৳{totalRevenue.toLocaleString('en-BD')}</p>
-                  <p className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1">
-                    <TrendingUp className="w-3 h-3" /> Live from Firestore
+                <div className="p-4 bg-emerald-50/80 border border-emerald-200/70 rounded-2xl">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-bold text-emerald-800">Total Revenue</p>
+                    <DollarSign className="w-4 h-4 text-emerald-600" />
+                  </div>
+                  <p className="text-2xl font-black text-emerald-950 mt-2">
+                    ৳{totalRevenue.toLocaleString('en-BD')}
                   </p>
+                  <p className="text-[11px] text-emerald-700 mt-1">From all confirmed orders</p>
                 </div>
 
-                <div className="p-4 rounded-xl border border-gray-200 bg-gray-50/50 space-y-1">
-                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Total Orders</p>
-                  <p className="text-2xl font-bold text-gray-900">{orders.length}</p>
-                  <p className="text-[11px] text-emerald-600 font-semibold">{pendingOrdersCount} Pending Delivery</p>
+                <div className="p-4 bg-purple-50/80 border border-purple-200/70 rounded-2xl">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-bold text-purple-800">Registered Users</p>
+                    <Users className="w-4 h-4 text-purple-600" />
+                  </div>
+                  <p className="text-2xl font-black text-purple-950 mt-2">{allUsers.length}</p>
+                  <p className="text-[11px] text-purple-700 mt-1">{totalCoinsInCirculation} Coins distributed</p>
                 </div>
 
-                <div className="p-4 rounded-xl border border-gray-200 bg-gray-50/50 space-y-1">
-                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Active Products</p>
-                  <p className="text-2xl font-bold text-gray-900">{products.length}</p>
-                  <p className="text-[11px] text-blue-600 font-semibold">12 Categories</p>
+                <div className="p-4 bg-blue-50/80 border border-blue-200/70 rounded-2xl">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-bold text-blue-800">Total Orders</p>
+                    <ShoppingCart className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <p className="text-2xl font-black text-blue-950 mt-2">{orders.length}</p>
+                  <p className="text-[11px] text-blue-700 mt-1">{pendingOrdersCount} awaiting delivery</p>
                 </div>
 
-                <div className="p-4 rounded-xl border border-gray-200 bg-gray-50/50 space-y-1">
-                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Live Visitors</p>
-                  <p className="text-2xl font-bold text-gray-900">{visitors.length} Active</p>
-                  <p className="text-[11px] text-emerald-600 font-semibold">Real-time Stream</p>
+                <div className="p-4 bg-amber-50/80 border border-amber-200/70 rounded-2xl">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-bold text-amber-800">Live Products</p>
+                    <Box className="w-4 h-4 text-amber-600" />
+                  </div>
+                  <p className="text-2xl font-black text-amber-950 mt-2">{products.length}</p>
+                  <p className="text-[11px] text-amber-700 mt-1">{CATEGORIES_DATA.length} categories</p>
                 </div>
               </div>
 
-              {/* Quick Table of Recent Orders */}
+              {/* Recent Orders in Dashboard */}
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-bold text-gray-900 text-sm">Recent Customer Orders</h3>
-                  <button
-                    onClick={() => setActiveRoute('orders')}
-                    className="text-xs text-emerald-600 font-semibold hover:underline cursor-pointer"
-                  >
-                    View All Orders →
-                  </button>
-                </div>
-
+                <h3 className="font-bold text-gray-900 text-sm">Recent Store Orders</h3>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
+                  <table className="w-full text-left text-xs border-collapse">
                     <thead>
-                      <tr className="border-b border-gray-200 text-gray-500 font-semibold">
-                        <th className="py-2.5 px-3">Order ID</th>
+                      <tr className="border-b border-gray-200 text-gray-700 font-semibold">
+                        <th className="py-2.5 px-3">Order #</th>
                         <th className="py-2.5 px-3">Customer</th>
-                        <th className="py-2.5 px-3">Amount</th>
+                        <th className="py-2.5 px-3">Total</th>
                         <th className="py-2.5 px-3">Payment</th>
                         <th className="py-2.5 px-3">Status</th>
                         <th className="py-2.5 px-3 text-right">Action</th>
@@ -1024,24 +1367,12 @@ export const AdminManagePage: React.FC = () => {
                     <tbody className="divide-y divide-gray-100">
                       {orders.slice(0, 5).map((ord) => (
                         <tr key={ord.id} className="hover:bg-gray-50">
-                          <td className="py-2.5 px-3 font-semibold text-gray-900">#{ord.orderNumber}</td>
-                          <td className="py-2.5 px-3">{ord.shippingAddress?.fullName || 'Customer'}</td>
-                          <td className="py-2.5 px-3 font-semibold text-gray-900">
-                            ৳{ord.total.toLocaleString('en-BD')}
-                          </td>
+                          <td className="py-2.5 px-3 font-semibold">#{ord.orderNumber}</td>
+                          <td className="py-2.5 px-3">{ord.shippingAddress?.fullName}</td>
+                          <td className="py-2.5 px-3 font-bold text-emerald-700">৳{ord.total}</td>
                           <td className="py-2.5 px-3 uppercase text-[10px] font-bold">{ord.paymentMethod}</td>
                           <td className="py-2.5 px-3">
-                            <span
-                              className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                ord.orderStatus === 'DELIVERED'
-                                  ? 'bg-emerald-100 text-emerald-700'
-                                  : ord.orderStatus === 'CANCELLED'
-                                  ? 'bg-red-100 text-red-700'
-                                  : ord.orderStatus === 'SHIPPED'
-                                  ? 'bg-blue-100 text-blue-700'
-                                  : 'bg-amber-100 text-amber-700'
-                              }`}
-                            >
+                            <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-semibold text-[10px]">
                               {ord.orderStatus}
                             </span>
                           </td>
@@ -1051,7 +1382,7 @@ export const AdminManagePage: React.FC = () => {
                                 setSelectedOrder(ord);
                                 setActiveRoute('orders');
                               }}
-                              className="px-2.5 py-1 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded font-semibold text-[11px]"
+                              className="px-2.5 py-1 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded font-semibold text-[11px] cursor-pointer"
                             >
                               View
                             </button>
@@ -1149,14 +1480,14 @@ export const AdminManagePage: React.FC = () => {
                                 setEditingProduct(prod);
                                 setIsProductModalOpen(true);
                               }}
-                              className="p-1.5 text-blue-600 hover:bg-blue-50 rounded"
+                              className="p-1.5 text-blue-600 hover:bg-blue-50 rounded cursor-pointer"
                               title="Edit Product"
                             >
                               <Edit2 className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleDeleteProduct(prod.id, prod.title)}
-                              className="p-1.5 text-red-500 hover:bg-red-50 rounded"
+                              className="p-1.5 text-red-500 hover:bg-red-50 rounded cursor-pointer"
                               title="Delete Product"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -1237,20 +1568,20 @@ export const AdminManagePage: React.FC = () => {
                                 setSelectedOrder(ord);
                                 setIsInvoiceOpen(true);
                               }}
-                              className="p-1.5 text-gray-500 hover:text-gray-900 rounded hover:bg-gray-100"
+                              className="p-1.5 text-gray-500 hover:text-gray-900 rounded hover:bg-gray-100 cursor-pointer"
                               title="Print Invoice"
                             >
                               <Printer className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => setSelectedOrder(ord)}
-                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-semibold text-[11px]"
+                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-semibold text-[11px] cursor-pointer"
                             >
                               Details
                             </button>
                             <button
                               onClick={() => handleDeleteOrder(ord.id)}
-                              className="p-1.5 text-red-500 hover:bg-red-50 rounded"
+                              className="p-1.5 text-red-500 hover:bg-red-50 rounded cursor-pointer"
                               title="Delete Order"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -1266,37 +1597,28 @@ export const AdminManagePage: React.FC = () => {
           )}
 
           {/* ========================================================================= */}
-          {/* VIEW 5: HERO BANNERS MANAGEMENT */}
+          {/* VIEW 5: BANNERS MANAGEMENT */}
           {/* ========================================================================= */}
           {activeRoute === 'banners' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {banners.map((ban) => (
-                <div key={ban.id} className="border border-gray-200 rounded-xl overflow-hidden p-3.5 space-y-3">
-                  <div className="relative aspect-[21/9] rounded-lg overflow-hidden bg-gray-100">
-                    <img src={ban.image} alt={ban.title} className="w-full h-full object-cover" />
-                    {ban.badge && (
-                      <span className="absolute top-2 left-2 px-2 py-0.5 bg-emerald-600 text-white text-[10px] font-bold rounded">
-                        {ban.badge}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {banners.map((b) => (
+                <div key={b.id} className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-2xs">
+                  <div className="h-36 relative overflow-hidden bg-gray-100">
+                    <img src={b.image} alt={b.title} className="w-full h-full object-cover" />
+                    {b.badge && (
+                      <span className="absolute top-2 left-2 px-2 py-0.5 bg-[#16a34a] text-white text-[10px] font-bold rounded">
+                        {b.badge}
                       </span>
                     )}
                   </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-900 text-sm">{ban.title}</h4>
-                    <p className="text-xs text-gray-500">{ban.subtitle}</p>
-                  </div>
-                  <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
+                  <div className="p-3.5 flex items-center justify-between">
+                    <div>
+                      <h4 className="font-bold text-gray-900 text-xs">{b.title}</h4>
+                      <p className="text-[11px] text-gray-500">{b.subtitle}</p>
+                    </div>
                     <button
-                      onClick={() => {
-                        setEditingBanner(ban);
-                        setIsBannerModalOpen(true);
-                      }}
-                      className="px-2.5 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded text-xs font-semibold"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDeleteBanner(ban.id)}
-                      className="px-2.5 py-1 bg-red-50 text-red-600 hover:bg-red-100 rounded text-xs font-semibold"
+                      onClick={() => handleDeleteBanner(b.id)}
+                      className="px-2.5 py-1 text-red-600 hover:bg-red-50 rounded text-xs font-semibold cursor-pointer"
                     >
                       Delete
                     </button>
@@ -1309,7 +1631,7 @@ export const AdminManagePage: React.FC = () => {
           {/* ========================================================================= */}
           {/* VIEW 6: PROJECTS, EVENTS, DONATIONS, VOLUNTEERS, CONTACT */}
           {/* ========================================================================= */}
-          {['projects', 'events', 'donations', 'volunteers', 'contact-messages', 'help-want', 'gdrive', 'documents', 'profile'].includes(activeRoute) && (
+          {['projects', 'events', 'donations', 'volunteers', 'contact-messages', 'help-want', 'profile'].includes(activeRoute) && (
             <div className="p-8 text-center bg-gray-50 rounded-xl border border-gray-200 space-y-3">
               <div className="w-12 h-12 bg-white text-emerald-600 rounded-xl mx-auto flex items-center justify-center border border-gray-200 shadow-2xs">
                 <CheckCircle className="w-6 h-6" />
@@ -1320,7 +1642,7 @@ export const AdminManagePage: React.FC = () => {
               </p>
               <button
                 onClick={() => setActiveRoute('visitors')}
-                className="px-4 py-2 bg-emerald-600 text-white text-xs font-semibold rounded-lg hover:bg-emerald-700 transition-colors"
+                className="px-4 py-2 bg-emerald-600 text-white text-xs font-semibold rounded-lg hover:bg-emerald-700 transition-colors cursor-pointer"
               >
                 Return to Live Visitors
               </button>
@@ -1329,16 +1651,155 @@ export const AdminManagePage: React.FC = () => {
         </main>
       </div>
 
-      {/* Floating Settings Gear Button on right edge (as seen in screenshot) */}
+      {/* Floating Settings Gear Button */}
       <button
         onClick={() => {
-          showToast('Settings: Cloud Firestore Active | Version 2.4');
+          showToast('Settings: Cloud Firestore Active | Multi-User & Token Enabled');
         }}
         className="fixed right-0 top-1/2 -translate-y-1/2 bg-[#6366f1] hover:bg-[#4f46e5] text-white p-2.5 rounded-l-xl shadow-lg cursor-pointer z-40 transition-all"
         title="Quick Settings"
       >
         <Settings className="w-5 h-5 animate-spin-slow" />
       </button>
+
+      {/* ========================================================================= */}
+      {/* USER ADD / EDIT MODAL */}
+      {/* ========================================================================= */}
+      {isUserModalOpen && editingUser && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl border border-gray-200 my-8">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <h3 className="font-bold text-base text-gray-900">
+                {editingUser.id && allUsers.some((u) => u.id === editingUser.id) ? 'Edit User Profile' : 'Add New User'}
+              </h3>
+              <button
+                onClick={() => setIsUserModalOpen(false)}
+                className="p-1.5 text-gray-400 hover:text-gray-700 rounded-full"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveUser} className="space-y-3 text-xs">
+              <div>
+                <label className="block font-semibold text-gray-700 mb-1">Full Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={editingUser.name || ''}
+                  onChange={(e) => setEditingUser({ ...editingUser, name: e.target.value })}
+                  placeholder="e.g. Nusrat Jahan"
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-1 focus:ring-purple-500"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-gray-700 mb-1">Email Address *</label>
+                <input
+                  type="email"
+                  required
+                  value={editingUser.email || ''}
+                  onChange={(e) => setEditingUser({ ...editingUser, email: e.target.value })}
+                  placeholder="user@example.com"
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-1 focus:ring-purple-500"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-gray-700 mb-1">Phone Number</label>
+                <input
+                  type="text"
+                  value={editingUser.phone || ''}
+                  onChange={(e) => setEditingUser({ ...editingUser, phone: e.target.value })}
+                  placeholder="+880 17XXXXXXXX"
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-1 focus:ring-purple-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Ashaal Coins</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={editingUser.coins ?? 500}
+                    onChange={(e) => setEditingUser({ ...editingUser, coins: Number(e.target.value) })}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg font-bold text-amber-700"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Member Tier</label>
+                  <select
+                    value={editingUser.memberTier || 'Silver Member'}
+                    onChange={(e) => setEditingUser({ ...editingUser, memberTier: e.target.value as any })}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg font-semibold"
+                  >
+                    <option value="Silver Member">Silver Member</option>
+                    <option value="Gold Member">Gold Member</option>
+                    <option value="Diamond Club">Diamond Club</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Account Role</label>
+                  <select
+                    value={editingUser.role || 'customer'}
+                    onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value as any })}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg font-semibold"
+                  >
+                    <option value="customer">Customer</option>
+                    <option value="admin">Admin</option>
+                    <option value="seller">Seller</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Status</label>
+                  <select
+                    value={editingUser.status || 'active'}
+                    onChange={(e) => setEditingUser({ ...editingUser, status: e.target.value as any })}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg font-semibold"
+                  >
+                    <option value="active">Active</option>
+                    <option value="suspended">Suspended</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-gray-700 mb-1">User Token (Auto-Generated API Key)</label>
+                <input
+                  type="text"
+                  value={editingUser.token || ''}
+                  onChange={(e) => setEditingUser({ ...editingUser, token: e.target.value })}
+                  className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg font-mono text-[11px]"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setIsUserModalOpen(false)}
+                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-semibold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingUser}
+                  className="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold shadow-xs flex items-center gap-1.5 cursor-pointer"
+                >
+                  {isSavingUser ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                  Save User
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* ========================================================================= */}
       {/* PRODUCT ADD / EDIT MODAL */}
@@ -1421,13 +1882,13 @@ export const AdminManagePage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">Stock Quantity</label>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Brand</label>
                   <input
-                    type="number"
-                    min={0}
-                    value={editingProduct.inStock ?? 50}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, inStock: Number(e.target.value) })}
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-xs focus:ring-1 focus:ring-emerald-500 focus:bg-white"
+                    type="text"
+                    value={editingProduct.brand || ''}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, brand: e.target.value })}
+                    placeholder="e.g. Xiaomi, Samsung, Apex"
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-xs focus:ring-1 focus:ring-emerald-500"
                   />
                 </div>
 
@@ -1439,11 +1900,22 @@ export const AdminManagePage: React.FC = () => {
                     value={editingProduct.mainImage || ''}
                     onChange={(e) => setEditingProduct({ ...editingProduct, mainImage: e.target.value })}
                     placeholder="https://images.unsplash.com/..."
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-xs focus:ring-1 focus:ring-emerald-500 focus:bg-white"
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-xs focus:ring-1 focus:ring-emerald-500"
                   />
                 </div>
 
-                <div className="sm:col-span-2 flex items-center gap-4 p-2.5 bg-gray-50 rounded-lg border border-gray-200">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Stock Quantity</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={editingProduct.inStock ?? 50}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, inStock: Number(e.target.value) })}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-xs focus:ring-1 focus:ring-emerald-500"
+                  />
+                </div>
+
+                <div className="flex items-center gap-4 pt-3">
                   <label className="flex items-center gap-2 text-xs font-semibold text-gray-700 cursor-pointer">
                     <input
                       type="checkbox"
@@ -1470,14 +1942,14 @@ export const AdminManagePage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsProductModalOpen(false)}
-                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-semibold text-xs"
+                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-semibold text-xs cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSavingProduct}
-                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold text-xs shadow-xs flex items-center gap-1.5"
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold text-xs shadow-xs flex items-center gap-1.5 cursor-pointer"
                 >
                   {isSavingProduct ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
                   Save Product
@@ -1558,7 +2030,7 @@ export const AdminManagePage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => window.print()}
-                  className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded font-semibold flex items-center gap-1"
+                  className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded font-semibold flex items-center gap-1 cursor-pointer"
                 >
                   <Printer className="w-3.5 h-3.5" />
                   Print
@@ -1566,7 +2038,7 @@ export const AdminManagePage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setSelectedOrder(null)}
-                  className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-semibold"
+                  className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-semibold cursor-pointer"
                 >
                   Close
                 </button>
@@ -1623,13 +2095,13 @@ export const AdminManagePage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsBannerModalOpen(false)}
-                  className="px-3 py-1.5 bg-gray-100 text-gray-700 font-semibold rounded-lg"
+                  className="px-3 py-1.5 bg-gray-100 text-gray-700 font-semibold rounded-lg cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg shadow-2xs"
+                  className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg shadow-2xs cursor-pointer"
                 >
                   Save Banner
                 </button>

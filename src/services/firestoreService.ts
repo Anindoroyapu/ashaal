@@ -11,13 +11,81 @@ import {
   limit
 } from 'firebase/firestore';
 import { db } from '../firebase';
-import { Product, Order, Banner } from '../types';
+import { Product, Order, Banner, UserProfile } from '../types';
 import { PRODUCTS_DATA } from '../data/productsData';
 import { HERO_BANNERS } from '../data/bannersData';
 
 const PRODUCTS_COLLECTION = 'products';
 const ORDERS_COLLECTION = 'orders';
 const BANNERS_COLLECTION = 'banners';
+const USERS_COLLECTION = 'users';
+
+export const INITIAL_SEED_USERS: UserProfile[] = [
+  {
+    id: 'usr-tanvir-1',
+    name: 'Tanvir Ahmed',
+    phone: '+880 1712-345678',
+    email: 'tanvir.ahmed@example.com',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80',
+    coins: 480,
+    memberTier: 'Gold Member',
+    joinDate: 'Jan 2023',
+    role: 'customer',
+    status: 'active',
+    token: 'usr_tok_tanvir_94821',
+    totalOrders: 14,
+    totalSpent: 28400,
+    createdAt: '2023-01-15T10:00:00.000Z'
+  },
+  {
+    id: 'usr-anindo-2',
+    name: 'Anindo Roy',
+    phone: '+880 1819-876543',
+    email: 'anindo.roy@gmail.com',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&q=80',
+    coins: 850,
+    memberTier: 'Diamond Club',
+    joinDate: 'Mar 2023',
+    role: 'customer',
+    status: 'active',
+    token: 'usr_tok_anindo_55102',
+    totalOrders: 28,
+    totalSpent: 64200,
+    createdAt: '2023-03-20T14:30:00.000Z'
+  },
+  {
+    id: 'usr-sadia-3',
+    name: 'Sadia Islam',
+    phone: '+880 1911-223344',
+    email: 'sadia.islam@yahoo.com',
+    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&q=80',
+    coins: 210,
+    memberTier: 'Silver Member',
+    joinDate: 'Aug 2024',
+    role: 'customer',
+    status: 'active',
+    token: 'usr_tok_sadia_88301',
+    totalOrders: 5,
+    totalSpent: 9800,
+    createdAt: '2024-08-10T09:15:00.000Z'
+  },
+  {
+    id: 'usr-rafiq-4',
+    name: 'Rafiqul Hasan',
+    phone: '+880 1622-998877',
+    email: 'rafiqul.hasan@outlook.com',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&q=80',
+    coins: 120,
+    memberTier: 'Silver Member',
+    joinDate: 'Nov 2024',
+    role: 'customer',
+    status: 'active',
+    token: 'usr_tok_rafiq_47291',
+    totalOrders: 3,
+    totalSpent: 4500,
+    createdAt: '2024-11-05T16:45:00.000Z'
+  }
+];
 
 /**
  * Real-time listener for Products collection in Firestore
@@ -296,3 +364,222 @@ export async function deleteBannerFromFirestore(bannerId: string): Promise<void>
   const docRef = doc(db, BANNERS_COLLECTION, bannerId);
   await deleteDoc(docRef);
 }
+
+/**
+ * ============================================================================
+ * USERS & AUTHENTICATION FIRESTORE INTEGRATION
+ * ============================================================================
+ */
+
+/**
+ * Real-time listener for Users collection in Firestore
+ */
+export function subscribeToUsers(onUsersChange: (users: UserProfile[]) => void) {
+  try {
+    const usersRef = collection(db, USERS_COLLECTION);
+    const q = query(usersRef);
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        if (!snapshot.empty) {
+          const items: UserProfile[] = [];
+          snapshot.forEach((docSnap) => {
+            const data = docSnap.data() as UserProfile;
+            items.push({
+              ...data,
+              id: docSnap.id
+            });
+          });
+          onUsersChange(items);
+        } else {
+          // If Firestore is empty, seed initial users
+          seedInitialUsers().then(() => {
+            onUsersChange(INITIAL_SEED_USERS);
+          });
+        }
+      },
+      (error) => {
+        console.warn('Firestore users subscribe notice:', error);
+        onUsersChange(INITIAL_SEED_USERS);
+      }
+    );
+
+    return unsubscribe;
+  } catch (err) {
+    console.warn('Firestore users error, fallback to static:', err);
+    onUsersChange(INITIAL_SEED_USERS);
+    return () => {};
+  }
+}
+
+/**
+ * Seed initial sample users to Firestore
+ */
+export async function seedInitialUsers(force: boolean = false) {
+  try {
+    const usersRef = collection(db, USERS_COLLECTION);
+    const snapshot = await getDocs(usersRef);
+    if (snapshot.empty || force) {
+      const promises = INITIAL_SEED_USERS.map((usr) => {
+        const docRef = doc(db, USERS_COLLECTION, usr.id);
+        return setDoc(docRef, {
+          ...usr,
+          createdAt: usr.createdAt || new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        });
+      });
+      await Promise.all(promises);
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.warn('Could not seed initial users to Firestore:', error);
+    return false;
+  }
+}
+
+/**
+ * Add or update User profile in Firestore
+ */
+export async function saveUserToFirestore(user: Partial<UserProfile> & { id?: string }): Promise<string> {
+  const userId = user.id || `usr-${Date.now()}`;
+  const docRef = doc(db, USERS_COLLECTION, userId);
+
+  const cleanUserData: UserProfile = {
+    id: userId,
+    name: user.name || 'Anonymous User',
+    phone: user.phone || '+880 1700-000000',
+    email: user.email || `${userId}@example.com`,
+    password: user.password || 'password123',
+    avatar: user.avatar || `https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80`,
+    coins: Number(user.coins) ?? 200,
+    memberTier: user.memberTier || 'Silver Member',
+    joinDate: user.joinDate || new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+    role: user.role || 'customer',
+    status: user.status || 'active',
+    token: user.token || `usr_tok_${userId}_${Math.random().toString(36).substring(2, 9)}`,
+    totalOrders: Number(user.totalOrders) || 0,
+    totalSpent: Number(user.totalSpent) || 0,
+    addresses: user.addresses || [],
+    createdAt: user.createdAt || new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  await setDoc(docRef, cleanUserData, { merge: true });
+  return userId;
+}
+
+/**
+ * Delete user from Firestore
+ */
+export async function deleteUserFromFirestore(userId: string): Promise<void> {
+  const docRef = doc(db, USERS_COLLECTION, userId);
+  await deleteDoc(docRef);
+}
+
+/**
+ * ============================================================================
+ * LOCAL STORAGE TOKEN-BASED CART & FAVORITES HANDLERS
+ * ============================================================================
+ */
+
+const TOKEN_KEY = 'ash_user_token';
+const GUEST_TOKEN_KEY = 'ash_guest_token';
+
+/**
+ * Get or create current active token (User token or Guest token)
+ */
+export function getActiveSessionToken(customToken?: string | null): string {
+  if (typeof window === 'undefined') return 'guest_default';
+  
+  if (customToken) {
+    try {
+      localStorage.setItem(TOKEN_KEY, customToken);
+    } catch {}
+    return customToken;
+  }
+
+  try {
+    const savedUserToken = localStorage.getItem(TOKEN_KEY);
+    if (savedUserToken) return savedUserToken;
+
+    let guestTok = localStorage.getItem(GUEST_TOKEN_KEY);
+    if (!guestTok) {
+      guestTok = `guest_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+      localStorage.setItem(GUEST_TOKEN_KEY, guestTok);
+    }
+    return guestTok;
+  } catch {
+    return 'guest_fallback';
+  }
+}
+
+/**
+ * Set user authentication token upon signin/signup
+ */
+export function setUserSessionToken(token: string) {
+  try {
+    localStorage.setItem(TOKEN_KEY, token);
+  } catch {}
+}
+
+/**
+ * Clear user token on logout
+ */
+export function clearUserSessionToken() {
+  try {
+    localStorage.removeItem(TOKEN_KEY);
+  } catch {}
+}
+
+/**
+ * Load token-controlled Cart from localStorage
+ */
+export function loadCartByToken(token: string) {
+  if (typeof window === 'undefined') return [];
+  try {
+    const key = `ash_cart_tok_${token}`;
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Save token-controlled Cart to localStorage
+ */
+export function saveCartByToken(token: string, cartItems: any[]) {
+  if (typeof window === 'undefined') return;
+  try {
+    const key = `ash_cart_tok_${token}`;
+    localStorage.setItem(key, JSON.stringify(cartItems));
+  } catch {}
+}
+
+/**
+ * Load token-controlled Wishlist/Favorites from localStorage
+ */
+export function loadWishlistByToken(token: string): string[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const key = `ash_wishlist_tok_${token}`;
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Save token-controlled Wishlist/Favorites to localStorage
+ */
+export function saveWishlistByToken(token: string, wishlistIds: string[]) {
+  if (typeof window === 'undefined') return;
+  try {
+    const key = `ash_wishlist_tok_${token}`;
+    localStorage.setItem(key, JSON.stringify(wishlistIds));
+  } catch {}
+}
+

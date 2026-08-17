@@ -3,36 +3,50 @@ import { useApp } from '../context/AppContext';
 import { X, CheckCircle, ShieldCheck, MapPin, Smartphone, Mail, Lock, User, ArrowRight } from 'lucide-react';
 
 export const LoginModal: React.FC = () => {
-  const { isLoginModalOpen, setIsLoginModalOpen, login, t } = useApp();
+  const { isLoginModalOpen, setIsLoginModalOpen, login, signup, allUsers, t } = useApp();
   const [isRegister, setIsRegister] = useState(false);
   const [phoneOrEmail, setPhoneOrEmail] = useState('+880 1712-345678');
   const [password, setPassword] = useState('ashaal12345');
   const [fullName, setFullName] = useState('Tanvir Ahmed');
   const [otpStep, setOtpStep] = useState(false);
   const [otpCode, setOtpCode] = useState('8492');
+  const [loading, setLoading] = useState(false);
 
   if (!isLoginModalOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!otpStep && phoneOrEmail.includes('17')) {
-      setOtpStep(true);
+    setLoading(true);
+
+    if (isRegister) {
+      const email = phoneOrEmail.includes('@') ? phoneOrEmail : `user_${Date.now()}@ashaal.com.bd`;
+      const phone = phoneOrEmail.includes('@') ? '+880 1700-000000' : phoneOrEmail;
+      await signup({
+        name: fullName,
+        email,
+        phone,
+        password
+      });
+      setLoading(false);
+      setIsLoginModalOpen(false);
       return;
     }
-    login({
-      name: isRegister ? fullName : (fullName || 'Tanvir Ahmed'),
-      phone: phoneOrEmail.startsWith('+880') ? phoneOrEmail : `+880 ${phoneOrEmail}`,
-      email: phoneOrEmail.includes('@') ? phoneOrEmail : 'tanvir.ahmed@example.com'
-    });
+
+    if (!otpStep && phoneOrEmail.includes('17') && !password) {
+      setOtpStep(true);
+      setLoading(false);
+      return;
+    }
+
+    await login(phoneOrEmail, password);
+    setLoading(false);
     setOtpStep(false);
+    setIsLoginModalOpen(false);
   };
 
-  const handleQuickDemoLogin = () => {
-    login({
-      name: 'Tanvir Ahmed',
-      phone: '+880 1712-345678',
-      email: 'tanvir.ahmed@example.com'
-    });
+  const handleQuickDemoUser = (userProfile: any) => {
+    login(userProfile);
+    setIsLoginModalOpen(false);
   };
 
   return (
@@ -52,8 +66,8 @@ export const LoginModal: React.FC = () => {
               {otpStep
                 ? t('Enter 4-digit code sent to your phone', 'আপনার ফোনে পাঠানো ৪ ডিজিটের কোডটি দিন')
                 : isRegister
-                ? t('Sign up to enjoy vouchers, rewards & easy tracking', 'সাইন আপ করে উপভোগ করুন বিশেষ ভাউচার ও অফার')
-                : t('Login with your phone number or email', 'আপনার ফোন নম্বর বা ইমেইল দিয়ে লগইন করুন')}
+                ? t('Sign up for personal token, rewards & isolated cart', 'সাইন আপ করে উপভোগ করুন পার্সোনাল টোকেন ও রিওয়ার্ড')
+                : t('Login with phone or email to load your data', 'আপনার ফোন নম্বর বা ইমেইল দিয়ে লগইন করুন')}
             </p>
           </div>
           <button
@@ -97,9 +111,10 @@ export const LoginModal: React.FC = () => {
 
               <button
                 type="submit"
-                className="w-full bg-[#16a34a] hover:bg-[#15803d] text-white font-bold py-2.5 rounded-lg text-sm transition-colors shadow-md shadow-green-600/20 cursor-pointer"
+                disabled={loading}
+                className="w-full bg-[#16a34a] hover:bg-[#15803d] text-white font-bold py-2.5 rounded-lg text-sm transition-colors shadow-md shadow-green-600/20 cursor-pointer disabled:opacity-50"
               >
-                {t('Verify & Continue', 'যাচাই করে এগিয়ে যান')}
+                {loading ? t('Verifying...', 'যাচাই করা হচ্ছে...') : t('Verify & Continue', 'যাচাই করে এগিয়ে যান')}
               </button>
             </form>
           ) : (
@@ -115,7 +130,7 @@ export const LoginModal: React.FC = () => {
                       type="text"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
-                      placeholder="e.g. Tanvir Ahmed"
+                      placeholder="e.g. Nusrat Jahan"
                       className="w-full pl-9 pr-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:border-[#16a34a]"
                       required
                     />
@@ -133,7 +148,7 @@ export const LoginModal: React.FC = () => {
                     type="text"
                     value={phoneOrEmail}
                     onChange={(e) => setPhoneOrEmail(e.target.value)}
-                    placeholder="+880 17XXXXXXXX"
+                    placeholder="+880 17XXXXXXXX or user@example.com"
                     className="w-full pl-9 pr-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:border-[#16a34a]"
                     required
                   />
@@ -146,12 +161,9 @@ export const LoginModal: React.FC = () => {
                     {t('Password', 'পাসওয়ার্ড')}
                   </label>
                   {!isRegister && (
-                    <button
-                      type="button"
-                      className="text-[11px] text-[#16a34a] hover:underline cursor-pointer"
-                    >
-                      {t('Forgot password?', 'পাসওয়ার্ড ভুলে গেছেন?')}
-                    </button>
+                    <span className="text-[11px] text-[#16a34a]">
+                      {t('Token protected', 'টোকেন সুরক্ষিত')}
+                    </span>
                   )}
                 </div>
                 <div className="relative">
@@ -169,21 +181,37 @@ export const LoginModal: React.FC = () => {
 
               <button
                 type="submit"
-                className="w-full bg-[#16a34a] hover:bg-[#15803d] text-white font-bold py-2.5 rounded-lg text-xs sm:text-sm transition-colors shadow-md shadow-green-600/20 mt-2 cursor-pointer"
+                disabled={loading}
+                className="w-full bg-[#16a34a] hover:bg-[#15803d] text-white font-bold py-2.5 rounded-lg text-xs sm:text-sm transition-colors shadow-md shadow-green-600/20 mt-2 cursor-pointer disabled:opacity-50"
               >
-                {isRegister ? t('REGISTER ACCOUNT', 'রেজিস্টার করুন') : t('LOGIN TO ASHAAL', 'লগইন করুন')}
+                {loading
+                  ? t('Processing...', 'প্রসেসিং হচ্ছে...')
+                  : isRegister
+                  ? t('SIGN UP & GET 500 COINS', 'সাইন আপ করুন (+৫০০ কয়েন)')
+                  : t('SIGN IN (LOAD DATA)', 'লগইন করুন')}
               </button>
 
-              {/* Quick 1-Click Demo Login */}
+              {/* Quick 1-Click Demo Accounts */}
               <div className="pt-2">
-                <button
-                  type="button"
-                  onClick={handleQuickDemoLogin}
-                  className="w-full bg-green-50 hover:bg-green-100 text-[#16a34a] border border-green-200 font-bold py-2 rounded-lg text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                >
-                  <CheckCircle className="w-4 h-4" />
-                  <span>{t('Instant 1-Click Demo Login (Anindo Roy)', '১-ক্লিকে ডেমো লগইন')}</span>
-                </button>
+                <p className="text-[11px] text-gray-400 font-medium mb-1.5 text-center">
+                  {t('Or instant login with demo accounts:', 'অথবা ডেমো একাউন্টে দ্রুত লগইন:')}
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {(allUsers && allUsers.length > 0 ? allUsers.slice(0, 2) : []).map((u) => (
+                    <button
+                      key={u.id}
+                      type="button"
+                      onClick={() => handleQuickDemoUser(u)}
+                      className="p-1.5 text-left border border-gray-200 hover:border-[#16a34a] hover:bg-green-50 rounded-lg text-[11px] transition-colors flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <img src={u.avatar} alt={u.name} className="w-5 h-5 rounded-full object-cover" />
+                      <div className="truncate">
+                        <p className="font-bold text-gray-800 truncate">{u.name.split(' ')[0]}</p>
+                        <p className="text-[10px] text-gray-500">{u.coins} {t('coins', 'কয়েন')}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="text-center pt-3 border-t border-gray-100">

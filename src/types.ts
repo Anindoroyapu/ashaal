@@ -160,6 +160,32 @@ export interface Banner {
   badge?: string;
 }
 
+export interface UserProfile {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  password?: string;
+  avatar: string;
+  coins: number;
+  memberTier: 'Silver Member' | 'Gold Member' | 'Diamond Club';
+  joinDate: string;
+  role: 'customer' | 'admin' | 'seller';
+  status: 'active' | 'suspended';
+  token?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  totalOrders?: number;
+  totalSpent?: number;
+  addresses?: DeliveryAddress[];
+}
+
+export interface AuthSession {
+  token: string;
+  userId: string;
+  user: UserProfile;
+}
+
 export type PageView =
   | 'home'
   | 'product-details'

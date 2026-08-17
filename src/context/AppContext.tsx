@@ -1,27 +1,27 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate as useRouterNavigate, useLocation } from 'react-router-dom';
-import { Product, CartItem, Voucher, DeliveryAddress, Order, PageView, Language, Banner } from '../types';
+import { Product, CartItem, Voucher, DeliveryAddress, Order, PageView, Language, Banner, UserProfile } from '../types';
 import { PRODUCTS_DATA } from '../data/productsData';
 import { VOUCHERS_DATA, HERO_BANNERS } from '../data/bannersData';
 import {
   subscribeToProducts,
   subscribeToOrders,
   subscribeToBanners,
+  subscribeToUsers,
   saveOrderToFirestore,
-  updateOrderStatusInFirestore
+  updateOrderStatusInFirestore,
+  saveUserToFirestore,
+  deleteUserFromFirestore,
+  getActiveSessionToken,
+  setUserSessionToken,
+  clearUserSessionToken,
+  loadCartByToken,
+  saveCartByToken,
+  loadWishlistByToken,
+  saveWishlistByToken,
+  INITIAL_SEED_USERS
 } from '../services/firestoreService';
 import confetti from 'canvas-confetti';
-
-interface UserProfile {
-  id: string;
-  name: string;
-  phone: string;
-  email: string;
-  avatar: string;
-  coins: number;
-  memberTier: 'Silver Member' | 'Gold Member' | 'Diamond Club';
-  joinDate: string;
-}
 
 export interface RouteState {
   page: PageView;
@@ -210,12 +210,18 @@ interface AppContextType {
   toggleWishlist: (productId: string) => void;
   isWishlisted: (productId: string) => boolean;
   user: UserProfile;
+  allUsers: UserProfile[];
+  sessionToken: string;
   isLoggedIn: boolean;
-  login: (data?: Partial<UserProfile>) => void;
+  login: (identifierOrData?: string | Partial<UserProfile>, password?: string) => Promise<{ success: boolean; message?: string }>;
+  signup: (userData: { name: string; email: string; phone: string; password?: string }) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
+  updateUserProfile: (userId: string, data: Partial<UserProfile>) => Promise<void>;
+  deleteUserAccount: (userId: string) => Promise<void>;
   vouchers: Voucher[];
   claimVoucher: (id: string) => void;
   orders: Order[];
+  userOrders: Order[];
   currentOrderId: string | null;
   currentOrder: Order | null;
   setCurrentOrderId: (id: string | null) => void;
@@ -234,16 +240,7 @@ interface AppContextType {
   t: (en: string, bn: string) => string;
 }
 
-const INITIAL_USER: UserProfile = {
-  id: 'usr-daraz-1',
-  name: 'Tanvir Ahmed',
-  phone: '+880 1712-345678',
-  email: 'tanvir.ahmed@example.com',
-  avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80',
-  coins: 480,
-  memberTier: 'Gold Member',
-  joinDate: 'Jan 2023'
-};
+const INITIAL_USER: UserProfile = INITIAL_SEED_USERS[0];
 
 const INITIAL_ADDRESSES: DeliveryAddress[] = [
   {
@@ -375,8 +372,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [searchFilter, setSearchFilter] = useState<string | null>(initialRoute.searchFilter || null);
   const [products, setProducts] = useState<Product[]>(() => getStoredItem<Product[]>('ash_products', PRODUCTS_DATA));
   const [banners, setBanners] = useState<Banner[]>(() => HERO_BANNERS);
-  const [cart, setCart] = useState<CartItem[]>(() =>
-    getStoredItem<CartItem[]>('ash_cart', [
+  
+  // Users state from Firestore
+  const [allUsers, setAllUsers] = useState<UserProfile[]>(() => getStoredItem<UserProfile[]>('ash_all_users', INITIAL_SEED_USERS));
+  
+  // Active Logged-in User and Token
+  const [sessionToken, setSessionToken] = useState<string>(() => getActiveSessionToken());
+  const [user, setUser] = useState<UserProfile>(() => {
+    const savedUser = getStoredItem<UserProfile | null>('ash_active_user', null);
+    return savedUser || INITIAL_USER;
+  });
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
+    return getStoredItem<boolean>('ash_is_logged_in', true);
+  });
+
+  // Token-controlled Cart & Wishlist state
+  const [cart, setCart] = useState<CartItem[]>(() => {
+    const activeTok = getActiveSessionToken();
+    const tokenCart = loadCartByToken(activeTok);
+    if (tokenCart && tokenCart.length > 0) return tokenCart;
+    return [
       {
         id: 'cart-item-default-1',
         productId: 'prod-1',
@@ -385,15 +400,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         selectedVariations: { Color: 'Midnight Black', Storage: '8GB/256GB' },
         selected: true
       }
-    ])
-  );
-  const [wishlist, setWishlist] = useState<string[]>(() => getStoredItem<string[]>('ash_wishlist', ['prod-1', 'prod-3']));
-  const [user, setUser] = useState<UserProfile>(INITIAL_USER);
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(true);
+    ];
+  });
+
+  const [wishlist, setWishlist] = useState<string[]>(() => {
+    const activeTok = getActiveSessionToken();
+    const tokenWishlist = loadWishlistByToken(activeTok);
+    if (tokenWishlist && tokenWishlist.length > 0) return tokenWishlist;
+    return ['prod-1', 'prod-3'];
+  });
+
   const [vouchers, setVouchers] = useState<Voucher[]>(VOUCHERS_DATA);
   const [orders, setOrders] = useState<Order[]>(() => getStoredItem<Order[]>('ash_orders', INITIAL_ORDERS));
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(initialRoute.orderId || 'ord-bd-98421');
-  const [addresses, setAddresses] = useState<DeliveryAddress[]>(INITIAL_ADDRESSES);
+  const [addresses, setAddresses] = useState<DeliveryAddress[]>(user.addresses && user.addresses.length > 0 ? user.addresses : INITIAL_ADDRESSES);
   const [activeLocation, setActiveLocation] = useState<{ division: string; city: string }>({
     division: 'Dhaka',
     city: 'Dhaka North - Gulshan'
@@ -410,7 +430,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch {}
   };
 
-  // Real-time Firestore Subscriptions for Products, Orders, and Banners
+  // Real-time Firestore Subscriptions for Products, Orders, Banners, and Users
   useEffect(() => {
     const unsubProducts = subscribeToProducts((loadedProducts) => {
       if (loadedProducts && loadedProducts.length > 0) {
@@ -436,31 +456,59 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     });
 
+    const unsubUsers = subscribeToUsers((loadedUsers) => {
+      if (loadedUsers && loadedUsers.length > 0) {
+        setAllUsers(loadedUsers);
+        try {
+          localStorage.setItem('ash_all_users', JSON.stringify(loadedUsers));
+        } catch {}
+        // If current user is in loadedUsers, sync details
+        setUser((currentUser) => {
+          const matched = loadedUsers.find((u) => u.id === currentUser.id);
+          return matched ? { ...currentUser, ...matched } : currentUser;
+        });
+      }
+    });
+
     return () => {
       unsubProducts();
       unsubOrders();
       unsubBanners();
+      unsubUsers();
     };
   }, []);
 
-  // Sync cart, wishlist, orders with localStorage
+  // Save Cart and Wishlist scoped to current session token
   useEffect(() => {
-    try {
-      localStorage.setItem('ash_cart', JSON.stringify(cart));
-    } catch {}
-  }, [cart]);
+    if (sessionToken) {
+      saveCartByToken(sessionToken, cart);
+    }
+  }, [cart, sessionToken]);
 
   useEffect(() => {
+    if (sessionToken) {
+      saveWishlistByToken(sessionToken, wishlist);
+    }
+  }, [wishlist, sessionToken]);
+
+  // Sync user and auth state to localStorage
+  useEffect(() => {
     try {
-      localStorage.setItem('ash_wishlist', JSON.stringify(wishlist));
+      localStorage.setItem('ash_active_user', JSON.stringify(user));
+      localStorage.setItem('ash_is_logged_in', JSON.stringify(isLoggedIn));
     } catch {}
-  }, [wishlist]);
+  }, [user, isLoggedIn]);
 
   useEffect(() => {
     try {
       localStorage.setItem('ash_orders', JSON.stringify(orders));
     } catch {}
   }, [orders]);
+
+  // Filter orders for active user
+  const userOrders = isLoggedIn
+    ? orders.filter((o) => (o as any).userId === user.id || o.shippingAddress?.fullName === user.name || !((o as any).userId))
+    : orders;
 
   // Keep state synced with router location changes
   useEffect(() => {
@@ -597,18 +645,163 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const isWishlisted = (productId: string) => wishlist.includes(productId);
 
-  const login = (data?: Partial<UserProfile>) => {
-    setIsLoggedIn(true);
-    if (data) {
-      setUser((prev) => ({ ...prev, ...data }));
+  /**
+   * User Sign In (Supports Email, Phone, or Direct Profile Data)
+   */
+  const login = async (identifierOrData?: string | Partial<UserProfile>, password?: string): Promise<{ success: boolean; message?: string }> => {
+    let targetUser: UserProfile | undefined;
+
+    if (typeof identifierOrData === 'object') {
+      // Direct login data passed
+      targetUser = {
+        ...INITIAL_USER,
+        ...identifierOrData
+      };
+    } else if (typeof identifierOrData === 'string' && identifierOrData.trim()) {
+      const cleanIdent = identifierOrData.trim().toLowerCase();
+      targetUser = allUsers.find(
+        (u) =>
+          u.email.toLowerCase() === cleanIdent ||
+          u.phone.replace(/[^0-9]/g, '').includes(cleanIdent.replace(/[^0-9]/g, '')) ||
+          u.name.toLowerCase() === cleanIdent
+      );
+
+      if (!targetUser) {
+        // Create user on the fly if not found
+        const newUserId = `usr-${Date.now()}`;
+        targetUser = {
+          id: newUserId,
+          name: identifierOrData.includes('@') ? identifierOrData.split('@')[0] : identifierOrData,
+          phone: identifierOrData.includes('@') ? '+880 1700-000000' : identifierOrData,
+          email: identifierOrData.includes('@') ? identifierOrData : `user${Date.now()}@example.com`,
+          avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80',
+          coins: 300,
+          memberTier: 'Silver Member',
+          joinDate: new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+          role: 'customer',
+          status: 'active',
+          token: `usr_tok_${newUserId}_${Math.random().toString(36).substring(2, 8)}`,
+          totalOrders: 0,
+          totalSpent: 0
+        };
+        await saveUserToFirestore(targetUser);
+      }
+    } else {
+      targetUser = INITIAL_USER;
     }
-    setIsLoginModalOpen(false);
-    showToast(language === 'BN' ? 'সফলভাবে লগইন করেছেন!' : 'Logged in successfully!');
+
+    if (targetUser) {
+      const userToken = targetUser.token || `usr_tok_${targetUser.id}`;
+      setUser(targetUser);
+      setIsLoggedIn(true);
+      setSessionToken(userToken);
+      setUserSessionToken(userToken);
+
+      // Load user-specific token cart & wishlist (merge current guest items if existing)
+      const existingUserCart = loadCartByToken(userToken);
+      if (existingUserCart && existingUserCart.length > 0) {
+        setCart(existingUserCart);
+      }
+      const existingUserWishlist = loadWishlistByToken(userToken);
+      if (existingUserWishlist && existingUserWishlist.length > 0) {
+        setWishlist(existingUserWishlist);
+      }
+
+      setIsLoginModalOpen(false);
+      showToast(language === 'BN' ? `স্বাগতম, ${targetUser.name}!` : `Welcome back, ${targetUser.name}!`);
+      return { success: true };
+    }
+
+    return { success: false, message: 'Invalid credentials' };
   };
 
+  /**
+   * User Sign Up (Registers to Firestore & assigns unique token)
+   */
+  const signup = async (userData: { name: string; email: string; phone: string; password?: string }): Promise<{ success: boolean; message?: string }> => {
+    try {
+      const newUserId = `usr-${Date.now()}`;
+      const userToken = `usr_tok_${newUserId}_${Math.random().toString(36).substring(2, 9)}`;
+
+      const newUser: UserProfile = {
+        id: newUserId,
+        name: userData.name || 'New Customer',
+        email: userData.email,
+        phone: userData.phone.startsWith('+880') ? userData.phone : `+880 ${userData.phone}`,
+        password: userData.password || 'password123',
+        avatar: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80`,
+        coins: 500, // Welcome gift of 500 coins
+        memberTier: 'Silver Member',
+        joinDate: new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+        role: 'customer',
+        status: 'active',
+        token: userToken,
+        totalOrders: 0,
+        totalSpent: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      await saveUserToFirestore(newUser);
+
+      setUser(newUser);
+      setIsLoggedIn(true);
+      setSessionToken(userToken);
+      setUserSessionToken(userToken);
+
+      // Save current guest cart/wishlist into this user's token space
+      saveCartByToken(userToken, cart);
+      saveWishlistByToken(userToken, wishlist);
+
+      setIsLoginModalOpen(false);
+      showToast(language === 'BN' ? 'আশাল একাউন্ট সফলভাবে তৈরি হয়েছে! (+৫০০ কয়েন 🎉)' : 'Account created successfully! (+500 Welcome Coins 🎉)');
+      return { success: true };
+    } catch (err: any) {
+      console.error('Signup error:', err);
+      return { success: false, message: err?.message || 'Signup failed' };
+    }
+  };
+
+  /**
+   * User Log Out
+   */
   const logout = () => {
     setIsLoggedIn(false);
-    showToast(language === 'BN' ? 'লগআউট করা হয়েছে' : 'Logged out');
+    clearUserSessionToken();
+    const guestTok = `guest_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    setSessionToken(guestTok);
+    // Reset to initial or empty guest state
+    setCart([]);
+    setWishlist([]);
+    showToast(language === 'BN' ? 'সফলভাবে লগআউট করা হয়েছে' : 'Logged out successfully');
+  };
+
+  /**
+   * Update User Profile
+   */
+  const updateUserProfile = async (userId: string, data: Partial<UserProfile>) => {
+    try {
+      await saveUserToFirestore({ id: userId, ...data });
+      if (user.id === userId) {
+        setUser((prev) => ({ ...prev, ...data }));
+      }
+      showToast(language === 'BN' ? 'প্রোফাইল আপডেট সম্পন্ন হয়েছে' : 'Profile updated successfully');
+    } catch (e) {
+      console.error('Profile update error:', e);
+    }
+  };
+
+  /**
+   * Delete User Account (Admin action)
+   */
+  const deleteUserAccount = async (userId: string) => {
+    try {
+      await deleteUserFromFirestore(userId);
+      setAllUsers((prev) => prev.filter((u) => u.id !== userId));
+      showToast(language === 'BN' ? 'ইউজার একাউন্ট মুছে ফেলা হয়েছে' : 'User account removed');
+    } catch (e) {
+      console.error('Delete user error:', e);
+    }
   };
 
   const claimVoucher = (id: string) => {
@@ -688,6 +881,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ]
     };
 
+    // Attach user profile metadata
+    (newOrder as any).userId = user.id;
+    (newOrder as any).userEmail = user.email;
+
     // Remove ordered items from cart
     setCart((prev) => prev.filter((i) => !i.selected));
     setOrders((prev) => [newOrder, ...prev]);
@@ -698,10 +895,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       console.warn('Firestore order save notice:', err);
     });
 
-    // Deduct coins if used
-    if (coinDiscount > 0) {
-      setUser((prev) => ({ ...prev, coins: Math.max(0, prev.coins - coinDiscount) }));
-    }
+    // Update user stats
+    const updatedTotalOrders = (user.totalOrders || 0) + 1;
+    const updatedTotalSpent = (user.totalSpent || 0) + total;
+    const coinsEarned = Math.round(total * 0.05);
+    const updatedCoins = Math.max(0, user.coins - coinDiscount) + coinsEarned;
+
+    updateUserProfile(user.id, {
+      totalOrders: updatedTotalOrders,
+      totalSpent: updatedTotalSpent,
+      coins: updatedCoins
+    });
 
     // Launch confetti
     try {
@@ -711,7 +915,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         origin: { y: 0.6 }
       });
     } catch {
-      // ignore in test
+      // ignore
     }
 
     return newOrder;
@@ -732,7 +936,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ...addr,
       id: `addr-${Date.now()}`
     };
-    setAddresses((prev) => (addr.isDefault ? [newAddr, ...prev.map((a) => ({ ...a, isDefault: false }))] : [...prev, newAddr]));
+    const updatedAddrs = addr.isDefault
+      ? [newAddr, ...addresses.map((a) => ({ ...a, isDefault: false }))]
+      : [...addresses, newAddr];
+
+    setAddresses(updatedAddrs);
+    updateUserProfile(user.id, { addresses: updatedAddrs });
     showToast(language === 'BN' ? 'নতুন ঠিকানা যোগ হয়েছে' : 'New address saved');
   };
 
@@ -764,12 +973,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         toggleWishlist,
         isWishlisted,
         user,
+        allUsers,
+        sessionToken,
         isLoggedIn,
         login,
+        signup,
         logout,
+        updateUserProfile,
+        deleteUserAccount,
         vouchers,
         claimVoucher,
         orders,
+        userOrders,
         currentOrderId,
         currentOrder,
         setCurrentOrderId,
@@ -800,3 +1015,4 @@ export const useApp = () => {
   }
   return context;
 };
+
