@@ -1,0 +1,80 @@
+{
+  "$schema": "https://raw.githubusercontent.com/firebase/firebase-tools/master/schema/firestore-blueprint.json",
+  "entities": {
+    "Product": {
+      "collection": "products",
+      "fields": {
+        "title": { "type": "string" },
+        "titleBn": { "type": "string" },
+        "slug": { "type": "string" },
+        "brand": { "type": "string" },
+        "category": { "type": "string" },
+        "categorySlug": { "type": "string" },
+        "subCategory": { "type": "string" },
+        "price": { "type": "number" },
+        "originalPrice": { "type": "number" },
+        "discountPercentage": { "type": "number" },
+        "rating": { "type": "number" },
+        "reviewsCount": { "type": "number" },
+        "soldCount": { "type": "number" },
+        "inStock": { "type": "number" },
+        "isDarazMall": { "type": "boolean" },
+        "isFreeDelivery": { "type": "boolean" },
+        "isFlashSale": { "type": "boolean" },
+        "flashSaleEndTime": { "type": "string" },
+        "coinsCashback": { "type": "number" },
+        "mainImage": { "type": "string" },
+        "images": { "type": "array" },
+        "description": { "type": "array" },
+        "descriptionBn": { "type": "array" },
+        "specifications": { "type": "map" },
+        "seller": { "type": "map" },
+        "warranty": { "type": "string" },
+        "returnPolicy": { "type": "string" },
+        "deliveryFee": { "type": "number" },
+        "estimatedDeliveryDays": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      }
+    },
+    "Order": {
+      "collection": "orders",
+      "fields": {
+        "orderNumber": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "items": { "type": "array" },
+        "shippingAddress": { "type": "map" },
+        "paymentMethod": { "type": "string" },
+        "paymentStatus": { "type": "string" },
+        "orderStatus": { "type": "string" },
+        "subtotal": { "type": "number" },
+        "shippingFee": { "type": "number" },
+        "voucherDiscount": { "type": "number" },
+        "coinDiscount": { "type": "number" },
+        "total": { "type": "number" },
+        "trackingNumber": { "type": "string" },
+        "courier": { "type": "string" },
+        "timeline": { "type": "array" }
+      }
+    },
+    "Banner": {
+      "collection": "banners",
+      "fields": {
+        "title": { "type": "string" },
+        "subtitle": { "type": "string" },
+        "image": { "type": "string" },
+        "linkType": { "type": "string" },
+        "targetId": { "type": "string" },
+        "bgColor": { "type": "string" },
+        "badge": { "type": "string" }
+      }
+    },
+    "Setting": {
+      "collection": "settings",
+      "fields": {
+        "key": { "type": "string" },
+        "value": { "type": "string" }
+      }
+    }
+  }
+}

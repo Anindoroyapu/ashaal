@@ -1,0 +1,20 @@
+# robots.txt for Ashaal E-commerce Platform
+User-agent: *
+Allow: /
+Allow: /product/
+Allow: /products/
+Allow: /category/
+Allow: /search
+Allow: /flash-sale
+Allow: /ashaalmall
+Allow: /customer-care
+Allow: /seller-center
+Allow: /coins-rewards
+
+# Disallow private user transactional routes
+Disallow: /cart
+Disallow: /checkout
+Disallow: /order-confirmation
+Disallow: /my-account
+
+Sitemap: https://ashall.com/sitemap.xml

@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { PRODUCTS_DATA } from '../data/productsData';
 import { ProductCard } from '../components/ProductCard';
+import { SEO } from '../components/SEO';
 import {
   Star,
   ShoppingCart,
@@ -33,6 +34,7 @@ import {
 
 export const ProductDetailPage: React.FC = () => {
   const {
+    products: dynamicProducts,
     selectedProduct,
     language,
     navigate,
@@ -47,8 +49,9 @@ export const ProductDetailPage: React.FC = () => {
     t
   } = useApp();
 
+  const productsList = dynamicProducts && dynamicProducts.length > 0 ? dynamicProducts : PRODUCTS_DATA;
   const { id: routeProductId } = useParams<{ id: string }>();
-  const product = (routeProductId ? PRODUCTS_DATA.find((p) => p.id === routeProductId) : null) || selectedProduct || PRODUCTS_DATA[0];
+  const product = (routeProductId ? productsList.find((p) => p.id === routeProductId) : null) || selectedProduct || productsList[0] || PRODUCTS_DATA[0];
 
   const [selectedImage, setSelectedImage] = useState<string>(product.mainImage);
   const [selectedVariations, setSelectedVariations] = useState<Record<string, string>>(() => {
@@ -216,7 +219,7 @@ export const ProductDetailPage: React.FC = () => {
     }, 1000);
   };
 
-  const relatedProducts = PRODUCTS_DATA.filter((p) => p.categorySlug === product.categorySlug && p.id !== product.id).slice(0, 6);
+  const relatedProducts = productsList.filter((p) => p.categorySlug === product.categorySlug && p.id !== product.id).slice(0, 6);
 
   const reviewsList = product.reviews || [];
   const filteredReviews = reviewsList.filter((r) => {
@@ -224,8 +227,74 @@ export const ProductDetailPage: React.FC = () => {
     return r.rating === reviewFilter;
   });
 
+  const productJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.title,
+    image: [product.mainImage, ...(product.gallery || [])],
+    description: product.description || `Buy ${product.title} online at best price in Bangladesh on Ashaal.com.bd. Authentic ${product.brand} with warranty and fast delivery.`,
+    sku: product.id,
+    brand: {
+      '@type': 'Brand',
+      name: product.brand || 'Ashaal'
+    },
+    offers: {
+      '@type': 'Offer',
+      url: getProductShareUrl(),
+      priceCurrency: 'BDT',
+      price: product.price,
+      priceValidUntil: '2027-12-31',
+      itemCondition: 'https://schema.org/NewCondition',
+      availability: product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      seller: {
+        '@type': 'Organization',
+        name: product.seller?.name || 'Ashaal Official Mall'
+      }
+    },
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: product.rating,
+      reviewCount: product.reviewCount || 1,
+      bestRating: '5',
+      worstRating: '1'
+    }
+  };
+
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: typeof window !== 'undefined' ? window.location.origin : 'https://ashall.com'
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: product.category,
+        item: `${typeof window !== 'undefined' ? window.location.origin : 'https://ashall.com'}/category/${product.categorySlug}`
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: product.title,
+        item: getProductShareUrl()
+      }
+    ]
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 space-y-6 pb-20 sm:pb-6">
+      <SEO
+        title={`${product.title} - Price in Bangladesh | Ashaal.com.bd`}
+        description={`Buy ${product.title} online at ৳${product.price.toLocaleString('en-BD')} in Bangladesh. Genuine ${product.brand} with fast home delivery and warranty.`}
+        image={product.mainImage}
+        type="product"
+        keywords={`${product.title}, ${product.brand}, buy ${product.title} bangladesh, ${product.category}, Ashaal`}
+        structuredData={[productJsonLd, breadcrumbJsonLd]}
+      />
       {/* Breadcrumb */}
       <div className="flex items-center gap-1.5 text-xs text-gray-500 overflow-x-auto whitespace-nowrap py-1">
         <button onClick={() => navigate('home')} className="hover:text-[#16a34a] cursor-pointer">

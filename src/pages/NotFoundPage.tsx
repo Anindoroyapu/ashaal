@@ -1,6 +1,7 @@
 import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
+import { SEO } from '../components/SEO';
 import { AlertCircle, Home, Search, ShoppingBag, ArrowLeft } from 'lucide-react';
 
 export const NotFoundPage: React.FC = () => {
@@ -9,6 +10,7 @@ export const NotFoundPage: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 md:py-16">
+      <SEO title="404 - Page Not Found | Ashaal Bangladesh" noindex={true} />
       <div className="bg-white shadow-xs p-8 md:p-12 text-center max-w-2xl mx-auto space-y-6">
         <div className="w-20 h-20 bg-green-50 text-[#16a34a] rounded-full flex items-center justify-center mx-auto">
           <AlertCircle className="w-10 h-10 stroke-[2.5]" />

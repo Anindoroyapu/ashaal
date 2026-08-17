@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { SEO } from '../components/SEO';
 import {
   Store,
   TrendingUp,
@@ -57,6 +58,11 @@ export const SellerCenterPage: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-6 py-8 space-y-10">
+      <SEO
+        title={t('Become a Seller on Ashaal | Start Selling Across Bangladesh', 'আশালে সেলার হোন | অনলাইনে পণ্য বিক্রি শুরু করুন')}
+        description={t('Sell to millions of customers across 64 districts in Bangladesh with lowest commission rates, instant payouts, and free seller support on Ashaal.', 'আশাল সেলার সেন্টারে যুক্ত হয়ে আপনার পণ্য বিক্রি করুন সারা বাংলাদেশে। সহজ রেজিস্ট্রেশন ও দ্রুত পেমেন্ট সুবিধা।')}
+        keywords="sell on ashaal, ashaal seller center bangladesh, online seller bd, merchant registration"
+      />
       {/* Hero Banner */}
       <div className="bg-gradient-to-r from-[#16a34a] via-[#15803d] to-[#166534] text-white rounded-3xl p-8 sm:p-12 shadow-xl relative overflow-hidden">
         <div className="max-w-2xl space-y-4 relative z-10">
@@ -266,6 +272,11 @@ export const CoinsRewardsPage: React.FC = () => {
 
   return (
     <div className="max-w-5xl mx-auto px-3 sm:px-6 py-6 space-y-6">
+      <SEO
+        title={t('Ashaal Coins & Daily Rewards | Earn Discounts Every Day', 'আশাল কয়েন ও দৈনিক রিওয়ার্ডস | ডিসকাউন্ট সংগ্রহ করুন')}
+        description={t('Claim daily bonus coins, play lucky draw, and convert Ashaal coins to direct cash discount at checkout.', 'প্রতিদিন ফ্রি আশাল কয়েন সংগ্রহ করুন এবং চেকআউটে তাৎক্ষণিক ক্যাশ ডিসকাউন্ট উপভোগ করুন।')}
+        keywords="ashaal coins, daily reward coins, free coupons bangladesh, earn coins online"
+      />
       {/* Coins Hero Card */}
       <div className="bg-gradient-to-r from-emerald-600 via-green-600 to-[#15803d] text-white rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-6">
         <div className="space-y-2 text-center sm:text-left">

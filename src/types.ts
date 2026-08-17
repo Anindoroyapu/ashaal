@@ -173,4 +173,5 @@ export type PageView =
   | 'seller-center'
   | 'customer-care'
   | 'my-account'
-  | 'coins-rewards';
+  | 'coins-rewards'
+  | 'manage';

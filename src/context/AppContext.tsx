@@ -1,8 +1,15 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate as useRouterNavigate, useLocation } from 'react-router-dom';
-import { Product, CartItem, Voucher, DeliveryAddress, Order, PageView, Language } from '../types';
+import { Product, CartItem, Voucher, DeliveryAddress, Order, PageView, Language, Banner } from '../types';
 import { PRODUCTS_DATA } from '../data/productsData';
-import { VOUCHERS_DATA } from '../data/bannersData';
+import { VOUCHERS_DATA, HERO_BANNERS } from '../data/bannersData';
+import {
+  subscribeToProducts,
+  subscribeToOrders,
+  subscribeToBanners,
+  saveOrderToFirestore,
+  updateOrderStatusInFirestore
+} from '../services/firestoreService';
 import confetti from 'canvas-confetti';
 
 interface UserProfile {
@@ -126,6 +133,10 @@ export function parseRouteFromBrowserLocation(): RouteState {
     return { page: 'coins-rewards' };
   }
 
+  if (path === '/manage' || path.startsWith('/manage/')) {
+    return { page: 'manage' };
+  }
+
   return { page: 'home' };
 }
 
@@ -136,6 +147,8 @@ export function buildRouteUrl(
   switch (page) {
     case 'home':
       return '/';
+    case 'manage':
+      return '/manage';
     case 'product-details':
       return params?.productId ? `/product/${params.productId}` : '/product';
     case 'search': {
@@ -176,6 +189,8 @@ interface AppContextType {
   setLanguage: (lang: Language) => void;
   currentPage: PageView;
   navigate: (page: PageView, params?: { productId?: string; categorySlug?: string; searchQuery?: string; orderId?: string; filter?: string }) => void;
+  products: Product[];
+  banners: Banner[];
   selectedProductId: string | null;
   selectedProduct: Product | null;
   selectedCategorySlug: string | null;
@@ -358,6 +373,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [selectedCategorySlug, setSelectedCategorySlug] = useState<string | null>(initialRoute.categorySlug || null);
   const [searchQuery, setSearchQuery] = useState<string>(initialRoute.searchQuery || '');
   const [searchFilter, setSearchFilter] = useState<string | null>(initialRoute.searchFilter || null);
+  const [products, setProducts] = useState<Product[]>(() => getStoredItem<Product[]>('ash_products', PRODUCTS_DATA));
+  const [banners, setBanners] = useState<Banner[]>(() => HERO_BANNERS);
   const [cart, setCart] = useState<CartItem[]>(() =>
     getStoredItem<CartItem[]>('ash_cart', [
       {
@@ -392,6 +409,39 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       localStorage.setItem('ash_lang', JSON.stringify(lang));
     } catch {}
   };
+
+  // Real-time Firestore Subscriptions for Products, Orders, and Banners
+  useEffect(() => {
+    const unsubProducts = subscribeToProducts((loadedProducts) => {
+      if (loadedProducts && loadedProducts.length > 0) {
+        setProducts(loadedProducts);
+        try {
+          localStorage.setItem('ash_products', JSON.stringify(loadedProducts));
+        } catch {}
+      }
+    });
+
+    const unsubOrders = subscribeToOrders((loadedOrders) => {
+      if (loadedOrders && loadedOrders.length > 0) {
+        setOrders(loadedOrders);
+        try {
+          localStorage.setItem('ash_orders', JSON.stringify(loadedOrders));
+        } catch {}
+      }
+    });
+
+    const unsubBanners = subscribeToBanners((loadedBanners) => {
+      if (loadedBanners && loadedBanners.length > 0) {
+        setBanners(loadedBanners);
+      }
+    });
+
+    return () => {
+      unsubProducts();
+      unsubOrders();
+      unsubBanners();
+    };
+  }, []);
 
   // Sync cart, wishlist, orders with localStorage
   useEffect(() => {
@@ -451,7 +501,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     routerNavigate(targetUrl);
   };
 
-  const selectedProduct = PRODUCTS_DATA.find((p) => p.id === selectedProductId) || null;
+  const selectedProduct =
+    products.find((p) => p.id === selectedProductId) ||
+    PRODUCTS_DATA.find((p) => p.id === selectedProductId) ||
+    products[0] ||
+    PRODUCTS_DATA[0] ||
+    null;
   const currentOrder = orders.find((o) => o.id === currentOrderId) || orders[0] || null;
 
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
@@ -638,6 +693,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setOrders((prev) => [newOrder, ...prev]);
     setCurrentOrderId(newOrder.id);
 
+    // Save to Firestore asynchronously
+    saveOrderToFirestore(newOrder).catch((err) => {
+      console.warn('Firestore order save notice:', err);
+    });
+
     // Deduct coins if used
     if (coinDiscount > 0) {
       setUser((prev) => ({ ...prev, coins: Math.max(0, prev.coins - coinDiscount) }));
@@ -661,6 +721,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setOrders((prev) =>
       prev.map((o) => (o.id === orderId ? { ...o, orderStatus: 'CANCELLED' } : o))
     );
+    updateOrderStatusInFirestore(orderId, 'CANCELLED').catch((err) => {
+      console.warn('Firestore cancel order notice:', err);
+    });
     showToast(language === 'BN' ? 'অর্ডার বাতিল করা হয়েছে' : 'Order cancelled successfully');
   };
 
@@ -680,6 +743,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setLanguage,
         currentPage,
         navigate,
+        products,
+        banners,
         selectedProductId,
         selectedProduct,
         selectedCategorySlug,

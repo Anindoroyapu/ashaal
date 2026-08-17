@@ -15,6 +15,7 @@ import { CheckoutPage } from './pages/CheckoutPage';
 import { OrderConfirmationPage, TrackOrderPage } from './pages/OrderConfirmationPage';
 import { MyAccountPage, CustomerCarePage } from './pages/MyAccountPage';
 import { SellerCenterPage, CoinsRewardsPage } from './pages/SellerCenterPage';
+import { AdminManagePage } from './pages/AdminManagePage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
 /**
@@ -34,6 +35,22 @@ const ScrollToTop: React.FC = () => {
  * App Layout with Header, Footer, and Next.js / React Router declarative Routes
  */
 const AppLayout: React.FC = () => {
+  const location = useLocation();
+  const isManageRoute = location.pathname.startsWith('/manage');
+
+  // If visiting /manage, render pure admin portal interface without customer storefront headers/footers
+  if (isManageRoute) {
+    return (
+      <div className="min-h-screen bg-slate-900 text-slate-100 font-sans">
+        <ScrollToTop />
+        <Routes>
+          <Route path="/manage" element={<AdminManagePage />} />
+          <Route path="/manage/*" element={<AdminManagePage />} />
+        </Routes>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-[#eff0f5] text-[#212121] font-sans selection:bg-[#16a34a] selection:text-white">
       <ScrollToTop />
@@ -45,6 +62,7 @@ const AppLayout: React.FC = () => {
       <main className="flex-1 w-full">
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/manage" element={<AdminManagePage />} />
           <Route path="/product/:id" element={<ProductDetailPage />} />
           <Route path="/product" element={<ProductDetailPage />} />
           <Route path="/products/:id" element={<ProductDetailPage />} />

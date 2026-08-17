@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { PRODUCTS_DATA } from '../data/productsData';
 import { ProductCard } from '../components/ProductCard';
+import { SEO } from '../components/SEO';
 import { Zap, Clock, Flame, ChevronRight, ShieldCheck, Truck, Sparkles } from 'lucide-react';
 
 export const FlashSalePage: React.FC = () => {
-  const { language, t } = useApp();
+  const { language, t, products: dynamicProducts } = useApp();
+  const productsList = dynamicProducts && dynamicProducts.length > 0 ? dynamicProducts : PRODUCTS_DATA;
 
   const [activeSlot, setActiveSlot] = useState<'current' | 'next' | 'tomorrow'>('current');
   const [activeCategory, setActiveCategory] = useState<'all' | 'electronics' | 'fashion' | 'home' | 'groceries'>('all');
@@ -23,7 +25,7 @@ export const FlashSalePage: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const flashProducts = PRODUCTS_DATA.filter((p) => {
+  const flashProducts = productsList.filter((p) => {
     if (activeCategory === 'electronics') return p.categorySlug.includes('electronic');
     if (activeCategory === 'fashion') return p.categorySlug.includes('fashion');
     if (activeCategory === 'home') return p.categorySlug.includes('home') || p.categorySlug.includes('tv');
@@ -33,6 +35,11 @@ export const FlashSalePage: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-6 py-5 space-y-6">
+      <SEO
+        title={t('Flash Sale - Limited Time Crazy Deals | Ashaal Bangladesh', 'ফ্ল্যাশ সেল - বিশেষ সময়ের সেরা অফার | আশাল')}
+        description={t('Huge discounts up to 70% off on top electronics, smartphones, fashion & beauty brands with fast home delivery across Bangladesh on Ashaal.', 'আশাল ফ্ল্যাশ সেলে পান ৭০% পর্যন্ত অবিশ্বাস্য ছাড় সেরা ব্র্যান্ড পণ্যে!')}
+        keywords="flash sale, limited deals, discount bangladesh, ashaal flash deals, low price bd"
+      />
       {/* Hero Banner for Flash Sale */}
       <div className="bg-gradient-to-r from-[#16a34a] via-[#22c55e] to-emerald-600 rounded-2xl p-6 sm:p-8 text-white shadow-lg relative overflow-hidden">
         <div className="relative z-10 max-w-2xl space-y-2">
@@ -142,7 +149,8 @@ export const FlashSalePage: React.FC = () => {
 };
 
 export const DarazMallPage: React.FC = () => {
-  const { language, navigate, vouchers, claimVoucher, t } = useApp();
+  const { language, navigate, vouchers, claimVoucher, t, products: dynamicProducts } = useApp();
+  const productsList = dynamicProducts && dynamicProducts.length > 0 ? dynamicProducts : PRODUCTS_DATA;
 
   const mallBrands = [
     { name: 'Xiaomi', logo: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=120&q=80', followers: '1.4M', banner: 'https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=500&q=80' },
@@ -153,10 +161,15 @@ export const DarazMallPage: React.FC = () => {
     { name: 'ASUS', logo: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=120&q=80', followers: '740k', banner: 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=500&q=80' }
   ];
 
-  const mallProducts = PRODUCTS_DATA.filter((p) => p.isDarazMall);
+  const mallProducts = productsList.filter((p) => p.isDarazMall);
 
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-6 py-5 space-y-8">
+      <SEO
+        title={t('AshaalMall - 100% Authentic Brand Flagship Stores | Ashaal.com.bd', 'আশালমল - ১০০% আসল অফিশিয়াল ব্র্যান্ড স্টোর')}
+        description={t('Discover 100% authentic products from flagship brand stores like Xiaomi, Walton, Apex, COSRX, and ASUS with 14 days easy return on AshaalMall.', 'আশালমল থেকে কিনুন ১০০% জেনুইন অফিশিয়াল ব্র্যান্ড প্রোডাক্ট ও পান ১৪ দিনের ইজি রিটার্ন পলিসি।')}
+        keywords="AshaalMall, authentic brands, official store bangladesh, genuine products bd, original warranty"
+      />
       {/* Mall Header Hero */}
       <div className="bg-[#0f136d] text-white rounded-2xl p-6 sm:p-8 relative overflow-hidden shadow-xl">
         <div className="max-w-2xl space-y-3 relative z-10">

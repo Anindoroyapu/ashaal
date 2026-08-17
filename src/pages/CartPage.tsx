@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { CartItem } from '../types';
+import { SEO } from '../components/SEO';
 import { ShoppingCart, Trash2, ShieldCheck, Truck, ArrowRight, TicketPercent, Coins, Store, Plus, Minus } from 'lucide-react';
 
 interface SellerCartGroup {
@@ -70,6 +71,7 @@ export const CartPage: React.FC = () => {
   if (cart.length === 0) {
     return (
       <div className="max-w-7xl mx-auto px-3 sm:px-6 py-16 text-center">
+        <SEO title={t('Shopping Cart | Ashaal.com.bd', 'শপিং কার্ট | আশাল')} noindex={true} />
         <div className="max-w-md mx-auto bg-white p-8 rounded-2xl border border-gray-200 shadow-sm space-y-4">
           <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center text-[#16a34a] mx-auto">
             <ShoppingCart className="w-10 h-10" />
@@ -93,6 +95,7 @@ export const CartPage: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-6 py-6 space-y-6">
+      <SEO title={t(`Shopping Cart (${cartCount} items) | Ashaal Bangladesh`, `শপিং কার্ট (${cartCount} পণ্য) | আশাল`)} noindex={true} />
       <h1 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">
         {t('Shopping Cart', 'শপিং কার্ট')} ({cartCount} {t('items', 'পণ্য')})
       </h1>

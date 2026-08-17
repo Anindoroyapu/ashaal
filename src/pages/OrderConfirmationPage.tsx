@@ -1,6 +1,7 @@
 import React from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
+import { SEO } from '../components/SEO';
 import { CheckCircle, Package, Truck, Printer, ArrowRight, ShieldCheck, ShoppingBag } from 'lucide-react';
 
 export const OrderConfirmationPage: React.FC = () => {
@@ -30,6 +31,7 @@ export const OrderConfirmationPage: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto px-3 sm:px-6 py-8 space-y-6">
+      <SEO title={t(`Order Placed #${order.id} | Ashaal Bangladesh`, `অর্ডার সম্পন্ন #${order.id} | আশাল`)} noindex={true} />
       {/* Success Badge Banner */}
       <div className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 text-center space-y-3 shadow-sm">
         <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-2 animate-bounce">
@@ -201,6 +203,7 @@ export const TrackOrderPage: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto px-3 sm:px-6 py-6 space-y-6">
+      <SEO title={t(`Track Package #${order.trackingNumber} | Ashaal Express (DEX)`, `প্যাকেজ ট্র্যাকিং #${order.trackingNumber} | আশাল`)} noindex={true} />
       <div className="flex items-center justify-between pb-2 border-b border-gray-200">
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">

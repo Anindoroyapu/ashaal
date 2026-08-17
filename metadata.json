@@ -1,6 +1,6 @@
 {
   "name": "Ashaal Bangladesh Online Shopping",
-  "description": "Comprehensive e-commerce platform with flash sales, AshaalMall, product details, cart, bKash/Nagad/COD checkout, order tracking, seller center, and multi-language support.",
+  "description": "Comprehensive e-commerce marketplace in Bangladesh featuring real-time Firebase Firestore database, dedicated /manage secret admin panel for adding/editing products, orders, and banners, flash sales, AshaalMall authentic brands, dynamic checkout with bKash/Nagad/Rocket/COD, and bilingual support (English & Bengali).",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

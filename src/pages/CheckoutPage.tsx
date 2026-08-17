@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { DeliveryAddress } from '../types';
+import { SEO } from '../components/SEO';
 import {
   MapPin,
   Truck,
@@ -133,6 +134,7 @@ export const CheckoutPage: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-6 py-6 space-y-6">
+      <SEO title={t('Secure Checkout | Ashaal Bangladesh', 'নিরাপদ চেকআউট | আশাল')} noindex={true} />
       {/* Header */}
       <div className="flex items-center gap-3 pb-2 border-b border-gray-200">
         <button onClick={() => navigate('cart')} className="p-1 hover:bg-gray-100 rounded-full cursor-pointer">

@@ -4,6 +4,7 @@ import { useApp } from '../context/AppContext';
 import { PRODUCTS_DATA } from '../data/productsData';
 import { CATEGORIES_DATA } from '../data/categoriesData';
 import { ProductCard } from '../components/ProductCard';
+import { SEO } from '../components/SEO';
 import {
   Filter,
   Grid,
@@ -27,8 +28,11 @@ export const SearchListingPage: React.FC = () => {
     setSearchFilter,
     navigate,
     language,
-    t
+    t,
+    products: dynamicProducts
   } = useApp();
+
+  const productsList = dynamicProducts && dynamicProducts.length > 0 ? dynamicProducts : PRODUCTS_DATA;
 
   const { slug: routeCategorySlug } = useParams<{ slug: string }>();
   const [searchParams] = useSearchParams();
@@ -50,15 +54,15 @@ export const SearchListingPage: React.FC = () => {
   // Available brands
   const allBrands = useMemo(() => {
     const set = new Set<string>();
-    PRODUCTS_DATA.forEach((p) => set.add(p.brand));
+    productsList.forEach((p) => set.add(p.brand));
     return Array.from(set);
-  }, []);
+  }, [productsList]);
 
   const activeCategory = CATEGORIES_DATA.find((c) => c.slug === effectiveCategorySlug);
 
   // Filter products
   const filteredProducts = useMemo(() => {
-    return PRODUCTS_DATA.filter((p) => {
+    return productsList.filter((p) => {
       // Search text query
       if (effectiveSearchQuery.trim()) {
         const q = effectiveSearchQuery.toLowerCase();
@@ -104,8 +108,9 @@ export const SearchListingPage: React.FC = () => {
       return 0; // default best match
     });
   }, [
-    searchQuery,
-    selectedCategorySlug,
+    productsList,
+    effectiveSearchQuery,
+    effectiveCategorySlug,
     searchFilter,
     selectedBrands,
     minPrice,
@@ -135,8 +140,23 @@ export const SearchListingPage: React.FC = () => {
     setSearchFilter(null);
   };
 
+  const pageTitle = activeCategory
+    ? `${activeCategory.name} - Buy Online in Bangladesh | Ashaal.com.bd`
+    : effectiveSearchQuery
+    ? `Search results for "${effectiveSearchQuery}" | Ashaal.com.bd`
+    : 'All Products & Categories | Ashaal Bangladesh';
+
+  const pageDescription = activeCategory
+    ? `Explore best deals on ${activeCategory.name} in Bangladesh. Genuine products, discount vouchers, and fast cash-on-delivery on Ashaal.`
+    : `Browse verified deals, lowest prices, and top rated products with fast delivery on Ashaal.com.bd.`;
+
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 space-y-4">
+      <SEO
+        title={pageTitle}
+        description={pageDescription}
+        keywords={`${activeCategory ? activeCategory.name + ', ' : ''}${effectiveSearchQuery ? effectiveSearchQuery + ', ' : ''}buy online bangladesh, best prices, Ashaal`}
+      />
       {/* Breadcrumb & Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-gray-200">
         <div className="flex items-center gap-2 text-xs text-gray-500">

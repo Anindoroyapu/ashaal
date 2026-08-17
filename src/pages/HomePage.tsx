@@ -4,6 +4,7 @@ import { HERO_BANNERS, PROMO_CHANNELS } from '../data/bannersData';
 import { CATEGORIES_DATA } from '../data/categoriesData';
 import { PRODUCTS_DATA } from '../data/productsData';
 import { ProductCard } from '../components/ProductCard';
+import { SEO } from '../components/SEO';
 import {
   Zap,
   ShieldCheck,
@@ -23,17 +24,21 @@ import {
 } from 'lucide-react';
 
 export const HomePage: React.FC = () => {
-  const { language, navigate, vouchers, claimVoucher, t } = useApp();
+  const { language, navigate, vouchers, claimVoucher, t, products: dynamicProducts, banners: dynamicBanners } = useApp();
+
+  const productsList = dynamicProducts && dynamicProducts.length > 0 ? dynamicProducts : PRODUCTS_DATA;
+  const bannersList = dynamicBanners && dynamicBanners.length > 0 ? dynamicBanners : HERO_BANNERS;
 
   // Carousel slider state
   const [currentSlide, setCurrentSlide] = useState(0);
 
   useEffect(() => {
+    if (bannersList.length === 0) return;
     const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % HERO_BANNERS.length);
+      setCurrentSlide((prev) => (prev + 1) % bannersList.length);
     }, 4500);
     return () => clearInterval(timer);
-  }, []);
+  }, [bannersList.length]);
 
   // Flash sale countdown timer simulation
   const [timeLeft, setTimeLeft] = useState({ hours: 11, minutes: 42, seconds: 18 });
@@ -58,10 +63,10 @@ export const HomePage: React.FC = () => {
   const [justForYouTab, setJustForYouTab] = useState<'all' | 'electronics' | 'fashion' | 'beauty' | 'groceries'>('all');
   const [visibleCount, setVisibleCount] = useState(8);
 
-  const flashSaleProducts = PRODUCTS_DATA.filter((p) => p.isFlashSale);
-  const darazMallProducts = PRODUCTS_DATA.filter((p) => p.isDarazMall);
+  const flashSaleProducts = productsList.filter((p) => p.isFlashSale);
+  const darazMallProducts = productsList.filter((p) => p.isDarazMall);
 
-  const filteredJustForYou = PRODUCTS_DATA.filter((p) => {
+  const filteredJustForYou = productsList.filter((p) => {
     if (justForYouTab === 'electronics') return p.categorySlug.includes('electronic');
     if (justForYouTab === 'fashion') return p.categorySlug.includes('fashion');
     if (justForYouTab === 'beauty') return p.categorySlug.includes('beauty');
@@ -85,12 +90,19 @@ export const HomePage: React.FC = () => {
 
   return (
     <div className="space-y-6 sm:space-y-8 pb-12">
+      <SEO
+        title={t('Online Shopping in Bangladesh | Flash Deals, Free Shipping & AshaalMall', 'অনলাইন শপিং বাংলাদেশ | ফ্ল্যাশ ডিল ও ফ্রি শিপিং')}
+        description={t(
+          'Shop online at Ashaal.com.bd for electronics, fashion, beauty, groceries & home appliances with Cash on Delivery, bKash & Nagad payments and fast nationwide delivery.',
+          'আশাল ডট কম ডট বিডি থেকে ইলেকট্রনিক্স, ফ্যাশন, প্রসাধনী ও গৃহস্থালির পণ্য কিনুন ক্যাশ অন ডেলিভারি এবং দ্রুততম হোম ডেলিভারিতে।'
+        )}
+      />
       {/* 1. Hero Carousel & Promo Box */}
       <section className="max-w-7xl mx-auto px-3 sm:px-6 pt-4">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           {/* Main Banner Slider */}
           <div className="lg:col-span-9 relative rounded-xl overflow-hidden shadow-lg h-[240px] sm:h-[340px] md:h-[380px] group bg-gray-900">
-            {HERO_BANNERS.map((banner, index) => (
+            {bannersList.map((banner, index) => (
               <div
                 key={banner.id}
                 onClick={() => {
@@ -129,7 +141,7 @@ export const HomePage: React.FC = () => {
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                setCurrentSlide((prev) => (prev === 0 ? HERO_BANNERS.length - 1 : prev - 1));
+                setCurrentSlide((prev) => (prev === 0 ? bannersList.length - 1 : prev - 1));
               }}
               className="absolute left-3 top-1/2 -translate-y-1/2 z-20 bg-black/40 hover:bg-black/70 text-white p-2 rounded-full backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity"
             >
@@ -138,7 +150,7 @@ export const HomePage: React.FC = () => {
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                setCurrentSlide((prev) => (prev === 0 ? HERO_BANNERS.length - 1 : prev - 1));
+                setCurrentSlide((prev) => (prev === bannersList.length - 1 ? 0 : prev + 1));
               }}
               className="absolute right-3 top-1/2 -translate-y-1/2 z-20 bg-black/40 hover:bg-black/70 text-white p-2 rounded-full backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity"
             >
@@ -147,7 +159,7 @@ export const HomePage: React.FC = () => {
 
             {/* Dots */}
             <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex gap-2">
-              {HERO_BANNERS.map((_, idx) => (
+              {bannersList.map((_, idx) => (
                 <button
                   key={idx}
                   onClick={(e) => {

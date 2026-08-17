@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { PRODUCTS_DATA } from '../data/productsData';
 import { ProductCard } from '../components/ProductCard';
+import { SEO } from '../components/SEO';
 import {
   User,
   Package,
@@ -50,6 +51,10 @@ export const MyAccountPage: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-6 py-6 space-y-6">
+      <SEO
+        title={t('My Account & Orders | Ashaal Bangladesh', 'আমার অ্যাকাউন্ট ও অর্ডার সমূহ | আশাল')}
+        noindex={true}
+      />
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Sidebar Menu */}
         <div className="lg:col-span-3 space-y-4">
@@ -370,8 +375,27 @@ export const CustomerCarePage: React.FC = () => {
     { q: 'What is AshaalMall 100% Authentic Guarantee?', a: 'AshaalMall products are supplied directly by authorized brand owners. If proven fake, you get 2x money back.' }
   ];
 
+  const faqJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((f) => ({
+      '@type': 'Question',
+      name: f.q,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: f.a
+      }
+    }))
+  };
+
   return (
     <div className="max-w-6xl mx-auto px-3 sm:px-6 py-8 space-y-8">
+      <SEO
+        title={t('Customer Care & Help Center | Ashaal Bangladesh', 'কাস্টমার কেয়ার ও সাপোর্ট হাব | আশাল')}
+        description={t('Get 24/7 help on Ashaal orders, returns, bKash refunds, tracking delivery, and voucher discounts.', 'আশাল কাস্টমার কেয়ার - ২৪/৭ লাইভ চ্যাট, রিটার্ন এবং রিফান্ড পলিসি।')}
+        keywords="Ashaal customer care, helpline 16492, returns, refund policy bangladesh, order help"
+        structuredData={faqJsonLd}
+      />
       {/* Hero Header */}
       <div className="bg-gradient-to-r from-[#16a34a] to-[#15803d] text-white rounded-2xl p-6 sm:p-8 text-center space-y-2">
         <h1 className="text-2xl sm:text-3xl font-black">{t('Ashaal Bangladesh Help Center', 'আশাল কাস্টমার কেয়ার ও সাপোর্ট')}</h1>
