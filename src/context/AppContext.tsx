@@ -507,7 +507,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Filter orders for active user
   const userOrders = isLoggedIn
-    ? orders.filter((o) => (o as any).userId === user.id || o.shippingAddress?.fullName === user.name || !((o as any).userId))
+    ? orders.filter((o) => {
+        const orderUserId = (o as any).userId;
+        return orderUserId === user.id || o.shippingAddress?.fullName === user.name;
+      })
     : orders;
 
   // Keep state synced with router location changes

@@ -15,6 +15,25 @@ import { Product, Order, Banner, UserProfile } from '../types';
 import { PRODUCTS_DATA } from '../data/productsData';
 import { HERO_BANNERS } from '../data/bannersData';
 
+const SERVER_API_URL = typeof window !== 'undefined' ? '' : '';
+
+/**
+ * Helper to sync data with the Express server API
+ */
+async function syncWithServer(endpoint: string, method: string, data: any): Promise<void> {
+  try {
+    if (typeof window === 'undefined') return;
+    const baseUrl = window.location.origin;
+    await fetch(`${baseUrl}/api/${endpoint}`, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+  } catch {
+    // Silently fail - Firestore is the primary source of truth
+  }
+}
+
 const PRODUCTS_COLLECTION = 'products';
 const ORDERS_COLLECTION = 'orders';
 const BANNERS_COLLECTION = 'banners';
@@ -210,6 +229,7 @@ export async function saveProductToFirestore(product: Partial<Product> & { id?: 
   };
 
   await setDoc(docRef, productData, { merge: true });
+  await syncWithServer(`products`, 'POST', productData);
   return productId;
 }
 
@@ -264,11 +284,12 @@ export function subscribeToOrders(onOrdersChange: (orders: Order[]) => void) {
 export async function saveOrderToFirestore(order: Order): Promise<void> {
   try {
     const docRef = doc(db, ORDERS_COLLECTION, order.id);
-    await setDoc(docRef, {
-      ...order,
-      createdAt: order.createdAt || new Date().toLocaleString('en-US')
-    });
-  } catch (err) {
+  await setDoc(docRef, {
+    ...order,
+    createdAt: order.createdAt || new Date().toLocaleString('en-US')
+  });
+  await syncWithServer(`orders`, 'POST', order);
+} catch (err) {
     console.error('Error saving order to Firestore:', err);
   }
 }
@@ -358,6 +379,7 @@ export async function saveBannerToFirestore(banner: Banner): Promise<void> {
   const bannerId = banner.id || `b-${Date.now()}`;
   const docRef = doc(db, BANNERS_COLLECTION, bannerId);
   await setDoc(docRef, { ...banner, id: bannerId }, { merge: true });
+  await syncWithServer(`banners`, 'POST', { ...banner, id: bannerId });
 }
 
 export async function deleteBannerFromFirestore(bannerId: string): Promise<void> {
@@ -467,6 +489,7 @@ export async function saveUserToFirestore(user: Partial<UserProfile> & { id?: st
   };
 
   await setDoc(docRef, cleanUserData, { merge: true });
+  await syncWithServer(`users`, 'POST', cleanUserData);
   return userId;
 }
 
