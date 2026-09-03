@@ -746,3 +746,4 @@ export async function saveUserRecord(connOrPool: mysql.Pool | mysql.PoolConnecti
     joinDate, role, status, token, totalOrders, totalSpent, addresses
   });
 }
+

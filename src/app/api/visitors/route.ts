@@ -28,3 +28,4 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, message: 'Failed to log visitor: ' + err.message }, { status: 500 });
   }
 }
+

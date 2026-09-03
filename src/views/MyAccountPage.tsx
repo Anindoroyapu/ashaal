@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { useApp } from '../context/AppContext';
-import { PRODUCTS_DATA } from '../data/productsData';
-import { ProductCard } from '../components/ProductCard';
-import { SEO } from '../components/SEO';
+import React, { useState } from "react";
+import { useApp } from "../context/AppContext";
+import { PRODUCTS_DATA } from "../data/productsData";
+import { ProductCard } from "../components/ProductCard";
+import { SEO } from "../components/SEO";
 import {
   User,
   Package,
@@ -20,8 +20,8 @@ import {
   Star,
   CheckCircle,
   HelpCircle,
-  Plus
-} from 'lucide-react';
+  Plus,
+} from "lucide-react";
 
 export const MyAccountPage: React.FC = () => {
   const {
@@ -34,27 +34,36 @@ export const MyAccountPage: React.FC = () => {
     language,
     logout,
     setIsLoginModalOpen,
-    t
+    t,
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState<'profile' | 'orders' | 'wishlist' | 'vouchers' | 'addresses'>('orders');
-  const [orderStatusFilter, setOrderStatusFilter] = useState<'all' | 'pending' | 'processing' | 'shipped' | 'delivered'>('all');
+  const [activeTab, setActiveTab] = useState<
+    "profile" | "orders" | "wishlist" | "vouchers" | "addresses"
+  >("orders");
+  const [orderStatusFilter, setOrderStatusFilter] = useState<
+    "all" | "pending" | "processing" | "shipped" | "delivered"
+  >("all");
 
-  const wishlistedProducts = PRODUCTS_DATA.filter((p) => wishlist.includes(p.id));
+  const wishlistedProducts = PRODUCTS_DATA.filter((p) =>
+    wishlist.includes(p.id),
+  );
 
   const filteredOrders = orders.filter((o) => {
-    if (orderStatusFilter === 'all') return true;
+    if (orderStatusFilter === "all") return true;
     return o.orderStatus.toLowerCase() === orderStatusFilter;
   });
 
   const formatPrice = (price: number) => {
-    return '৳' + price.toLocaleString('en-BD');
+    return "৳" + price.toLocaleString("en-BD");
   };
 
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-6 py-6 space-y-6">
       <SEO
-        title={t('My Account & Orders | Ashaal Bangladesh', 'আমার অ্যাকাউন্ট ও অর্ডার সমূহ | আশাল')}
+        title={t(
+          "My Account & Orders | Ashaal Bangladesh",
+          "আমার অ্যাকাউন্ট ও অর্ডার সমূহ | আশাল",
+        )}
         noindex={true}
       />
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -68,7 +77,9 @@ export const MyAccountPage: React.FC = () => {
               className="w-12 h-12 rounded-full object-cover border-2 border-[#16a34a]"
             />
             <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-sm text-gray-900 truncate">{user.name}</h3>
+              <h3 className="font-bold text-sm text-gray-900 truncate">
+                {user.name}
+              </h3>
               <p className="text-xs text-gray-500 truncate">{user.email}</p>
               <div className="flex items-center gap-1.5 mt-1 text-[11px] text-[#16a34a] font-bold">
                 <Coins className="w-3.5 h-3.5 text-amber-500" />
@@ -80,14 +91,16 @@ export const MyAccountPage: React.FC = () => {
           {/* Navigation Links */}
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-xs divide-y divide-gray-100 text-xs">
             <button
-              onClick={() => setActiveTab('orders')}
+              onClick={() => setActiveTab("orders")}
               className={`w-full flex items-center justify-between p-3.5 font-semibold transition-colors cursor-pointer ${
-                activeTab === 'orders' ? 'bg-green-50 text-[#16a34a] font-bold border-l-4 border-[#16a34a]' : 'text-gray-700 hover:bg-gray-50'
+                activeTab === "orders"
+                  ? "bg-green-50 text-[#16a34a] font-bold border-l-4 border-[#16a34a]"
+                  : "text-gray-700 hover:bg-gray-50"
               }`}
             >
               <span className="flex items-center gap-2.5">
                 <Package className="w-4 h-4" />
-                {t('My Orders', 'আমার অর্ডার সমূহ')}
+                {t("My Orders", "আমার অর্ডার সমূহ")}
               </span>
               <span className="text-[11px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-bold">
                 {orders.length}
@@ -95,14 +108,16 @@ export const MyAccountPage: React.FC = () => {
             </button>
 
             <button
-              onClick={() => setActiveTab('wishlist')}
+              onClick={() => setActiveTab("wishlist")}
               className={`w-full flex items-center justify-between p-3.5 font-semibold transition-colors cursor-pointer ${
-                activeTab === 'wishlist' ? 'bg-green-50 text-[#16a34a] font-bold border-l-4 border-[#16a34a]' : 'text-gray-700 hover:bg-gray-50'
+                activeTab === "wishlist"
+                  ? "bg-green-50 text-[#16a34a] font-bold border-l-4 border-[#16a34a]"
+                  : "text-gray-700 hover:bg-gray-50"
               }`}
             >
               <span className="flex items-center gap-2.5">
                 <Heart className="w-4 h-4" />
-                {t('My Wishlist', 'আমার উইশলিস্ট')}
+                {t("My Wishlist", "আমার উইশলিস্ট")}
               </span>
               <span className="text-[11px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-bold">
                 {wishlist.length}
@@ -110,14 +125,16 @@ export const MyAccountPage: React.FC = () => {
             </button>
 
             <button
-              onClick={() => setActiveTab('vouchers')}
+              onClick={() => setActiveTab("vouchers")}
               className={`w-full flex items-center justify-between p-3.5 font-semibold transition-colors cursor-pointer ${
-                activeTab === 'vouchers' ? 'bg-green-50 text-[#16a34a] font-bold border-l-4 border-[#16a34a]' : 'text-gray-700 hover:bg-gray-50'
+                activeTab === "vouchers"
+                  ? "bg-green-50 text-[#16a34a] font-bold border-l-4 border-[#16a34a]"
+                  : "text-gray-700 hover:bg-gray-50"
               }`}
             >
               <span className="flex items-center gap-2.5">
                 <TicketPercent className="w-4 h-4" />
-                {t('My Vouchers', 'আমার ভাউচার')}
+                {t("My Vouchers", "আমার ভাউচার")}
               </span>
               <span className="text-[11px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-bold">
                 {vouchers.filter((v) => v.isClaimed).length}
@@ -125,14 +142,16 @@ export const MyAccountPage: React.FC = () => {
             </button>
 
             <button
-              onClick={() => setActiveTab('addresses')}
+              onClick={() => setActiveTab("addresses")}
               className={`w-full flex items-center justify-between p-3.5 font-semibold transition-colors cursor-pointer ${
-                activeTab === 'addresses' ? 'bg-green-50 text-[#16a34a] font-bold border-l-4 border-[#16a34a]' : 'text-gray-700 hover:bg-gray-50'
+                activeTab === "addresses"
+                  ? "bg-green-50 text-[#16a34a] font-bold border-l-4 border-[#16a34a]"
+                  : "text-gray-700 hover:bg-gray-50"
               }`}
             >
               <span className="flex items-center gap-2.5">
                 <MapPin className="w-4 h-4" />
-                {t('Address Book', 'ঠিকানা বই')}
+                {t("Address Book", "ঠিকানা বই")}
               </span>
               <span className="text-[11px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-bold">
                 {addresses.length}
@@ -140,12 +159,12 @@ export const MyAccountPage: React.FC = () => {
             </button>
 
             <button
-              onClick={() => navigate('coins-rewards')}
+              onClick={() => navigate("coins-rewards")}
               className="w-full flex items-center justify-between p-3.5 text-gray-700 hover:bg-gray-50 font-semibold cursor-pointer"
             >
               <span className="flex items-center gap-2.5">
                 <Coins className="w-4 h-4 text-amber-500" />
-                {t('Ashaal Coins & Rewards', 'আশাল কয়েন ও রিওয়ার্ড')}
+                {t("Ashaal Coins & Rewards", "আশাল কয়েন ও রিওয়ার্ড")}
               </span>
               <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
             </button>
@@ -155,7 +174,7 @@ export const MyAccountPage: React.FC = () => {
               className="w-full flex items-center gap-2.5 p-3.5 text-red-600 hover:bg-red-50 font-semibold transition-colors cursor-pointer"
             >
               <LogOut className="w-4 h-4" />
-              <span>{t('Logout', 'লগআউট')}</span>
+              <span>{t("Logout", "লগআউট")}</span>
             </button>
           </div>
         </div>
@@ -163,41 +182,53 @@ export const MyAccountPage: React.FC = () => {
         {/* Right Content View */}
         <div className="lg:col-span-9 space-y-6">
           {/* TAB 1: ORDERS */}
-          {activeTab === 'orders' && (
+          {activeTab === "orders" && (
             <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 space-y-4 shadow-xs">
               <div className="flex items-center justify-between pb-3 border-b border-gray-200">
                 <h2 className="text-base sm:text-lg font-bold text-gray-900">
-                  {t('My Orders', 'আমার অর্ডার')}
+                  {t("My Orders", "আমার অর্ডার")}
                 </h2>
                 <div className="flex items-center gap-1 overflow-x-auto text-xs">
-                  {(['all', 'processing', 'shipped', 'delivered'] as const).map((st) => (
-                    <button
-                      key={st}
-                      onClick={() => setOrderStatusFilter(st)}
-                      className={`px-3 py-1 rounded-full font-semibold capitalize transition-colors cursor-pointer ${
-                        orderStatusFilter === st
-                          ? 'bg-[#16a34a] text-white'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
-                    >
-                      {st}
-                    </button>
-                  ))}
+                  {(["all", "processing", "shipped", "delivered"] as const).map(
+                    (st) => (
+                      <button
+                        key={st}
+                        onClick={() => setOrderStatusFilter(st)}
+                        className={`px-3 py-1 rounded-full font-semibold capitalize transition-colors cursor-pointer ${
+                          orderStatusFilter === st
+                            ? "bg-[#16a34a] text-white"
+                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                        }`}
+                      >
+                        {st}
+                      </button>
+                    ),
+                  )}
                 </div>
               </div>
 
               {filteredOrders.length === 0 ? (
                 <div className="text-center py-12 space-y-3">
                   <Package className="w-12 h-12 text-gray-300 mx-auto" />
-                  <p className="text-sm font-semibold text-gray-600">{t('No orders found in this status.', 'কোনো অর্ডার পাওয়া যায়নি।')}</p>
+                  <p className="text-sm font-semibold text-gray-600">
+                    {t(
+                      "No orders found in this status.",
+                      "কোনো অর্ডার পাওয়া যায়নি।",
+                    )}
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-4">
                   {filteredOrders.map((ord) => (
-                    <div key={ord.id} className="border border-gray-200 rounded-xl overflow-hidden shadow-2xs">
+                    <div
+                      key={ord.id}
+                      className="border border-gray-200 rounded-xl overflow-hidden shadow-2xs"
+                    >
                       <div className="bg-gray-50 px-4 py-2.5 border-b border-gray-200 flex flex-wrap items-center justify-between text-xs gap-2">
                         <div className="flex items-center gap-3">
-                          <span className="font-bold text-gray-900 font-mono">#{ord.id}</span>
+                          <span className="font-bold text-gray-900 font-mono">
+                            #{ord.id}
+                          </span>
                           <span className="text-gray-400">|</span>
                           <span className="text-gray-500">{ord.createdAt}</span>
                         </div>
@@ -205,13 +236,18 @@ export const MyAccountPage: React.FC = () => {
                           <span className="bg-green-100 text-[#16a34a] font-bold px-2 py-0.5 rounded uppercase text-[10px]">
                             {ord.orderStatus}
                           </span>
-                          <span className="font-bold text-gray-900">{formatPrice(ord.total)}</span>
+                          <span className="font-bold text-gray-900">
+                            {formatPrice(ord.total)}
+                          </span>
                         </div>
                       </div>
 
                       <div className="p-4 divide-y divide-gray-100">
                         {ord.items.map((item) => (
-                          <div key={item.id} className="py-2.5 first:pt-0 flex items-center justify-between gap-4 text-xs">
+                          <div
+                            key={item.id}
+                            className="py-2.5 first:pt-0 flex items-center justify-between gap-4 text-xs"
+                          >
                             <div className="flex items-center gap-3">
                               <img
                                 src={item.product.mainImage}
@@ -219,15 +255,22 @@ export const MyAccountPage: React.FC = () => {
                                 className="w-12 h-12 rounded object-contain bg-gray-50 border p-1"
                               />
                               <div>
-                                <p className="font-semibold text-gray-900 line-clamp-1">{item.product.title}</p>
-                                <p className="text-[11px] text-gray-500">Qty: {item.quantity} × {formatPrice(item.product.price)}</p>
+                                <p className="font-semibold text-gray-900 line-clamp-1">
+                                  {item.product.title}
+                                </p>
+                                <p className="text-[11px] text-gray-500">
+                                  Qty: {item.quantity} ×{" "}
+                                  {formatPrice(item.product.price)}
+                                </p>
                               </div>
                             </div>
                             <button
-                              onClick={() => navigate('track-order', { orderId: ord.id })}
+                              onClick={() =>
+                                navigate("track-order", { orderId: ord.id })
+                              }
                               className="text-xs text-[#16a34a] hover:underline font-bold whitespace-nowrap cursor-pointer"
                             >
-                              {t('Track', 'ট্র্যাক করুন')} →
+                              {t("Track", "ট্র্যাক করুন")} →
                             </button>
                           </div>
                         ))}
@@ -240,21 +283,27 @@ export const MyAccountPage: React.FC = () => {
           )}
 
           {/* TAB 2: WISHLIST */}
-          {activeTab === 'wishlist' && (
+          {activeTab === "wishlist" && (
             <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 space-y-4 shadow-xs">
               <h2 className="text-base sm:text-lg font-bold text-gray-900 pb-3 border-b border-gray-200">
-                {t('My Wishlist Products', 'উইশলিস্টে সংরক্ষিত পণ্য')} ({wishlist.length})
+                {t("My Wishlist Products", "উইশলিস্টে সংরক্ষিত পণ্য")} (
+                {wishlist.length})
               </h2>
 
               {wishlistedProducts.length === 0 ? (
                 <div className="text-center py-12 space-y-3">
                   <Heart className="w-12 h-12 text-gray-300 mx-auto" />
-                  <p className="text-sm font-semibold text-gray-600">{t('Your wishlist is currently empty.', 'আপনার উইশলিস্টে কোনো পণ্য নেই।')}</p>
+                  <p className="text-sm font-semibold text-gray-600">
+                    {t(
+                      "Your wishlist is currently empty.",
+                      "আপনার উইশলিস্টে কোনো পণ্য নেই।",
+                    )}
+                  </p>
                   <button
-                    onClick={() => navigate('home')}
+                    onClick={() => navigate("home")}
                     className="bg-[#16a34a] text-white font-bold px-4 py-2 rounded-lg text-xs cursor-pointer"
                   >
-                    {t('Discover Products', 'পণ্য দেখুন')}
+                    {t("Discover Products", "পণ্য দেখুন")}
                   </button>
                 </div>
               ) : (
@@ -268,10 +317,10 @@ export const MyAccountPage: React.FC = () => {
           )}
 
           {/* TAB 3: VOUCHERS */}
-          {activeTab === 'vouchers' && (
+          {activeTab === "vouchers" && (
             <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 space-y-4 shadow-xs">
               <h2 className="text-base sm:text-lg font-bold text-gray-900 pb-3 border-b border-gray-200">
-                {t('My Collected Vouchers', 'সংগৃহীত ভাউচার সমূহ')}
+                {t("My Collected Vouchers", "সংগৃহীত ভাউচার সমূহ")}
               </h2>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -282,19 +331,25 @@ export const MyAccountPage: React.FC = () => {
                   >
                     <div>
                       <div className="flex items-center justify-between mb-1">
-                        <span className="font-black text-sm text-[#16a34a]">{v.title}</span>
+                        <span className="font-black text-sm text-[#16a34a]">
+                          {v.title}
+                        </span>
                         <span className="text-[10px] font-bold bg-white text-gray-700 px-2 py-0.5 rounded border">
                           Code: {v.code}
                         </span>
                       </div>
-                      <p className="text-xs text-gray-600">{v.titleBn || v.title}</p>
-                      <p className="text-[11px] text-gray-400 mt-2">Min. Spend: ৳{v.minSpend} • Valid till {v.expiresAt}</p>
+                      <p className="text-xs text-gray-600">
+                        {v.titleBn || v.title}
+                      </p>
+                      <p className="text-[11px] text-gray-400 mt-2">
+                        Min. Spend: ৳{v.minSpend} • Valid till {v.expiresAt}
+                      </p>
                     </div>
                     <button
-                      onClick={() => navigate('home')}
+                      onClick={() => navigate("home")}
                       className="mt-3 bg-[#16a34a] hover:bg-[#15803d] text-white text-xs font-bold py-1.5 rounded-lg text-center cursor-pointer"
                     >
-                      {t('USE NOW', 'এখনই ব্যবহার করুন')}
+                      {t("USE NOW", "এখনই ব্যবহার করুন")}
                     </button>
                   </div>
                 ))}
@@ -303,30 +358,38 @@ export const MyAccountPage: React.FC = () => {
           )}
 
           {/* TAB 4: ADDRESS BOOK */}
-          {activeTab === 'addresses' && (
+          {activeTab === "addresses" && (
             <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 space-y-4 shadow-xs">
               <div className="flex items-center justify-between pb-3 border-b border-gray-200">
                 <h2 className="text-base sm:text-lg font-bold text-gray-900">
-                  {t('Saved Address Book', 'সংরক্ষিত ঠিকানা সমূহ')}
+                  {t("Saved Address Book", "সংরক্ষিত ঠিকানা সমূহ")}
                 </h2>
                 <button
-                  onClick={() => navigate('checkout')}
+                  onClick={() => navigate("checkout")}
                   className="bg-[#16a34a] text-white font-bold text-xs px-3 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>{t('Add New', 'নতুন ঠিকানা')}</span>
+                  <span>{t("Add New", "নতুন ঠিকানা")}</span>
                 </button>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {addresses.map((addr) => (
-                  <div key={addr.id} className="p-4 rounded-xl border border-gray-200 bg-gray-50 text-xs space-y-1 relative">
+                  <div
+                    key={addr.id}
+                    className="p-4 rounded-xl border border-gray-200 bg-gray-50 text-xs space-y-1 relative"
+                  >
                     <div className="flex items-center justify-between font-bold text-gray-900">
                       <span>{addr.fullName}</span>
-                      <span className="bg-white text-gray-700 px-2 py-0.5 rounded border text-[10px]">{addr.label}</span>
+                      <span className="bg-white text-gray-700 px-2 py-0.5 rounded border text-[10px]">
+                        {addr.label}
+                      </span>
                     </div>
                     <p className="text-gray-600">{addr.phone}</p>
-                    <p className="text-gray-700">{addr.addressLine}, {addr.thana}, {addr.district}, {addr.division}</p>
+                    <p className="text-gray-700">
+                      {addr.addressLine}, {addr.thana}, {addr.district},{" "}
+                      {addr.division}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -341,68 +404,106 @@ export const MyAccountPage: React.FC = () => {
 export const CustomerCarePage: React.FC = () => {
   const { language, t, showToast } = useApp();
 
-  const [aiMessage, setAiMessage] = useState('');
-  const [chatLog, setChatLog] = useState<{ sender: 'bot' | 'user'; text: string }[]>([
+  const [aiMessage, setAiMessage] = useState("");
+  const [chatLog, setChatLog] = useState<
+    { sender: "bot" | "user"; text: string }[]
+  >([
     {
-      sender: 'bot',
-      text: 'Hello! I am Ashaal Virtual Customer Assistant (CLEO). How can I assist you with orders, returns, refunds, or vouchers today?'
-    }
+      sender: "bot",
+      text: "Hello! I am Ashaal Virtual Customer Assistant (CLEO). How can I assist you with orders, returns, refunds, or vouchers today?",
+    },
   ]);
 
   const handleSendAi = (e: React.FormEvent) => {
     e.preventDefault();
     if (!aiMessage.trim()) return;
     const msg = aiMessage;
-    setChatLog((prev) => [...prev, { sender: 'user', text: msg }]);
-    setAiMessage('');
+    setChatLog((prev) => [...prev, { sender: "user", text: msg }]);
+    setAiMessage("");
 
     setTimeout(() => {
-      let reply = 'Thank you for reaching out! You can easily manage your orders or request a refund in the "My Orders" tab within 14 days of delivery.';
-      if (msg.toLowerCase().includes('refund') || msg.toLowerCase().includes('return')) {
-        reply = 'For refunds, Ashaal processes bKash refunds within 24 hours and card refunds within 5-7 business days after item pickup.';
-      } else if (msg.toLowerCase().includes('delivery') || msg.toLowerCase().includes('track')) {
-        reply = 'You can track real-time Ashaal Express packages using the "Track My Order" page with your 9-digit DEX code!';
-      } else if (msg.toLowerCase().includes('voucher') || msg.toLowerCase().includes('coupon')) {
-        reply = 'Use code ASHAALBD100 to get ৳100 OFF on your next order above ৳500!';
+      let reply =
+        'Thank you for reaching out! You can easily manage your orders or request a refund in the "My Orders" tab within 14 days of delivery.';
+      if (
+        msg.toLowerCase().includes("refund") ||
+        msg.toLowerCase().includes("return")
+      ) {
+        reply =
+          "For refunds, Ashaal processes bKash refunds within 24 hours and card refunds within 5-7 business days after item pickup.";
+      } else if (
+        msg.toLowerCase().includes("delivery") ||
+        msg.toLowerCase().includes("track")
+      ) {
+        reply =
+          'You can track real-time Ashaal Express packages using the "Track My Order" page with your 9-digit DEX code!';
+      } else if (
+        msg.toLowerCase().includes("voucher") ||
+        msg.toLowerCase().includes("coupon")
+      ) {
+        reply =
+          "Use code ASHAALBD100 to get ৳100 OFF on your next order above ৳500!";
       }
 
-      setChatLog((prev) => [...prev, { sender: 'bot', text: reply }]);
+      setChatLog((prev) => [...prev, { sender: "bot", text: reply }]);
     }, 800);
   };
 
   const faqs = [
-    { q: 'How do I return an item on Ashaal?', a: 'Go to My Account > My Orders > Select Order > Click "Initiate Return". Choose your reason and handover package to Ashaal Drop-off point or request home pickup.' },
-    { q: 'What payment methods are supported in Bangladesh?', a: 'Ashaal supports bKash, Nagad, Rocket, Visa/Mastercard debit and credit cards, and Cash on Delivery (COD).' },
-    { q: 'How long does Ashaal Express (DEX) take to deliver?', a: 'Within Dhaka: 1 to 2 business days. Outside Dhaka (Chittagong, Sylhet, etc.): 2 to 4 business days.' },
-    { q: 'What is AshaalMall 100% Authentic Guarantee?', a: 'AshaalMall products are supplied directly by authorized brand owners. If proven fake, you get 2x money back.' }
+    {
+      q: "How do I return an item on Ashaal?",
+      a: 'Go to My Account > My Orders > Select Order > Click "Initiate Return". Choose your reason and handover package to Ashaal Drop-off point or request home pickup.',
+    },
+    {
+      q: "What payment methods are supported in Bangladesh?",
+      a: "Ashaal supports bKash, Nagad, Rocket, Visa/Mastercard debit and credit cards, and Cash on Delivery (COD).",
+    },
+    {
+      q: "How long does Ashaal Express (DEX) take to deliver?",
+      a: "Within Dhaka: 1 to 2 business days. Outside Dhaka (Chittagong, Sylhet, etc.): 2 to 4 business days.",
+    },
+    {
+      q: "What is AshaalMall 100% Authentic Guarantee?",
+      a: "AshaalMall products are supplied directly by authorized brand owners. If proven fake, you get 2x money back.",
+    },
   ];
 
   const faqJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
     mainEntity: faqs.map((f) => ({
-      '@type': 'Question',
+      "@type": "Question",
       name: f.q,
       acceptedAnswer: {
-        '@type': 'Answer',
-        text: f.a
-      }
-    }))
+        "@type": "Answer",
+        text: f.a,
+      },
+    })),
   };
 
   return (
     <div className="max-w-6xl mx-auto px-3 sm:px-6 py-8 space-y-8">
       <SEO
-        title={t('Customer Care & Help Center | Ashaal Bangladesh', 'কাস্টমার কেয়ার ও সাপোর্ট হাব | আশাল')}
-        description={t('Get 24/7 help on Ashaal orders, returns, bKash refunds, tracking delivery, and voucher discounts.', 'আশাল কাস্টমার কেয়ার - ২৪/৭ লাইভ চ্যাট, রিটার্ন এবং রিফান্ড পলিসি।')}
+        title={t(
+          "Customer Care & Help Center | Ashaal Bangladesh",
+          "কাস্টমার কেয়ার ও সাপোর্ট হাব | আশাল",
+        )}
+        description={t(
+          "Get 24/7 help on Ashaal orders, returns, bKash refunds, tracking delivery, and voucher discounts.",
+          "আশাল কাস্টমার কেয়ার - ২৪/৭ লাইভ চ্যাট, রিটার্ন এবং রিফান্ড পলিসি।",
+        )}
         keywords="Ashaal customer care, helpline 16492, returns, refund policy bangladesh, order help"
         structuredData={faqJsonLd}
       />
       {/* Hero Header */}
       <div className="bg-gradient-to-r from-[#16a34a] to-[#15803d] text-white rounded-2xl p-6 sm:p-8 text-center space-y-2">
-        <h1 className="text-2xl sm:text-3xl font-black">{t('Ashaal Bangladesh Help Center', 'আশাল কাস্টমার কেয়ার ও সাপোর্ট')}</h1>
+        <h1 className="text-2xl sm:text-3xl font-black">
+          {t("Ashaal Bangladesh Help Center", "আশাল কাস্টমার কেয়ার ও সাপোর্ট")}
+        </h1>
         <p className="text-xs sm:text-sm text-green-100">
-          {t('24/7 Live Support, FAQs, and instant self-service assistance', '২৪/৭ সহায়তা, রিটার্ন ও রিফান্ড নীতি')}
+          {t(
+            "24/7 Live Support, FAQs, and instant self-service assistance",
+            "২৪/৭ সহায়তা, রিটার্ন ও রিফান্ড নীতি",
+          )}
         </p>
       </div>
 
@@ -414,19 +515,26 @@ export const CustomerCarePage: React.FC = () => {
               CLEO
             </div>
             <div>
-              <h3 className="font-bold text-xs sm:text-sm text-gray-900">Ashaal Smart AI Assistant</h3>
-              <p className="text-[10px] text-emerald-600">● Online & Ready to Help</p>
+              <h3 className="font-bold text-xs sm:text-sm text-gray-900">
+                Ashaal Smart AI Assistant
+              </h3>
+              <p className="text-[10px] text-emerald-600">
+                ● Online & Ready to Help
+              </p>
             </div>
           </div>
 
           <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-gray-50 rounded-lg my-3 text-xs">
             {chatLog.map((msg, idx) => (
-              <div key={idx} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div
+                key={idx}
+                className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
+              >
                 <div
                   className={`max-w-[85%] p-3 rounded-xl ${
-                    msg.sender === 'user'
-                      ? 'bg-[#16a34a] text-white rounded-br-none'
-                      : 'bg-white text-gray-800 border border-gray-200 rounded-bl-none shadow-2xs'
+                    msg.sender === "user"
+                      ? "bg-[#16a34a] text-white rounded-br-none"
+                      : "bg-white text-gray-800 border border-gray-200 rounded-bl-none shadow-2xs"
                   }`}
                 >
                   {msg.text}
@@ -456,11 +564,14 @@ export const CustomerCarePage: React.FC = () => {
         <div className="lg:col-span-6 space-y-6">
           <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 shadow-sm space-y-3">
             <h3 className="font-bold text-sm text-gray-900 pb-2 border-b border-gray-200">
-              {t('Frequently Asked Questions', 'প্রয়োজনীয় প্রশ্নোত্তর')}
+              {t("Frequently Asked Questions", "প্রয়োজনীয় প্রশ্নোত্তর")}
             </h3>
             <div className="space-y-3 text-xs">
               {faqs.map((f, i) => (
-                <div key={i} className="p-3 bg-gray-50 rounded-lg border border-gray-200 space-y-1">
+                <div
+                  key={i}
+                  className="p-3 bg-gray-50 rounded-lg border border-gray-200 space-y-1"
+                >
                   <h4 className="font-bold text-gray-900 flex items-start gap-1.5">
                     <HelpCircle className="w-3.5 h-3.5 text-[#16a34a] shrink-0 mt-0.5" />
                     <span>{f.q}</span>
@@ -472,9 +583,15 @@ export const CustomerCarePage: React.FC = () => {
           </div>
 
           <div className="bg-green-50 p-4 rounded-xl border border-green-200 text-xs space-y-2">
-            <h4 className="font-bold text-[#16a34a]">{t('Need Official Telephone Support?', 'সরাসরি কথা বলুন')}</h4>
-            <p className="text-gray-700">Customer Helpline: <strong>16492</strong> (9:00 AM - 9:00 PM)</p>
-            <p className="text-gray-700">Email: <strong>customer.support@ashaal.com.bd</strong></p>
+            <h4 className="font-bold text-[#16a34a]">
+              {t("Need Official Telephone Support?", "সরাসরি কথা বলুন")}
+            </h4>
+            <p className="text-gray-700">
+              Customer Helpline: <strong>16492</strong> (9:00 AM - 9:00 PM)
+            </p>
+            <p className="text-gray-700">
+              Email: <strong>customer.support@ashaal.com.bd</strong>
+            </p>
           </div>
         </div>
       </div>

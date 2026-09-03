@@ -1,17 +1,28 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { useApp } from '../context/AppContext';
-import { X, CheckCircle, ShieldCheck, MapPin, Smartphone, Mail, Lock, User, ArrowRight } from 'lucide-react';
+import React, { useState } from "react";
+import { useApp } from "../context/AppContext";
+import {
+  X,
+  CheckCircle,
+  ShieldCheck,
+  MapPin,
+  Smartphone,
+  Mail,
+  Lock,
+  User,
+  ArrowRight,
+} from "lucide-react";
 
 export const LoginModal: React.FC = () => {
-  const { isLoginModalOpen, setIsLoginModalOpen, login, signup, allUsers, t } = useApp();
+  const { isLoginModalOpen, setIsLoginModalOpen, login, signup, allUsers, t } =
+    useApp();
   const [isRegister, setIsRegister] = useState(false);
-  const [phoneOrEmail, setPhoneOrEmail] = useState('+880 1712-345678');
-  const [password, setPassword] = useState('ashaal12345');
-  const [fullName, setFullName] = useState('Tanvir Ahmed');
+  const [phoneOrEmail, setPhoneOrEmail] = useState("+880 1712-345678");
+  const [password, setPassword] = useState("ashaal12345");
+  const [fullName, setFullName] = useState("Tanvir Ahmed");
   const [otpStep, setOtpStep] = useState(false);
-  const [otpCode, setOtpCode] = useState('8492');
+  const [otpCode, setOtpCode] = useState("8492");
   const [loading, setLoading] = useState(false);
 
   if (!isLoginModalOpen) return null;
@@ -21,20 +32,24 @@ export const LoginModal: React.FC = () => {
     setLoading(true);
 
     if (isRegister) {
-      const email = phoneOrEmail.includes('@') ? phoneOrEmail : `user_${Date.now()}@ashaal.com.bd`;
-      const phone = phoneOrEmail.includes('@') ? '+880 1700-000000' : phoneOrEmail;
+      const email = phoneOrEmail.includes("@")
+        ? phoneOrEmail
+        : `user_${Date.now()}@ashaal.com.bd`;
+      const phone = phoneOrEmail.includes("@")
+        ? "+880 1700-000000"
+        : phoneOrEmail;
       await signup({
         name: fullName,
         email,
         phone,
-        password
+        password,
       });
       setLoading(false);
       setIsLoginModalOpen(false);
       return;
     }
 
-    if (!otpStep && phoneOrEmail.includes('17') && !password) {
+    if (!otpStep && phoneOrEmail.includes("17") && !password) {
       setOtpStep(true);
       setLoading(false);
       return;
@@ -59,17 +74,26 @@ export const LoginModal: React.FC = () => {
           <div>
             <h3 className="font-extrabold text-lg">
               {otpStep
-                ? t('Verify OTP Code', 'ওটিপি কোড যাচাই করুন')
+                ? t("Verify OTP Code", "ওটিপি কোড যাচাই করুন")
                 : isRegister
-                ? t('Create Ashaal Account', 'আশাল একাউন্ট তৈরি করুন')
-                : t('Welcome to Ashaal!', 'আশালে স্বাগতম!')}
+                  ? t("Create Ashaal Account", "আশাল একাউন্ট তৈরি করুন")
+                  : t("Welcome to Ashaal!", "আশালে স্বাগতম!")}
             </h3>
             <p className="text-xs text-green-100">
               {otpStep
-                ? t('Enter 4-digit code sent to your phone', 'আপনার ফোনে পাঠানো ৪ ডিজিটের কোডটি দিন')
+                ? t(
+                    "Enter 4-digit code sent to your phone",
+                    "আপনার ফোনে পাঠানো ৪ ডিজিটের কোডটি দিন",
+                  )
                 : isRegister
-                ? t('Sign up for personal token, rewards & isolated cart', 'সাইন আপ করে উপভোগ করুন পার্সোনাল টোকেন ও রিওয়ার্ড')
-                : t('Login with phone or email to load your data', 'আপনার ফোন নম্বর বা ইমেইল দিয়ে লগইন করুন')}
+                  ? t(
+                      "Sign up for personal token, rewards & isolated cart",
+                      "সাইন আপ করে উপভোগ করুন পার্সোনাল টোকেন ও রিওয়ার্ড",
+                    )
+                  : t(
+                      "Login with phone or email to load your data",
+                      "আপনার ফোন নম্বর বা ইমেইল দিয়ে লগইন করুন",
+                    )}
             </p>
           </div>
           <button
@@ -92,14 +116,22 @@ export const LoginModal: React.FC = () => {
                   SMS
                 </div>
                 <p className="text-xs text-gray-600">
-                  {t('Verification code sent to', 'ভেরিফিকেশন কোড পাঠানো হয়েছে')}{' '}
-                  <span className="font-bold text-gray-900">{phoneOrEmail}</span>
+                  {t(
+                    "Verification code sent to",
+                    "ভেরিফিকেশন কোড পাঠানো হয়েছে",
+                  )}{" "}
+                  <span className="font-bold text-gray-900">
+                    {phoneOrEmail}
+                  </span>
                 </p>
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">
-                  {t('4-Digit SMS Code (Pre-filled for Demo)', '৪ ডিজিট কোড (ডেমো কোড দেওয়া আছে)')}
+                  {t(
+                    "4-Digit SMS Code (Pre-filled for Demo)",
+                    "৪ ডিজিট কোড (ডেমো কোড দেওয়া আছে)",
+                  )}
                 </label>
                 <input
                   type="text"
@@ -116,7 +148,9 @@ export const LoginModal: React.FC = () => {
                 disabled={loading}
                 className="w-full bg-[#16a34a] hover:bg-[#15803d] text-white font-bold py-2.5 rounded-lg text-sm transition-colors shadow-md shadow-green-600/20 cursor-pointer disabled:opacity-50"
               >
-                {loading ? t('Verifying...', 'যাচাই করা হচ্ছে...') : t('Verify & Continue', 'যাচাই করে এগিয়ে যান')}
+                {loading
+                  ? t("Verifying...", "যাচাই করা হচ্ছে...")
+                  : t("Verify & Continue", "যাচাই করে এগিয়ে যান")}
               </button>
             </form>
           ) : (
@@ -124,7 +158,7 @@ export const LoginModal: React.FC = () => {
               {isRegister && (
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1">
-                    {t('Full Name', 'পুরো নাম')}
+                    {t("Full Name", "পুরো নাম")}
                   </label>
                   <div className="relative">
                     <User className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
@@ -142,7 +176,7 @@ export const LoginModal: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">
-                  {t('Phone Number or Email', 'ফোন নম্বর অথবা ইমেইল')}
+                  {t("Phone Number or Email", "ফোন নম্বর অথবা ইমেইল")}
                 </label>
                 <div className="relative">
                   <Smartphone className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
@@ -160,11 +194,11 @@ export const LoginModal: React.FC = () => {
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="text-xs font-semibold text-gray-700">
-                    {t('Password', 'পাসওয়ার্ড')}
+                    {t("Password", "পাসওয়ার্ড")}
                   </label>
                   {!isRegister && (
                     <span className="text-[11px] text-[#16a34a]">
-                      {t('Token protected', 'টোকেন সুরক্ষিত')}
+                      {t("Token protected", "টোকেন সুরক্ষিত")}
                     </span>
                   )}
                 </div>
@@ -187,29 +221,43 @@ export const LoginModal: React.FC = () => {
                 className="w-full bg-[#16a34a] hover:bg-[#15803d] text-white font-bold py-2.5 rounded-lg text-xs sm:text-sm transition-colors shadow-md shadow-green-600/20 mt-2 cursor-pointer disabled:opacity-50"
               >
                 {loading
-                  ? t('Processing...', 'প্রসেসিং হচ্ছে...')
+                  ? t("Processing...", "প্রসেসিং হচ্ছে...")
                   : isRegister
-                  ? t('SIGN UP & GET 500 COINS', 'সাইন আপ করুন (+৫০০ কয়েন)')
-                  : t('SIGN IN (LOAD DATA)', 'লগইন করুন')}
+                    ? t("SIGN UP & GET 500 COINS", "সাইন আপ করুন (+৫০০ কয়েন)")
+                    : t("SIGN IN (LOAD DATA)", "লগইন করুন")}
               </button>
 
               {/* Quick 1-Click Demo Accounts */}
               <div className="pt-2">
                 <p className="text-[11px] text-gray-400 font-medium mb-1.5 text-center">
-                  {t('Or instant login with demo accounts:', 'অথবা ডেমো একাউন্টে দ্রুত লগইন:')}
+                  {t(
+                    "Or instant login with demo accounts:",
+                    "অথবা ডেমো একাউন্টে দ্রুত লগইন:",
+                  )}
                 </p>
                 <div className="grid grid-cols-2 gap-2">
-                  {(allUsers && allUsers.length > 0 ? allUsers.slice(0, 2) : []).map((u) => (
+                  {(allUsers && allUsers.length > 0
+                    ? allUsers.slice(0, 2)
+                    : []
+                  ).map((u) => (
                     <button
                       key={u.id}
                       type="button"
                       onClick={() => handleQuickDemoUser(u)}
                       className="p-1.5 text-left border border-gray-200 hover:border-[#16a34a] hover:bg-green-50 rounded-lg text-[11px] transition-colors flex items-center gap-1.5 cursor-pointer"
                     >
-                      <img src={u.avatar} alt={u.name} className="w-5 h-5 rounded-full object-cover" />
+                      <img
+                        src={u.avatar}
+                        alt={u.name}
+                        className="w-5 h-5 rounded-full object-cover"
+                      />
                       <div className="truncate">
-                        <p className="font-bold text-gray-800 truncate">{u.name.split(' ')[0]}</p>
-                        <p className="text-[10px] text-gray-500">{u.coins} {t('coins', 'কয়েন')}</p>
+                        <p className="font-bold text-gray-800 truncate">
+                          {u.name.split(" ")[0]}
+                        </p>
+                        <p className="text-[10px] text-gray-500">
+                          {u.coins} {t("coins", "কয়েন")}
+                        </p>
                       </div>
                     </button>
                   ))}
@@ -219,14 +267,16 @@ export const LoginModal: React.FC = () => {
               <div className="text-center pt-3 border-t border-gray-100">
                 <p className="text-xs text-gray-600">
                   {isRegister
-                    ? t('Already have an account?', 'ইতিমধ্যে একাউন্ট আছে?')
-                    : t("Don't have an account?", 'কোনো একাউন্ট নেই?')}{' '}
+                    ? t("Already have an account?", "ইতিমধ্যে একাউন্ট আছে?")
+                    : t("Don't have an account?", "কোনো একাউন্ট নেই?")}{" "}
                   <button
                     type="button"
                     onClick={() => setIsRegister(!isRegister)}
                     className="text-[#16a34a] font-bold hover:underline cursor-pointer"
                   >
-                    {isRegister ? t('Login Here', 'লগইন করুন') : t('Sign Up Free', 'ফ্রি সাইন আপ')}
+                    {isRegister
+                      ? t("Login Here", "লগইন করুন")
+                      : t("Sign Up Free", "ফ্রি সাইন আপ")}
                   </button>
                 </p>
               </div>
@@ -239,29 +289,83 @@ export const LoginModal: React.FC = () => {
 };
 
 export const LocationModal: React.FC = () => {
-  const { isLocationModalOpen, setIsLocationModalOpen, activeLocation, setActiveLocation, showToast, t } = useApp();
+  const {
+    isLocationModalOpen,
+    setIsLocationModalOpen,
+    activeLocation,
+    setActiveLocation,
+    showToast,
+    t,
+  } = useApp();
 
   const DIVISIONS = [
-    { name: 'Dhaka', cities: ['Dhaka North - Gulshan', 'Dhaka North - Uttara', 'Dhaka South - Dhanmondi', 'Dhaka South - Mirpur', 'Gazipur', 'Narayanganj', 'Savar'] },
-    { name: 'Chittagong', cities: ['Chattogram City - Agrabad', 'Chattogram - Nasirabad', 'Cox’s Bazar', 'Comilla'] },
-    { name: 'Sylhet', cities: ['Sylhet Sadar - Zindabazar', 'Moulvibazar', 'Habiganj', 'Sunamganj'] },
-    { name: 'Rajshahi', cities: ['Rajshahi City - Shaheb Bazar', 'Bogra Sadar', 'Pabna'] },
-    { name: 'Khulna', cities: ['Khulna City - Sonadanga', 'Jessore Sadar', 'Kushtia'] },
-    { name: 'Barishal', cities: ['Barishal Sadar - Band Road', 'Patuakhali', 'Bhola'] },
-    { name: 'Rangpur', cities: ['Rangpur City - Jahaj Company Mor', 'Dinajpur'] },
-    { name: 'Mymensingh', cities: ['Mymensingh City - Ganginarpar', 'Jamalpur'] }
+    {
+      name: "Dhaka",
+      cities: [
+        "Dhaka North - Gulshan",
+        "Dhaka North - Uttara",
+        "Dhaka South - Dhanmondi",
+        "Dhaka South - Mirpur",
+        "Gazipur",
+        "Narayanganj",
+        "Savar",
+      ],
+    },
+    {
+      name: "Chittagong",
+      cities: [
+        "Chattogram City - Agrabad",
+        "Chattogram - Nasirabad",
+        "Cox’s Bazar",
+        "Comilla",
+      ],
+    },
+    {
+      name: "Sylhet",
+      cities: [
+        "Sylhet Sadar - Zindabazar",
+        "Moulvibazar",
+        "Habiganj",
+        "Sunamganj",
+      ],
+    },
+    {
+      name: "Rajshahi",
+      cities: ["Rajshahi City - Shaheb Bazar", "Bogra Sadar", "Pabna"],
+    },
+    {
+      name: "Khulna",
+      cities: ["Khulna City - Sonadanga", "Jessore Sadar", "Kushtia"],
+    },
+    {
+      name: "Barishal",
+      cities: ["Barishal Sadar - Band Road", "Patuakhali", "Bhola"],
+    },
+    {
+      name: "Rangpur",
+      cities: ["Rangpur City - Jahaj Company Mor", "Dinajpur"],
+    },
+    {
+      name: "Mymensingh",
+      cities: ["Mymensingh City - Ganginarpar", "Jamalpur"],
+    },
   ];
 
-  const [selectedDiv, setSelectedDiv] = useState(activeLocation.division || 'Dhaka');
+  const [selectedDiv, setSelectedDiv] = useState(
+    activeLocation.division || "Dhaka",
+  );
 
   if (!isLocationModalOpen) return null;
 
-  const currentDivObj = DIVISIONS.find((d) => d.name === selectedDiv) || DIVISIONS[0];
+  const currentDivObj =
+    DIVISIONS.find((d) => d.name === selectedDiv) || DIVISIONS[0];
 
   const handleSelectCity = (city: string) => {
     setActiveLocation({ division: selectedDiv, city });
     setIsLocationModalOpen(false);
-    showToast(`${t('Delivery address changed to', 'ডেলিভারি লোকেশন পরিবর্তন করা হয়েছে:')} ${city}`);
+    showToast(
+      `${t("Delivery address changed to", "ডেলিভারি লোকেশন পরিবর্তন করা হয়েছে:")} ${city}`,
+    );
   };
 
   return (
@@ -270,7 +374,12 @@ export const LocationModal: React.FC = () => {
         <div className="bg-[#16a34a] text-white p-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <MapPin className="w-5 h-5" />
-            <h3 className="font-bold text-base">{t('Choose Your Delivery Location', 'ডেলিভারি এলাকা নির্বাচন করুন')}</h3>
+            <h3 className="font-bold text-base">
+              {t(
+                "Choose Your Delivery Location",
+                "ডেলিভারি এলাকা নির্বাচন করুন",
+              )}
+            </h3>
           </div>
           <button
             onClick={() => setIsLocationModalOpen(false)}
@@ -282,14 +391,17 @@ export const LocationModal: React.FC = () => {
 
         <div className="p-5">
           <p className="text-xs text-gray-500 mb-3">
-            {t('Select your Division and City / Thana to check accurate delivery speed & fees in Bangladesh.', 'সঠিক ডেলিভারি চার্জ ও সময় দেখতে আপনার বিভাগ ও থানা নির্বাচন করুন।')}
+            {t(
+              "Select your Division and City / Thana to check accurate delivery speed & fees in Bangladesh.",
+              "সঠিক ডেলিভারি চার্জ ও সময় দেখতে আপনার বিভাগ ও থানা নির্বাচন করুন।",
+            )}
           </p>
 
           <div className="flex gap-4 min-h-[260px]">
             {/* Division list */}
             <div className="w-1/3 border-r border-gray-200 pr-2 space-y-1">
               <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
-                {t('Division', 'বিভাগ')}
+                {t("Division", "বিভাগ")}
               </span>
               {DIVISIONS.map((div) => (
                 <button
@@ -297,8 +409,8 @@ export const LocationModal: React.FC = () => {
                   onClick={() => setSelectedDiv(div.name)}
                   className={`w-full text-left px-2.5 py-1.5 rounded text-xs font-semibold transition-colors flex items-center justify-between cursor-pointer ${
                     selectedDiv === div.name
-                      ? 'bg-green-50 text-[#16a34a] border-l-4 border-[#16a34a]'
-                      : 'text-gray-700 hover:bg-gray-100'
+                      ? "bg-green-50 text-[#16a34a] border-l-4 border-[#16a34a]"
+                      : "text-gray-700 hover:bg-gray-100"
                   }`}
                 >
                   <span>{div.name}</span>
@@ -310,7 +422,7 @@ export const LocationModal: React.FC = () => {
             {/* City / Thana list */}
             <div className="flex-1 pl-1 space-y-1 overflow-y-auto max-h-[280px]">
               <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
-                {t('City / Area in', 'এলাকা/থানা -')} {selectedDiv}
+                {t("City / Area in", "এলাকা/থানা -")} {selectedDiv}
               </span>
               <div className="grid grid-cols-1 gap-1.5">
                 {currentDivObj.cities.map((city) => (
@@ -319,12 +431,14 @@ export const LocationModal: React.FC = () => {
                     onClick={() => handleSelectCity(city)}
                     className={`w-full text-left px-3 py-2 rounded-lg border text-xs font-medium transition-colors flex items-center justify-between cursor-pointer ${
                       activeLocation.city === city
-                        ? 'border-[#16a34a] bg-green-50/60 text-[#16a34a] font-bold'
-                        : 'border-gray-200 hover:border-green-300 text-gray-700 hover:bg-green-50/20'
+                        ? "border-[#16a34a] bg-green-50/60 text-[#16a34a] font-bold"
+                        : "border-gray-200 hover:border-green-300 text-gray-700 hover:bg-green-50/20"
                     }`}
                   >
                     <span>{city}</span>
-                    {activeLocation.city === city && <CheckCircle className="w-4 h-4 text-[#16a34a]" />}
+                    {activeLocation.city === city && (
+                      <CheckCircle className="w-4 h-4 text-[#16a34a]" />
+                    )}
                   </button>
                 ))}
               </div>

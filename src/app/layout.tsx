@@ -1,15 +1,16 @@
-import type { Metadata } from 'next';
-import './globals.css';
-import { Suspense } from 'react';
-import { AppProvider } from '@/context/AppContext';
-import { AppLayoutClient } from '@/components/AppLayoutClient';
+import type { Metadata } from "next";
+import "./globals.css";
+import { Suspense } from "react";
+import { AppProvider } from "@/context/AppContext";
+import { AppLayoutClient } from "@/components/AppLayoutClient";
 
 export const metadata: Metadata = {
-  title: 'Ashaal.com.bd | Online Shopping in Bangladesh - Best Deals & Fast Delivery',
+  title:
+    "Ashaal.com.bd | Online Shopping in Bangladesh - Best Deals & Fast Delivery",
   description:
-    'Shop online at Ashaal.com.bd for electronics, fashion, beauty, home appliances & groceries with fast nationwide delivery, Cash on Delivery, bKash & Nagad payments, and 100% authentic AshaalMall brands.',
+    "Shop online at Ashaal.com.bd for electronics, fashion, beauty, home appliances & groceries with fast nationwide delivery, Cash on Delivery, bKash & Nagad payments, and 100% authentic AshaalMall brands.",
   icons: {
-    icon: '/icon.png',
+    icon: "/icon.png",
   },
 };
 

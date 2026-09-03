@@ -1,5 +1,5 @@
-import { Suspense } from 'react';
-import { NotFoundPage } from '@/views/NotFoundPage';
+import { Suspense } from "react";
+import { NotFoundPage } from "@/views/NotFoundPage";
 
 export default function NotFound() {
   return (

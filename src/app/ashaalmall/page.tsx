@@ -1,4 +1,4 @@
-import { DarazMallPage } from '@/views/FlashSalePage';
+import { DarazMallPage } from "@/pages/FlashSalePage";
 
 export default function Page() {
   return <DarazMallPage />;

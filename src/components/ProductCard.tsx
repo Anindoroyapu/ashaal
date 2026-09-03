@@ -1,28 +1,39 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { Product } from '../types';
-import { useApp } from '../context/AppContext';
-import { Star, ShoppingCart, Heart, ShieldCheck, Zap, Truck } from 'lucide-react';
+import React from "react";
+import { Product } from "../types";
+import { useApp } from "../context/AppContext";
+import {
+  Star,
+  ShoppingCart,
+  Heart,
+  ShieldCheck,
+  Zap,
+  Truck,
+} from "lucide-react";
 
 interface ProductCardProps {
   product: Product;
-  variant?: 'standard' | 'compact' | 'flash' | 'horizontal';
+  variant?: "standard" | "compact" | "flash" | "horizontal";
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({ product, variant = 'standard' }) => {
-  const { language, navigate, addToCart, toggleWishlist, isWishlisted, t } = useApp();
+export const ProductCard: React.FC<ProductCardProps> = ({
+  product,
+  variant = "standard",
+}) => {
+  const { language, navigate, addToCart, toggleWishlist, isWishlisted, t } =
+    useApp();
   const wishlisted = isWishlisted(product.id);
 
   const formatPrice = (price: number) => {
-    return '৳' + price.toLocaleString('en-BD');
+    return "৳" + price.toLocaleString("en-BD");
   };
 
   const handleCardClick = () => {
-    navigate('product-details', { productId: product.id });
+    navigate("product-details", { productId: product.id });
   };
 
-  if (variant === 'horizontal') {
+  if (variant === "horizontal") {
     return (
       <div
         onClick={handleCardClick}
@@ -55,13 +66,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, variant = 'st
               )}
             </div>
             <h3 className="text-xs font-semibold text-[#212121] line-clamp-2 leading-tight group-hover:text-[#16a34a] transition-colors">
-              {language === 'BN' ? product.titleBn : product.title}
+              {language === "BN" ? product.titleBn : product.title}
             </h3>
           </div>
 
           <div className="flex items-end justify-between mt-2">
             <div>
-              <div className="text-[#16a34a] font-bold text-base">{formatPrice(product.price)}</div>
+              <div className="text-[#16a34a] font-bold text-base">
+                {formatPrice(product.price)}
+              </div>
               {product.discountPercentage > 0 && (
                 <div className="text-[11px] text-gray-400 line-through">
                   {formatPrice(product.originalPrice)}
@@ -72,7 +85,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, variant = 'st
               <div className="flex text-amber-400">
                 <Star className="w-3.5 h-3.5 fill-amber-400" />
               </div>
-              <span className="font-semibold text-[#212121]">{product.rating}</span>
+              <span className="font-semibold text-[#212121]">
+                {product.rating}
+              </span>
               <span>({product.reviewsCount})</span>
             </div>
           </div>
@@ -123,11 +138,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, variant = 'st
             toggleWishlist(product.id);
           }}
           className={`absolute bottom-2 right-2 p-1.5 rounded-full bg-white shadow-xs hover:bg-white transition-colors z-10 ${
-            wishlisted ? 'text-red-500 fill-red-500' : 'text-gray-400 hover:text-red-500'
+            wishlisted
+              ? "text-red-500 fill-red-500"
+              : "text-gray-400 hover:text-red-500"
           }`}
           title="Add to Wishlist"
         >
-          <Heart className={`w-4 h-4 ${wishlisted ? 'fill-red-500' : ''}`} />
+          <Heart className={`w-4 h-4 ${wishlisted ? "fill-red-500" : ""}`} />
         </button>
       </div>
 
@@ -138,19 +155,20 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, variant = 'st
           <div className="flex items-center gap-1.5 mb-1.5 min-h-[18px]">
             {product.isFreeDelivery && (
               <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1">
-                <Truck className="w-3 h-3 text-emerald-600" /> {t('Free Delivery', 'ফ্রি ডেলিভারি')}
+                <Truck className="w-3 h-3 text-emerald-600" />{" "}
+                {t("Free Delivery", "ফ্রি ডেলিভারি")}
               </span>
             )}
             {product.coinsCashback && (
               <span className="text-[10px] text-amber-700 bg-amber-50 font-semibold px-1 py-0.5 rounded">
-                +{product.coinsCashback} {t('Coins', 'কয়েন')}
+                +{product.coinsCashback} {t("Coins", "কয়েন")}
               </span>
             )}
           </div>
 
           {/* Title */}
           <h3 className="text-xs sm:text-[12px] font-semibold text-[#212121] line-clamp-2 leading-tight group-hover:text-[#16a34a] transition-colors">
-            {language === 'BN' ? product.titleBn : product.title}
+            {language === "BN" ? product.titleBn : product.title}
           </h3>
         </div>
 
@@ -168,17 +186,23 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, variant = 'st
           </div>
 
           {/* Stock Meter for Flash Sale */}
-          {product.isFlashSale && variant === 'flash' && (
+          {product.isFlashSale && variant === "flash" && (
             <div className="mt-1.5">
               <div className="w-full bg-[#dcfce7] rounded-full h-1.5 overflow-hidden">
                 <div
                   className="bg-[#16a34a] h-full rounded-full transition-all"
-                  style={{ width: `${Math.min(95, Math.max(25, (product.soldCount % 100) + 15))}%` }}
+                  style={{
+                    width: `${Math.min(95, Math.max(25, (product.soldCount % 100) + 15))}%`,
+                  }}
                 ></div>
               </div>
               <div className="flex justify-between text-[10px] text-gray-500 mt-0.5 font-medium">
-                <span>{product.soldCount} {t('Sold', 'বিক্রি')}</span>
-                <span className="text-[#16a34a] font-semibold">{product.inStock} {t('Left', 'বাকি')}</span>
+                <span>
+                  {product.soldCount} {t("Sold", "বিক্রি")}
+                </span>
+                <span className="text-[#16a34a] font-semibold">
+                  {product.inStock} {t("Left", "বাকি")}
+                </span>
               </div>
             </div>
           )}
@@ -193,7 +217,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, variant = 'st
               <span>({product.reviewsCount})</span>
             </div>
             <span className="text-gray-400 font-medium">
-              {product.soldCount > 1000 ? `${(product.soldCount / 1000).toFixed(1)}k` : product.soldCount} {t('sold', 'বিক্রিত')}
+              {product.soldCount > 1000
+                ? `${(product.soldCount / 1000).toFixed(1)}k`
+                : product.soldCount}{" "}
+              {t("sold", "বিক্রিত")}
             </span>
           </div>
 
@@ -212,7 +239,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, variant = 'st
             className="w-full mt-2.5 bg-[#eff0f5] hover:bg-[#16a34a] text-[#212121] hover:text-white border border-[#e2e2e2] hover:border-[#16a34a] font-semibold py-1.5 rounded text-xs flex items-center justify-center gap-1.5 transition-all duration-150"
           >
             <ShoppingCart className="w-3.5 h-3.5" />
-            <span>{t('Add to Cart', 'কার্টে নিন')}</span>
+            <span>{t("Add to Cart", "কার্টে নিন")}</span>
           </button>
         </div>
       </div>

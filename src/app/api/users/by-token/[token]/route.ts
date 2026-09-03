@@ -26,3 +26,4 @@ export async function GET(
     return NextResponse.json({ success: false, message: 'Failed to fetch user by token: ' + err.message }, { status: 500 });
   }
 }
+
