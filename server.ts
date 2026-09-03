@@ -1,15 +1,27 @@
-import express from "express";
-import path from "path";
-import { createServer as createViteServer } from "vite";
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc, query, orderBy } from "firebase/firestore";
-import firebaseConfig from "./firebase-applet-config.json" with { type: "json" };
+import 'dotenv/config';
+import express from 'express';
+import path from 'path';
+import { createServer as createViteServer } from 'vite';
+import {
+  pool,
+  initDatabase,
+  seedProducts,
+  seedBanners,
+  seedUsers,
+  seedOrders,
+  seedVisitors,
+  formatProductRow,
+  saveProductRecord,
+  formatOrderRow,
+  saveOrderRecord,
+  formatUserRow,
+  saveUserRecord
+} from './src/server/db.js';
+
+const appDir = process.cwd();
 
 const app = express();
-const PORT = 3000;
-
-const firebaseApp = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-const db = getFirestore(firebaseApp);
+const PORT = Number(process.env.PORT) || 3000;
 
 app.use(express.json());
 
@@ -26,589 +38,538 @@ app.use((req, res, next) => {
 
 // Helper to strip sensitive fields from user objects
 function sanitizeUser(user: any) {
-  const { token, password, ...safeUser } = user;
+  if (!user) return null;
+  const { password, ...safeUser } = user;
   return safeUser;
-}
-
-// In-memory / initial seed data for user list API
-let usersStore = [
-  {
-    id: 'usr-tanvir-1',
-    name: 'Tanvir Ahmed',
-    phone: '+880 1712-345678',
-    email: 'tanvir.ahmed@example.com',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80',
-    coins: 480,
-    memberTier: 'Gold Member',
-    joinDate: 'Jan 2023',
-    role: 'customer',
-    status: 'active',
-    token: 'usr_tok_tanvir_94821',
-    totalOrders: 14,
-    totalSpent: 28400,
-    createdAt: '2023-01-15T10:00:00.000Z'
-  },
-  {
-    id: 'usr-anindo-2',
-    name: 'Anindo Roy',
-    phone: '+880 1819-876543',
-    email: 'anindo.roy@gmail.com',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&q=80',
-    coins: 850,
-    memberTier: 'Diamond Club',
-    joinDate: 'Mar 2023',
-    role: 'customer',
-    status: 'active',
-    token: 'usr_tok_anindo_55102',
-    totalOrders: 28,
-    totalSpent: 64200,
-    createdAt: '2023-03-20T14:30:00.000Z'
-  },
-  {
-    id: 'usr-sadia-3',
-    name: 'Sadia Islam',
-    phone: '+880 1911-223344',
-    email: 'sadia.islam@yahoo.com',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&q=80',
-    coins: 210,
-    memberTier: 'Silver Member',
-    joinDate: 'Aug 2024',
-    role: 'customer',
-    status: 'active',
-    token: 'usr_tok_sadia_88301',
-    totalOrders: 5,
-    totalSpent: 9800,
-    createdAt: '2024-08-10T09:15:00.000Z'
-  },
-  {
-    id: 'usr-rafiq-4',
-    name: 'Rafiqul Hasan',
-    phone: '+880 1622-998877',
-    email: 'rafiqul.hasan@outlook.com',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&q=80',
-    coins: 120,
-    memberTier: 'Silver Member',
-    joinDate: 'Nov 2024',
-    role: 'customer',
-    status: 'active',
-    token: 'usr_tok_rafiq_47291',
-    totalOrders: 3,
-    totalSpent: 4500,
-    createdAt: '2024-11-05T16:45:00.000Z'
-  }
-];
-
-// In-memory stores synced from Firestore
-let productsStore: any[] = [];
-let ordersStore: any[] = [];
-let bannersStore: any[] = [];
-
-// Sync Firestore data to in-memory stores
-async function syncStoresFromFirestore() {
-  try {
-    // Products
-    try {
-      const productsRef = collection(db, 'products');
-      const productsSnap = await getDocs(productsRef);
-      if (!productsSnap.empty) {
-        productsStore = productsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      } else {
-        productsStore = [];
-      }
-    } catch (e) {
-      console.warn('Could not sync products from Firestore:', e);
-    }
-
-    // Orders
-    try {
-      const ordersRef = collection(db, 'orders');
-      const ordersSnap = await getDocs(ordersRef);
-      if (!ordersSnap.empty) {
-        ordersStore = ordersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      } else {
-        ordersStore = [];
-      }
-    } catch (e) {
-      console.warn('Could not sync orders from Firestore:', e);
-    }
-
-    // Banners
-    try {
-      const bannersRef = collection(db, 'banners');
-      const bannersSnap = await getDocs(bannersRef);
-      if (!bannersSnap.empty) {
-        bannersStore = bannersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      } else {
-        bannersStore = [];
-      }
-    } catch (e) {
-      console.warn('Could not sync banners from Firestore:', e);
-    }
-
-    console.log('Stores synced from Firestore:', { products: productsStore.length, orders: ordersStore.length, banners: bannersStore.length });
-  } catch (err) {
-    console.error('Error syncing stores from Firestore:', err);
-  }
 }
 
 // ==========================================
 // 1. HEALTH & METADATA API
 // ==========================================
-app.get("/api/health", (req, res) => {
+app.get('/api/health', (req, res) => {
   res.json({
-    status: "ok",
-    app: "Ashaal Bangladesh & BetterMorning API",
-    version: "1.0.0",
+    status: 'ok',
+    app: 'Ashaal Bangladesh & BetterMorning API',
+    database: 'MySQL (51.79.229.154)',
+    version: '1.0.0',
     time: new Date().toISOString(),
     endpoints: {
-      users: "/api/users",
-      userById: "/api/users/:id",
-      userByToken: "/api/users/by-token/:token",
-      products: "/api/products",
-      productById: "/api/products/:id",
-      orders: "/api/orders",
-      orderById: "/api/orders/:id",
-      banners: "/api/banners",
-      bannerById: "/api/banners/:id"
+      users: '/api/users',
+      userById: '/api/users/:id',
+      userByToken: '/api/users/by-token/:token',
+      products: '/api/products',
+      productById: '/api/products/:id',
+      orders: '/api/orders',
+      orderById: '/api/orders/:id',
+      banners: '/api/banners',
+      bannerById: '/api/banners/:id',
+      visitors: '/api/visitors',
+      seed: '/api/seed'
     }
   });
 });
 
 // ==========================================
-// 2. USER LIST API (GET /api/users)
+// 2. SEED API (Admin trigger to populate DB)
 // ==========================================
-app.get("/api/users", (req, res) => {
+app.post('/api/seed', async (req, res) => {
   try {
-    const { role, status, search, q, limit } = req.query;
-    const searchQuery = ((search || q || "") as string).toLowerCase().trim();
-
-    let filtered = [...usersStore];
-
-    if (role && role !== 'all') {
-      filtered = filtered.filter(u => u.role === role);
-    }
-
-    if (status && status !== 'all') {
-      filtered = filtered.filter(u => u.status === status);
-    }
-
-    if (searchQuery) {
-      filtered = filtered.filter(u =>
-        u.name.toLowerCase().includes(searchQuery) ||
-        u.email.toLowerCase().includes(searchQuery) ||
-        u.phone.includes(searchQuery) ||
-        u.id.toLowerCase().includes(searchQuery)
-      );
-    }
-
-    if (limit) {
-      const numLimit = parseInt(limit as string, 10);
-      if (!isNaN(numLimit) && numLimit > 0) {
-        filtered = filtered.slice(0, numLimit);
-      }
-    }
-
-    res.json({
-      success: true,
-      count: filtered.length,
-      total: usersStore.length,
-      users: filtered.map(sanitizeUser),
-      meta: {
-        timestamp: new Date().toISOString(),
-        filters: { role: role || 'all', status: status || 'all', search: searchQuery || null }
-      }
-    });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Internal server error" });
+    await seedProducts();
+    await seedBanners();
+    await seedUsers();
+    await seedOrders();
+    await seedVisitors();
+    res.json({ success: true, message: 'Successfully seeded MySQL database with marketplace data' });
+  } catch (err: any) {
+    console.error('Seed error:', err);
+    res.status(500).json({ success: false, message: 'Seed failed: ' + err.message });
   }
 });
 
 // ==========================================
-// 3. GET SINGLE USER BY ID (GET /api/users/:id)
+// 3. PRODUCTS API (GET, POST, DELETE)
 // ==========================================
-app.get("/api/users/:id", (req, res) => {
+app.get('/api/products', async (req, res) => {
   try {
-    const user = usersStore.find(u => u.id === req.params.id);
-    if (!user) {
-      return res.status(404).json({ success: false, message: `User not found with id: ${req.params.id}` });
-    }
-    res.json({ success: true, user: sanitizeUser(user) });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Internal server error" });
-  }
-});
-
-// ==========================================
-// 4. GET USER BY TOKEN (GET /api/users/by-token/:token)
-// ==========================================
-app.get("/api/users/by-token/:token", (req, res) => {
-  try {
-    const user = usersStore.find(u => u.token === req.params.token);
-    if (!user) {
-      return res.status(404).json({ success: false, message: `No active user session for the provided token` });
-    }
-    res.json({ success: true, user: sanitizeUser(user) });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Internal server error" });
-  }
-});
-
-// ==========================================
-// 5. CREATE / REGISTER USER (POST /api/users)
-// ==========================================
-app.post("/api/users", (req, res) => {
-  try {
-    const { name, email, phone, password, role, memberTier, coins } = req.body;
-
-    if (!name || !email) {
-      return res.status(400).json({ success: false, message: "name and email are required fields." });
-    }
-
-    const existing = usersStore.find(u => u.email.toLowerCase() === email.toLowerCase());
-    if (existing) {
-      return res.status(409).json({ success: false, message: "User with this email already exists." });
-    }
-
-    const newId = `usr-${Date.now()}`;
-    const newUser = {
-      id: newId,
-      name,
-      email,
-      phone: phone || '+880 1700-000000',
-      password: password || 'default123',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80',
-      coins: Number(coins) || 200,
-      memberTier: memberTier || 'Silver Member',
-      joinDate: new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
-      role: role || 'customer',
-      status: 'active',
-      token: `usr_tok_${newId}_${Math.random().toString(36).substring(2, 9)}`,
-      totalOrders: 0,
-      totalSpent: 0,
-      createdAt: new Date().toISOString()
-    };
-
-    usersStore.unshift(newUser);
-    res.status(201).json({ success: true, message: "User registered successfully", user: sanitizeUser(newUser) });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Internal server error" });
-  }
-});
-
-// ==========================================
-// 6. PRODUCTS API (GET /api/products)
-// ==========================================
-app.get("/api/products", async (req, res) => {
-  try {
-    const { category, brand, sort, limit } = req.query;
-    let filtered = [...productsStore];
+    const { category, brand, sort, search, q, limit } = req.query;
+    let sql = 'SELECT * FROM products WHERE 1=1';
+    const params: any[] = [];
 
     if (category && category !== 'all') {
-      filtered = filtered.filter(p => p.categorySlug === category || p.category === category);
+      sql += ' AND (categorySlug = ? OR category = ?)';
+      params.push(category, category);
     }
+
     if (brand && brand !== 'all') {
-      filtered = filtered.filter(p => p.brand.toLowerCase() === (brand as string).toLowerCase());
+      sql += ' AND LOWER(brand) = LOWER(?)';
+      params.push(brand);
     }
+
+    const searchQuery = ((search || q || '') as string).toLowerCase().trim();
+    if (searchQuery) {
+      sql += ' AND (LOWER(title) LIKE ? OR LOWER(titleBn) LIKE ? OR LOWER(brand) LIKE ? OR LOWER(category) LIKE ?)';
+      const likeParam = `%${searchQuery}%`;
+      params.push(likeParam, likeParam, likeParam, likeParam);
+    }
+
     if (sort === 'price-asc') {
-      filtered.sort((a, b) => a.price - b.price);
+      sql += ' ORDER BY price ASC';
     } else if (sort === 'price-desc') {
-      filtered.sort((a, b) => b.price - a.price);
+      sql += ' ORDER BY price DESC';
     } else if (sort === 'rating') {
-      filtered.sort((a, b) => b.rating - a.rating);
+      sql += ' ORDER BY rating DESC';
+    } else if (sort === 'popular') {
+      sql += ' ORDER BY soldCount DESC';
+    } else {
+      sql += ' ORDER BY createdAt DESC';
     }
+
     if (limit) {
       const numLimit = parseInt(limit as string, 10);
       if (!isNaN(numLimit) && numLimit > 0) {
-        filtered = filtered.slice(0, numLimit);
+        sql += ' LIMIT ?';
+        params.push(numLimit);
       }
     }
 
+    const [rows]: any = await pool.query(sql, params);
+    const products = rows.map(formatProductRow);
+
     res.json({
       success: true,
-      count: filtered.length,
-      total: productsStore.length,
-      products: filtered,
+      count: products.length,
+      products,
       meta: { timestamp: new Date().toISOString() }
     });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Internal server error" });
+  } catch (err: any) {
+    console.error('GET /api/products error:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch products: ' + err.message });
   }
 });
 
-// ==========================================
-// 7. GET SINGLE PRODUCT BY ID (GET /api/products/:id)
-// ==========================================
-app.get("/api/products/:id", (req, res) => {
+app.get('/api/products/:id', async (req, res) => {
   try {
-    const product = productsStore.find(p => p.id === req.params.id);
-    if (!product) {
+    const [rows]: any = await pool.query('SELECT * FROM products WHERE id = ? OR slug = ? LIMIT 1', [
+      req.params.id,
+      req.params.id
+    ]);
+    if (rows.length === 0) {
       return res.status(404).json({ success: false, message: `Product not found with id: ${req.params.id}` });
     }
-    res.json({ success: true, product });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Internal server error" });
+    res.json({ success: true, product: formatProductRow(rows[0]) });
+  } catch (err: any) {
+    console.error('GET /api/products/:id error:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch product: ' + err.message });
   }
 });
 
-// ==========================================
-// 8. CREATE PRODUCT (POST /api/products)
-// ==========================================
-app.post("/api/products", async (req, res) => {
+app.post('/api/products', async (req, res) => {
   try {
     const productData = req.body;
-    const productId = productData.id || `prod-${Date.now()}`;
-    const newProduct = { ...productData, id: productId, createdAt: new Date().toISOString() };
+    const saved = await saveProductRecord(pool, productData);
+    res.status(201).json({ success: true, message: 'Product saved successfully', product: saved });
+  } catch (err: any) {
+    console.error('POST /api/products error:', err);
+    res.status(500).json({ success: false, message: 'Failed to save product: ' + err.message });
+  }
+});
 
-    productsStore.unshift(newProduct);
-
-    // Also save to Firestore
-    try {
-      await setDoc(doc(db, 'products', productId), newProduct);
-    } catch (fireErr) {
-      console.warn('Could not save product to Firestore:', fireErr);
+app.delete('/api/products/:id', async (req, res) => {
+  try {
+    const [result]: any = await pool.query('DELETE FROM products WHERE id = ?', [req.params.id]);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: `Product not found with id: ${req.params.id}` });
     }
-
-    res.status(201).json({ success: true, message: "Product created successfully", product: newProduct });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Internal server error" });
+    res.json({ success: true, message: 'Product deleted successfully' });
+  } catch (err: any) {
+    console.error('DELETE /api/products/:id error:', err);
+    res.status(500).json({ success: false, message: 'Failed to delete product: ' + err.message });
   }
 });
 
 // ==========================================
-// 9. ORDERS API (GET /api/orders)
+// 4. ORDERS API (GET, POST, PUT, DELETE)
 // ==========================================
-app.get("/api/orders", async (req, res) => {
+app.get('/api/orders', async (req, res) => {
   try {
-    const { status, orderId } = req.query;
-    let filtered = [...ordersStore];
+    const { status, orderId, userId } = req.query;
+    let sql = 'SELECT * FROM orders WHERE 1=1';
+    const params: any[] = [];
 
     if (status && status !== 'all') {
-      filtered = filtered.filter(o => o.orderStatus === status);
+      sql += ' AND orderStatus = ?';
+      params.push(status);
     }
     if (orderId) {
-      filtered = filtered.filter(o => o.id === orderId || o.orderNumber === orderId);
+      sql += ' AND (id = ? OR orderNumber = ?)';
+      params.push(orderId, orderId);
     }
+    if (userId) {
+      sql += ' AND userId = ?';
+      params.push(userId);
+    }
+
+    sql += ' ORDER BY updatedAt DESC';
+
+    const [rows]: any = await pool.query(sql, params);
+    const orders = rows.map(formatOrderRow);
 
     res.json({
       success: true,
-      count: filtered.length,
-      total: ordersStore.length,
-      orders: filtered,
+      count: orders.length,
+      orders,
       meta: { timestamp: new Date().toISOString() }
     });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Internal server error" });
+  } catch (err: any) {
+    console.error('GET /api/orders error:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch orders: ' + err.message });
   }
 });
 
-// ==========================================
-// 10. GET SINGLE ORDER BY ID (GET /api/orders/:id)
-// ==========================================
-app.get("/api/orders/:id", (req, res) => {
+app.get('/api/orders/:id', async (req, res) => {
   try {
-    const order = ordersStore.find(o => o.id === req.params.id);
-    if (!order) {
+    const [rows]: any = await pool.query('SELECT * FROM orders WHERE id = ? OR orderNumber = ? LIMIT 1', [
+      req.params.id,
+      req.params.id
+    ]);
+    if (rows.length === 0) {
       return res.status(404).json({ success: false, message: `Order not found with id: ${req.params.id}` });
     }
-    res.json({ success: true, order });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Internal server error" });
+    res.json({ success: true, order: formatOrderRow(rows[0]) });
+  } catch (err: any) {
+    console.error('GET /api/orders/:id error:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch order: ' + err.message });
   }
 });
 
-// ==========================================
-// 11. CREATE ORDER (POST /api/orders)
-// ==========================================
-app.post("/api/orders", async (req, res) => {
+app.post('/api/orders', async (req, res) => {
   try {
     const orderData = req.body;
-    const orderId = orderData.id || `ord-${Date.now()}`;
-    const newOrder = { ...orderData, id: orderId, createdAt: new Date().toISOString() };
+    const saved = await saveOrderRecord(pool, orderData);
+    res.status(201).json({ success: true, message: 'Order placed successfully', order: saved });
+  } catch (err: any) {
+    console.error('POST /api/orders error:', err);
+    res.status(500).json({ success: false, message: 'Failed to save order: ' + err.message });
+  }
+});
 
-    ordersStore.unshift(newOrder);
+app.put('/api/orders/:id', async (req, res) => {
+  try {
+    const { orderStatus, paymentStatus, timeline } = req.body;
+    const updates: string[] = [];
+    const params: any[] = [];
 
-    // Also save to Firestore
-    try {
-      await setDoc(doc(db, 'orders', orderId), newOrder);
-    } catch (fireErr) {
-      console.warn('Could not save order to Firestore:', fireErr);
+    if (orderStatus) {
+      updates.push('orderStatus = ?');
+      params.push(orderStatus);
+    }
+    if (paymentStatus) {
+      updates.push('paymentStatus = ?');
+      params.push(paymentStatus);
+    }
+    if (timeline) {
+      updates.push('timeline = ?');
+      params.push(JSON.stringify(timeline));
     }
 
-    res.status(201).json({ success: true, message: "Order placed successfully", order: newOrder });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Internal server error" });
+    if (updates.length === 0) {
+      return res.status(400).json({ success: false, message: 'No fields to update' });
+    }
+
+    params.push(req.params.id);
+    const [result]: any = await pool.query(
+      `UPDATE orders SET ${updates.join(', ')} WHERE id = ?`,
+      params
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: `Order not found with id: ${req.params.id}` });
+    }
+
+    const [rows]: any = await pool.query('SELECT * FROM orders WHERE id = ?', [req.params.id]);
+    res.json({ success: true, message: 'Order updated successfully', order: formatOrderRow(rows[0]) });
+  } catch (err: any) {
+    console.error('PUT /api/orders/:id error:', err);
+    res.status(500).json({ success: false, message: 'Failed to update order: ' + err.message });
+  }
+});
+
+app.delete('/api/orders/:id', async (req, res) => {
+  try {
+    const [result]: any = await pool.query('DELETE FROM orders WHERE id = ?', [req.params.id]);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: `Order not found with id: ${req.params.id}` });
+    }
+    res.json({ success: true, message: 'Order deleted successfully' });
+  } catch (err: any) {
+    console.error('DELETE /api/orders/:id error:', err);
+    res.status(500).json({ success: false, message: 'Failed to delete order: ' + err.message });
   }
 });
 
 // ==========================================
-// 12. BANNERS API (GET /api/banners)
+// 5. BANNERS API (GET, POST, DELETE)
 // ==========================================
-app.get("/api/banners", async (req, res) => {
+app.get('/api/banners', async (req, res) => {
   try {
+    const [rows]: any = await pool.query('SELECT * FROM banners ORDER BY id ASC');
     res.json({
       success: true,
-      count: bannersStore.length,
-      total: bannersStore.length,
-      banners: bannersStore,
+      count: rows.length,
+      banners: rows,
       meta: { timestamp: new Date().toISOString() }
     });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Internal server error" });
+  } catch (err: any) {
+    console.error('GET /api/banners error:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch banners: ' + err.message });
   }
 });
 
-// ==========================================
-// 13. GET SINGLE BANNER BY ID (GET /api/banners/:id)
-// ==========================================
-app.get("/api/banners/:id", (req, res) => {
+app.get('/api/banners/:id', async (req, res) => {
   try {
-    const banner = bannersStore.find(b => b.id === req.params.id);
-    if (!banner) {
+    const [rows]: any = await pool.query('SELECT * FROM banners WHERE id = ? LIMIT 1', [req.params.id]);
+    if (rows.length === 0) {
       return res.status(404).json({ success: false, message: `Banner not found with id: ${req.params.id}` });
     }
-    res.json({ success: true, banner });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Internal server error" });
+    res.json({ success: true, banner: rows[0] });
+  } catch (err: any) {
+    console.error('GET /api/banners/:id error:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch banner: ' + err.message });
+  }
+});
+
+app.post('/api/banners', async (req, res) => {
+  try {
+    const b = req.body;
+    const id = b.id || `b-${Date.now()}`;
+    await pool.query(
+      `INSERT INTO banners (id, title, subtitle, image, linkType, targetId, bgColor, badge)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE
+        title = VALUES(title), subtitle = VALUES(subtitle), image = VALUES(image),
+        linkType = VALUES(linkType), targetId = VALUES(targetId), bgColor = VALUES(bgColor), badge = VALUES(badge)`,
+      [id, b.title, b.subtitle, b.image, b.linkType || 'flash-sale', b.targetId || null, b.bgColor || null, b.badge || null]
+    );
+    res.status(201).json({ success: true, message: 'Banner saved successfully', banner: { ...b, id } });
+  } catch (err: any) {
+    console.error('POST /api/banners error:', err);
+    res.status(500).json({ success: false, message: 'Failed to save banner: ' + err.message });
+  }
+});
+
+app.delete('/api/banners/:id', async (req, res) => {
+  try {
+    const [result]: any = await pool.query('DELETE FROM banners WHERE id = ?', [req.params.id]);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: `Banner not found with id: ${req.params.id}` });
+    }
+    res.json({ success: true, message: 'Banner deleted successfully' });
+  } catch (err: any) {
+    console.error('DELETE /api/banners/:id error:', err);
+    res.status(500).json({ success: false, message: 'Failed to delete banner: ' + err.message });
   }
 });
 
 // ==========================================
-// 14. CREATE BANNER (POST /api/banners)
+// 6. USERS API (GET, POST, PUT, DELETE)
 // ==========================================
-app.post("/api/banners", async (req, res) => {
+app.get('/api/users', async (req, res) => {
   try {
-    const bannerData = req.body;
-    const bannerId = bannerData.id || `b-${Date.now()}`;
-    const newBanner = { ...bannerData, id: bannerId };
+    const { role, status, search, q, limit } = req.query;
+    let sql = 'SELECT * FROM users WHERE 1=1';
+    const params: any[] = [];
 
-    bannersStore.unshift(newBanner);
-
-    // Also save to Firestore
-    try {
-      await setDoc(doc(db, 'banners', bannerId), newBanner);
-    } catch (fireErr) {
-      console.warn('Could not save banner to Firestore:', fireErr);
+    if (role && role !== 'all') {
+      sql += ' AND role = ?';
+      params.push(role);
+    }
+    if (status && status !== 'all') {
+      sql += ' AND status = ?';
+      params.push(status);
     }
 
-    res.status(201).json({ success: true, message: "Banner created successfully", banner: newBanner });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Internal server error" });
+    const searchQuery = ((search || q || '') as string).toLowerCase().trim();
+    if (searchQuery) {
+      sql += ' AND (LOWER(name) LIKE ? OR LOWER(email) LIKE ? OR phone LIKE ? OR id LIKE ?)';
+      const likeParam = `%${searchQuery}%`;
+      params.push(likeParam, likeParam, likeParam, likeParam);
+    }
+
+    sql += ' ORDER BY createdAt DESC';
+
+    if (limit) {
+      const numLimit = parseInt(limit as string, 10);
+      if (!isNaN(numLimit) && numLimit > 0) {
+        sql += ' LIMIT ?';
+        params.push(numLimit);
+      }
+    }
+
+    const [rows]: any = await pool.query(sql, params);
+    const users = rows.map(formatUserRow).map(sanitizeUser);
+
+    res.json({
+      success: true,
+      count: users.length,
+      users,
+      meta: { timestamp: new Date().toISOString() }
+    });
+  } catch (err: any) {
+    console.error('GET /api/users error:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch users: ' + err.message });
   }
 });
 
-// ==========================================
-// 15. UPDATE USER (PUT /api/users/:id)
-// ==========================================
-app.put("/api/users/:id", (req, res) => {
+app.get('/api/users/by-token/:token', async (req, res) => {
   try {
-    const { name, email, phone, coins, memberTier, status } = req.body;
-    const userIndex = usersStore.findIndex(u => u.id === req.params.id);
-    if (userIndex === -1) {
+    const [rows]: any = await pool.query('SELECT * FROM users WHERE token = ? LIMIT 1', [req.params.token]);
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'No active user session for token' });
+    }
+    res.json({ success: true, user: sanitizeUser(formatUserRow(rows[0])) });
+  } catch (err: any) {
+    console.error('GET /api/users/by-token error:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch user by token: ' + err.message });
+  }
+});
+
+app.get('/api/users/:id', async (req, res) => {
+  try {
+    const [rows]: any = await pool.query('SELECT * FROM users WHERE id = ? LIMIT 1', [req.params.id]);
+    if (rows.length === 0) {
       return res.status(404).json({ success: false, message: `User not found with id: ${req.params.id}` });
     }
-    usersStore[userIndex] = { ...usersStore[userIndex], ...req.body, id: req.params.id };
-    res.json({ success: true, message: "User updated successfully", user: sanitizeUser(usersStore[userIndex]) });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Internal server error" });
+    res.json({ success: true, user: sanitizeUser(formatUserRow(rows[0])) });
+  } catch (err: any) {
+    console.error('GET /api/users/:id error:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch user: ' + err.message });
   }
 });
 
-// ==========================================
-// 16. DELETE PRODUCT (DELETE /api/products/:id)
-// ==========================================
-app.delete("/api/products/:id", async (req, res) => {
+app.post('/api/users', async (req, res) => {
   try {
-    const productId = req.params.id;
-    const index = productsStore.findIndex(p => p.id === productId);
-    if (index === -1) {
-      return res.status(404).json({ success: false, message: `Product not found with id: ${productId}` });
-    }
-    productsStore.splice(index, 1);
-
-    try {
-      await deleteDoc(doc(db, 'products', productId));
-    } catch (fireErr) {
-      console.warn('Could not delete product from Firestore:', fireErr);
+    const userData = req.body;
+    if (!userData.name || !userData.email) {
+      return res.status(400).json({ success: false, message: 'name and email are required fields.' });
     }
 
-    res.json({ success: true, message: "Product deleted successfully" });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Internal server error" });
+    const [existing]: any = await pool.query('SELECT id FROM users WHERE LOWER(email) = LOWER(?) LIMIT 1', [userData.email]);
+    if (existing.length > 0) {
+      return res.status(409).json({ success: false, message: 'User with this email already exists.' });
+    }
+
+    const saved = await saveUserRecord(pool, userData);
+    res.status(201).json({ success: true, message: 'User registered successfully', user: sanitizeUser(saved) });
+  } catch (err: any) {
+    console.error('POST /api/users error:', err);
+    res.status(500).json({ success: false, message: 'Failed to save user: ' + err.message });
   }
 });
 
-// ==========================================
-// 17. DELETE ORDER (DELETE /api/orders/:id)
-// ==========================================
-app.delete("/api/orders/:id", async (req, res) => {
+app.put('/api/users/:id', async (req, res) => {
   try {
-    const orderId = req.params.id;
-    const index = ordersStore.findIndex(o => o.id === orderId);
-    if (index === -1) {
-      return res.status(404).json({ success: false, message: `Order not found with id: ${orderId}` });
-    }
-    ordersStore.splice(index, 1);
+    const { name, phone, email, coins, memberTier, role, status, addresses, totalOrders, totalSpent } = req.body;
+    const updates: string[] = [];
+    const params: any[] = [];
 
-    try {
-      await deleteDoc(doc(db, 'orders', orderId));
-    } catch (fireErr) {
-      console.warn('Could not delete order from Firestore:', fireErr);
+    if (name !== undefined) { updates.push('name = ?'); params.push(name); }
+    if (phone !== undefined) { updates.push('phone = ?'); params.push(phone); }
+    if (email !== undefined) { updates.push('email = ?'); params.push(email); }
+    if (coins !== undefined) { updates.push('coins = ?'); params.push(coins); }
+    if (memberTier !== undefined) { updates.push('memberTier = ?'); params.push(memberTier); }
+    if (role !== undefined) { updates.push('role = ?'); params.push(role); }
+    if (status !== undefined) { updates.push('status = ?'); params.push(status); }
+    if (totalOrders !== undefined) { updates.push('totalOrders = ?'); params.push(totalOrders); }
+    if (totalSpent !== undefined) { updates.push('totalSpent = ?'); params.push(totalSpent); }
+    if (addresses !== undefined) { updates.push('addresses = ?'); params.push(JSON.stringify(addresses)); }
+
+    if (updates.length === 0) {
+      return res.status(400).json({ success: false, message: 'No fields provided to update' });
     }
 
-    res.json({ success: true, message: "Order deleted successfully" });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Internal server error" });
+    params.push(req.params.id);
+    const [result]: any = await pool.query(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`, params);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: `User not found with id: ${req.params.id}` });
+    }
+
+    const [rows]: any = await pool.query('SELECT * FROM users WHERE id = ?', [req.params.id]);
+    res.json({ success: true, message: 'User updated successfully', user: sanitizeUser(formatUserRow(rows[0])) });
+  } catch (err: any) {
+    console.error('PUT /api/users/:id error:', err);
+    res.status(500).json({ success: false, message: 'Failed to update user: ' + err.message });
   }
 });
 
-// ==========================================
-// 18. DELETE BANNER (DELETE /api/banners/:id)
-// ==========================================
-app.delete("/api/banners/:id", async (req, res) => {
+app.delete('/api/users/:id', async (req, res) => {
   try {
-    const bannerId = req.params.id;
-    const index = bannersStore.findIndex(b => b.id === bannerId);
-    if (index === -1) {
-      return res.status(404).json({ success: false, message: `Banner not found with id: ${bannerId}` });
+    const [result]: any = await pool.query('DELETE FROM users WHERE id = ?', [req.params.id]);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: `User not found with id: ${req.params.id}` });
     }
-    bannersStore.splice(index, 1);
-
-    try {
-      await deleteDoc(doc(db, 'banners', bannerId));
-    } catch (fireErr) {
-      console.warn('Could not delete banner from Firestore:', fireErr);
-    }
-
-    res.json({ success: true, message: "Banner deleted successfully" });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Internal server error" });
+    res.json({ success: true, message: 'User deleted successfully' });
+  } catch (err: any) {
+    console.error('DELETE /api/users/:id error:', err);
+    res.status(500).json({ success: false, message: 'Failed to delete user: ' + err.message });
   }
 });
 
 // ==========================================
-// GLOBAL ERROR HANDLING MIDDLEWARE
+// 7. VISITORS API (GET, POST)
 // ==========================================
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error("Server Error:", err.stack || err.message || err);
-  res.status(500).json({ success: false, message: "Something went wrong on the server" });
+app.get('/api/visitors', async (req, res) => {
+  try {
+    const [rows]: any = await pool.query('SELECT * FROM visitors ORDER BY id DESC LIMIT 50');
+    res.json({ success: true, count: rows.length, visitors: rows });
+  } catch (err: any) {
+    console.error('GET /api/visitors error:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch visitors: ' + err.message });
+  }
 });
 
-// 404 handler
-app.use((req, res) => {
+app.post('/api/visitors', async (req, res) => {
+  try {
+    const { ip, name, phone, location, page, platform, time } = req.body;
+    await pool.query(
+      `INSERT INTO visitors (ip, name, phone, location, page, platform, time)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [ip || '127.0.0.1', name || '—', phone || '—', location || 'Dhaka, BD', page || '/', platform || 'Web', time || 'Just now']
+    );
+    res.status(201).json({ success: true, message: 'Visitor logged' });
+  } catch (err: any) {
+    console.error('POST /api/visitors error:', err);
+    res.status(500).json({ success: false, message: 'Failed to log visitor: ' + err.message });
+  }
+});
+
+// ==========================================
+// GLOBAL ERROR HANDLING MIDDLEWARE FOR API
+// ==========================================
+app.use('/api', (err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('Server API Error:', err.stack || err.message || err);
+  res.status(500).json({ success: false, message: 'Internal server error in API' });
+});
+
+// 404 handler for API routes
+app.use('/api/*', (req, res) => {
   res.status(404).json({ success: false, message: `Endpoint ${req.method} ${req.path} not found` });
 });
-});
 
-// Start server with Vite middleware support
+// Start server with Vite middleware or production static build
 async function startServer() {
-  // Sync data from Firestore on startup
-  await syncStoresFromFirestore();
+  try {
+    // Initialize MySQL Database
+    await initDatabase();
+  } catch (err) {
+    console.error('Warning: Database initialization error:', err);
+  }
 
-  // Vite middleware for development
-  if (process.env.NODE_ENV !== "production") {
+  // Vite middleware for development vs static for production
+  if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
       server: { middlewareMode: true },
-      appType: "spa",
+      appType: 'spa',
     });
     app.use(vite.middlewares);
   } else {
@@ -619,7 +580,7 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
+  app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://0.0.0.0:${PORT}`);
     console.log(`API available at http://0.0.0.0:${PORT}/api/`);
   });

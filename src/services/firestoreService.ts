@@ -1,43 +1,29 @@
-import {
-  collection,
-  doc,
-  getDocs,
-  setDoc,
-  updateDoc,
-  deleteDoc,
-  onSnapshot,
-  query,
-  orderBy,
-  limit
-} from 'firebase/firestore';
-import { db } from '../firebase';
 import { Product, Order, Banner, UserProfile } from '../types';
 import { PRODUCTS_DATA } from '../data/productsData';
 import { HERO_BANNERS } from '../data/bannersData';
 
-const SERVER_API_URL = typeof window !== 'undefined' ? '' : '';
+const BASE_API_URL = typeof window !== 'undefined' ? `${window.location.origin}/api` : 'http://localhost:3000/api';
 
 /**
- * Helper to sync data with the Express server API
+ * Generic API helper
  */
-async function syncWithServer(endpoint: string, method: string, data: any): Promise<void> {
-  try {
-    if (typeof window === 'undefined') return;
-    const baseUrl = window.location.origin;
-    await fetch(`${baseUrl}/api/${endpoint}`, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
-  } catch {
-    // Silently fail - Firestore is the primary source of truth
-  }
-}
+async function apiRequest<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  const url = `${BASE_API_URL}/${endpoint.replace(/^\//, '')}`;
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(options?.headers || {})
+    }
+  });
 
-const PRODUCTS_COLLECTION = 'products';
-const ORDERS_COLLECTION = 'orders';
-const BANNERS_COLLECTION = 'banners';
-const USERS_COLLECTION = 'users';
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(`API Error ${response.status}: ${errorBody}`);
+  }
+
+  return response.json() as Promise<T>;
+}
 
 export const INITIAL_SEED_USERS: UserProfile[] = [
   {
@@ -106,416 +92,355 @@ export const INITIAL_SEED_USERS: UserProfile[] = [
   }
 ];
 
+// Simple event bus for immediate UI updates on mutations
+const listeners = {
+  products: new Set<(products: Product[]) => void>(),
+  orders: new Set<(orders: Order[]) => void>(),
+  banners: new Set<(banners: Banner[]) => void>(),
+  users: new Set<(users: UserProfile[]) => void>()
+};
+
+// ==========================================
+// 1. PRODUCTS (MySQL REST API)
+// ==========================================
+
+export async function fetchProducts(): Promise<Product[]> {
+  try {
+    const data = await apiRequest<{ success: boolean; products: Product[] }>('products');
+    return data.products || [];
+  } catch (err) {
+    console.warn('API fetchProducts error, fallback to static:', err);
+    return PRODUCTS_DATA;
+  }
+}
+
 /**
- * Real-time listener for Products collection in Firestore
+ * Real-time listener & polling for Products from MySQL
  */
 export function subscribeToProducts(onProductsChange: (products: Product[]) => void) {
-  try {
-    const productsRef = collection(db, PRODUCTS_COLLECTION);
-    const q = query(productsRef);
+  listeners.products.add(onProductsChange);
 
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        if (!snapshot.empty) {
-          const items: Product[] = [];
-          snapshot.forEach((docSnap) => {
-            const data = docSnap.data() as Product;
-            items.push({
-              ...data,
-              id: docSnap.id
-            });
-          });
-          onProductsChange(items);
-        } else {
-          // If Firestore is empty, we trigger initial seeding
-          seedInitialProducts().then(() => {
-            onProductsChange(PRODUCTS_DATA);
-          });
-        }
-      },
-      (error) => {
-        console.warn('Firestore products subscribe notice:', error);
-        onProductsChange(PRODUCTS_DATA);
-      }
-    );
-
-    return unsubscribe;
-  } catch (err) {
-    console.warn('Firestore products error, fallback to static:', err);
-    onProductsChange(PRODUCTS_DATA);
-    return () => {};
-  }
-}
-
-/**
- * Seed initial sample products to Firestore if empty
- */
-export async function seedInitialProducts(force: boolean = false) {
-  try {
-    const productsRef = collection(db, PRODUCTS_COLLECTION);
-    const snapshot = await getDocs(productsRef);
-    if (snapshot.empty || force) {
-      const promises = PRODUCTS_DATA.map((product) => {
-        const docRef = doc(db, PRODUCTS_COLLECTION, product.id);
-        return setDoc(docRef, {
-          ...product,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        });
-      });
-      await Promise.all(promises);
-      return true;
+  // Initial fetch
+  fetchProducts().then((prods) => {
+    if (prods && prods.length > 0) {
+      onProductsChange(prods);
+    } else {
+      onProductsChange(PRODUCTS_DATA);
     }
-    return false;
+  });
+
+  // Polling every 10 seconds to keep fresh across multi-window/admin updates
+  const interval = setInterval(() => {
+    fetchProducts().then((prods) => {
+      if (prods && prods.length > 0) {
+        onProductsChange(prods);
+      }
+    });
+  }, 10000);
+
+  return () => {
+    listeners.products.delete(onProductsChange);
+    clearInterval(interval);
+  };
+}
+
+/**
+ * Seed initial sample products to MySQL
+ */
+export async function seedInitialProducts(force: boolean = false): Promise<boolean> {
+  try {
+    await apiRequest('seed', { method: 'POST' });
+    const fresh = await fetchProducts();
+    listeners.products.forEach((fn) => fn(fresh));
+    return true;
   } catch (error) {
-    console.warn('Could not seed initial products to Firestore:', error);
+    console.warn('Could not seed initial products to MySQL:', error);
     return false;
   }
 }
 
 /**
- * Add or update product in Firestore
+ * Add or update product in MySQL
  */
 export async function saveProductToFirestore(product: Partial<Product> & { id?: string }): Promise<string> {
-  const productId = product.id || `prod-${Date.now()}`;
-  const docRef = doc(db, PRODUCTS_COLLECTION, productId);
+  const data = await apiRequest<{ success: boolean; product: Product }>('products', {
+    method: 'POST',
+    body: JSON.stringify(product)
+  });
 
-  const productData: Product = {
-    id: productId,
-    title: product.title || 'New Product',
-    titleBn: product.titleBn || product.title || 'নতুন পণ্য',
-    slug: product.slug || (product.title || 'product').toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-    brand: product.brand || 'Ashaal',
-    category: product.category || 'Electronic Devices',
-    categorySlug: product.categorySlug || 'electronic-devices',
-    subCategory: product.subCategory || 'general',
-    price: Number(product.price) || 0,
-    originalPrice: Number(product.originalPrice) || Number(product.price) || 0,
-    discountPercentage: product.originalPrice && product.price && product.originalPrice > product.price
-      ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
-      : Number(product.discountPercentage) || 0,
-    rating: Number(product.rating) || 5.0,
-    reviewsCount: Number(product.reviewsCount) || 1,
-    questionsCount: Number(product.questionsCount) || 0,
-    soldCount: Number(product.soldCount) || 0,
-    inStock: Number(product.inStock) ?? 50,
-    isDarazMall: Boolean(product.isDarazMall),
-    isFreeDelivery: Boolean(product.isFreeDelivery),
-    isFlashSale: Boolean(product.isFlashSale),
-    flashSaleEndTime: product.flashSaleEndTime || '12h 00m 00s',
-    coinsCashback: Number(product.coinsCashback) || 50,
-    mainImage: product.mainImage || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80',
-    images: product.images && product.images.length > 0
-      ? product.images
-      : [product.mainImage || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80'],
-    description: product.description || ['High quality authentic product on Ashaal.'],
-    descriptionBn: product.descriptionBn || ['আশাল এ সেরা মানের আসল পণ্য।'],
-    specifications: product.specifications || { Warranty: '1 Year Brand Warranty', Origin: 'Genuine Import' },
-    seller: product.seller || {
-      id: 'seller-official',
-      name: 'Ashaal Official Flagship Store',
-      isOfficial: true,
-      rating: 98,
-      shipOnTime: 99,
-      chatResponse: 97,
-      joinedYears: 3,
-      location: 'Dhaka'
-    },
-    warranty: product.warranty || '100% Authentic Brand Warranty',
-    returnPolicy: product.returnPolicy || '14 Days Easy Free Return',
-    deliveryFee: product.isFreeDelivery ? 0 : (product.deliveryFee ?? 60),
-    estimatedDeliveryDays: product.estimatedDeliveryDays || '2-4 Days'
-  };
+  // Refresh products list for all listeners
+  fetchProducts().then((prods) => {
+    listeners.products.forEach((fn) => fn(prods));
+  });
 
-  await setDoc(docRef, productData, { merge: true });
-  await syncWithServer(`products`, 'POST', productData);
-  return productId;
+  return data.product?.id || product.id || `prod-${Date.now()}`;
 }
 
 /**
- * Delete product from Firestore
+ * Delete product from MySQL
  */
 export async function deleteProductFromFirestore(productId: string): Promise<void> {
-  const docRef = doc(db, PRODUCTS_COLLECTION, productId);
-  await deleteDoc(docRef);
+  await apiRequest(`products/${productId}`, { method: 'DELETE' });
+
+  // Refresh products list
+  fetchProducts().then((prods) => {
+    listeners.products.forEach((fn) => fn(prods));
+  });
+}
+
+// ==========================================
+// 2. ORDERS (MySQL REST API)
+// ==========================================
+
+export async function fetchOrders(): Promise<Order[]> {
+  try {
+    const data = await apiRequest<{ success: boolean; orders: Order[] }>('orders');
+    return data.orders || [];
+  } catch (err) {
+    console.warn('API fetchOrders error:', err);
+    return [];
+  }
 }
 
 /**
- * Real-time listener for Orders collection in Firestore
+ * Real-time listener & polling for Orders from MySQL
  */
 export function subscribeToOrders(onOrdersChange: (orders: Order[]) => void) {
-  try {
-    const ordersRef = collection(db, ORDERS_COLLECTION);
-    const q = query(ordersRef);
+  listeners.orders.add(onOrdersChange);
 
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        if (!snapshot.empty) {
-          const items: Order[] = [];
-          snapshot.forEach((docSnap) => {
-            const data = docSnap.data() as Order;
-            items.push({
-              ...data,
-              id: docSnap.id
-            });
-          });
-          onOrdersChange(items);
-        } else {
-          onOrdersChange([]);
-        }
-      },
-      (error) => {
-        console.warn('Firestore orders subscription notice:', error);
-      }
-    );
+  fetchOrders().then((ords) => onOrdersChange(ords));
 
-    return unsubscribe;
-  } catch (err) {
-    console.warn('Firestore orders error:', err);
-    return () => {};
-  }
+  const interval = setInterval(() => {
+    fetchOrders().then((ords) => onOrdersChange(ords));
+  }, 8000);
+
+  return () => {
+    listeners.orders.delete(onOrdersChange);
+    clearInterval(interval);
+  };
 }
 
 /**
- * Save Order to Firestore (Called upon user checkout)
+ * Save Order to MySQL
  */
 export async function saveOrderToFirestore(order: Order): Promise<void> {
-  try {
-    const docRef = doc(db, ORDERS_COLLECTION, order.id);
-  await setDoc(docRef, {
-    ...order,
-    createdAt: order.createdAt || new Date().toLocaleString('en-US')
+  await apiRequest('orders', {
+    method: 'POST',
+    body: JSON.stringify(order)
   });
-  await syncWithServer(`orders`, 'POST', order);
-} catch (err) {
-    console.error('Error saving order to Firestore:', err);
-  }
+
+  fetchOrders().then((ords) => {
+    listeners.orders.forEach((fn) => fn(ords));
+  });
 }
 
 /**
- * Update order status (Admin operation)
+ * Update order status (Admin / System operation)
  */
 export async function updateOrderStatusInFirestore(
   orderId: string,
   newStatus: Order['orderStatus'],
   timelineUpdate?: any
 ): Promise<void> {
-  try {
-    const docRef = doc(db, ORDERS_COLLECTION, orderId);
-    const updates: Record<string, any> = {
-      orderStatus: newStatus
-    };
-    if (timelineUpdate) {
-      updates.timeline = timelineUpdate;
-    }
-    await updateDoc(docRef, updates);
-  } catch (err) {
-    console.error('Error updating order in Firestore:', err);
-  }
+  await apiRequest(`orders/${orderId}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      orderStatus: newStatus,
+      timeline: timelineUpdate
+    })
+  });
+
+  fetchOrders().then((ords) => {
+    listeners.orders.forEach((fn) => fn(ords));
+  });
 }
 
 /**
- * Delete Order (Admin operation)
+ * Delete Order from MySQL
  */
 export async function deleteOrderFromFirestore(orderId: string): Promise<void> {
-  const docRef = doc(db, ORDERS_COLLECTION, orderId);
-  await deleteDoc(docRef);
+  await apiRequest(`orders/${orderId}`, { method: 'DELETE' });
+
+  fetchOrders().then((ords) => {
+    listeners.orders.forEach((fn) => fn(ords));
+  });
 }
 
-/**
- * Real-time listener for Banners in Firestore
- */
-export function subscribeToBanners(onBannersChange: (banners: Banner[]) => void) {
+// ==========================================
+// 3. BANNERS (MySQL REST API)
+// ==========================================
+
+export async function fetchBanners(): Promise<Banner[]> {
   try {
-    const bannersRef = collection(db, BANNERS_COLLECTION);
-    const unsubscribe = onSnapshot(
-      bannersRef,
-      (snapshot) => {
-        if (!snapshot.empty) {
-          const items: Banner[] = [];
-          snapshot.forEach((docSnap) => {
-            items.push({
-              ...(docSnap.data() as Banner),
-              id: docSnap.id
-            });
-          });
-          onBannersChange(items);
-        } else {
-          // seed initial banners
-          seedInitialBanners().then(() => onBannersChange(HERO_BANNERS));
-        }
-      },
-      (error) => {
-        console.warn('Firestore banners notice:', error);
-        onBannersChange(HERO_BANNERS);
-      }
-    );
-    return unsubscribe;
-  } catch {
-    onBannersChange(HERO_BANNERS);
-    return () => {};
+    const data = await apiRequest<{ success: boolean; banners: Banner[] }>('banners');
+    return data.banners || [];
+  } catch (err) {
+    console.warn('API fetchBanners error:', err);
+    return HERO_BANNERS;
   }
 }
 
-export async function seedInitialBanners() {
+export function subscribeToBanners(onBannersChange: (banners: Banner[]) => void) {
+  listeners.banners.add(onBannersChange);
+
+  fetchBanners().then((b) => {
+    if (b && b.length > 0) onBannersChange(b);
+    else onBannersChange(HERO_BANNERS);
+  });
+
+  const interval = setInterval(() => {
+    fetchBanners().then((b) => {
+      if (b && b.length > 0) onBannersChange(b);
+    });
+  }, 15000);
+
+  return () => {
+    listeners.banners.delete(onBannersChange);
+    clearInterval(interval);
+  };
+}
+
+export async function seedInitialBanners(): Promise<void> {
   try {
-    const bannersRef = collection(db, BANNERS_COLLECTION);
-    const snapshot = await getDocs(bannersRef);
-    if (snapshot.empty) {
-      const promises = HERO_BANNERS.map((b) => {
-        const docRef = doc(db, BANNERS_COLLECTION, b.id);
-        return setDoc(docRef, b);
-      });
-      await Promise.all(promises);
-    }
+    await apiRequest('seed', { method: 'POST' });
   } catch (e) {
     console.warn('Banners seed notice:', e);
   }
 }
 
 export async function saveBannerToFirestore(banner: Banner): Promise<void> {
-  const bannerId = banner.id || `b-${Date.now()}`;
-  const docRef = doc(db, BANNERS_COLLECTION, bannerId);
-  await setDoc(docRef, { ...banner, id: bannerId }, { merge: true });
-  await syncWithServer(`banners`, 'POST', { ...banner, id: bannerId });
+  await apiRequest('banners', {
+    method: 'POST',
+    body: JSON.stringify(banner)
+  });
+
+  fetchBanners().then((b) => {
+    listeners.banners.forEach((fn) => fn(b));
+  });
 }
 
 export async function deleteBannerFromFirestore(bannerId: string): Promise<void> {
-  const docRef = doc(db, BANNERS_COLLECTION, bannerId);
-  await deleteDoc(docRef);
+  await apiRequest(`banners/${bannerId}`, { method: 'DELETE' });
+
+  fetchBanners().then((b) => {
+    listeners.banners.forEach((fn) => fn(b));
+  });
 }
 
-/**
- * ============================================================================
- * USERS & AUTHENTICATION FIRESTORE INTEGRATION
- * ============================================================================
- */
+// ==========================================
+// 4. USERS (MySQL REST API)
+// ==========================================
 
-/**
- * Real-time listener for Users collection in Firestore
- */
-export function subscribeToUsers(onUsersChange: (users: UserProfile[]) => void) {
+export async function fetchUsers(): Promise<UserProfile[]> {
   try {
-    const usersRef = collection(db, USERS_COLLECTION);
-    const q = query(usersRef);
-
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        if (!snapshot.empty) {
-          const items: UserProfile[] = [];
-          snapshot.forEach((docSnap) => {
-            const data = docSnap.data() as UserProfile;
-            items.push({
-              ...data,
-              id: docSnap.id
-            });
-          });
-          onUsersChange(items);
-        } else {
-          // If Firestore is empty, seed initial users
-          seedInitialUsers().then(() => {
-            onUsersChange(INITIAL_SEED_USERS);
-          });
-        }
-      },
-      (error) => {
-        console.warn('Firestore users subscribe notice:', error);
-        onUsersChange(INITIAL_SEED_USERS);
-      }
-    );
-
-    return unsubscribe;
+    const data = await apiRequest<{ success: boolean; users: UserProfile[] }>('users');
+    return data.users || [];
   } catch (err) {
-    console.warn('Firestore users error, fallback to static:', err);
-    onUsersChange(INITIAL_SEED_USERS);
-    return () => {};
+    console.warn('API fetchUsers error:', err);
+    return INITIAL_SEED_USERS;
   }
 }
 
-/**
- * Seed initial sample users to Firestore
- */
-export async function seedInitialUsers(force: boolean = false) {
+export function subscribeToUsers(onUsersChange: (users: UserProfile[]) => void) {
+  listeners.users.add(onUsersChange);
+
+  fetchUsers().then((u) => {
+    if (u && u.length > 0) onUsersChange(u);
+    else onUsersChange(INITIAL_SEED_USERS);
+  });
+
+  const interval = setInterval(() => {
+    fetchUsers().then((u) => {
+      if (u && u.length > 0) onUsersChange(u);
+    });
+  }, 10000);
+
+  return () => {
+    listeners.users.delete(onUsersChange);
+    clearInterval(interval);
+  };
+}
+
+export async function seedInitialUsers(force: boolean = false): Promise<boolean> {
   try {
-    const usersRef = collection(db, USERS_COLLECTION);
-    const snapshot = await getDocs(usersRef);
-    if (snapshot.empty || force) {
-      const promises = INITIAL_SEED_USERS.map((usr) => {
-        const docRef = doc(db, USERS_COLLECTION, usr.id);
-        return setDoc(docRef, {
-          ...usr,
-          createdAt: usr.createdAt || new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        });
-      });
-      await Promise.all(promises);
-      return true;
-    }
-    return false;
+    await apiRequest('seed', { method: 'POST' });
+    const fresh = await fetchUsers();
+    listeners.users.forEach((fn) => fn(fresh));
+    return true;
   } catch (error) {
-    console.warn('Could not seed initial users to Firestore:', error);
+    console.warn('Could not seed initial users to MySQL:', error);
     return false;
   }
 }
 
-/**
- * Add or update User profile in Firestore
- */
 export async function saveUserToFirestore(user: Partial<UserProfile> & { id?: string }): Promise<string> {
   const userId = user.id || `usr-${Date.now()}`;
-  const docRef = doc(db, USERS_COLLECTION, userId);
+  if (user.id) {
+    await apiRequest(`users/${user.id}`, {
+      method: 'PUT',
+      body: JSON.stringify(user)
+    });
+  } else {
+    await apiRequest('users', {
+      method: 'POST',
+      body: JSON.stringify(user)
+    });
+  }
 
-  const cleanUserData: UserProfile = {
-    id: userId,
-    name: user.name || 'Anonymous User',
-    phone: user.phone || '+880 1700-000000',
-    email: user.email || `${userId}@example.com`,
-    password: user.password || 'password123',
-    avatar: user.avatar || `https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80`,
-    coins: Number(user.coins) ?? 200,
-    memberTier: user.memberTier || 'Silver Member',
-    joinDate: user.joinDate || new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
-    role: user.role || 'customer',
-    status: user.status || 'active',
-    token: user.token || `usr_tok_${userId}_${Math.random().toString(36).substring(2, 9)}`,
-    totalOrders: Number(user.totalOrders) || 0,
-    totalSpent: Number(user.totalSpent) || 0,
-    addresses: user.addresses || [],
-    createdAt: user.createdAt || new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  };
+  fetchUsers().then((u) => {
+    listeners.users.forEach((fn) => fn(u));
+  });
 
-  await setDoc(docRef, cleanUserData, { merge: true });
-  await syncWithServer(`users`, 'POST', cleanUserData);
   return userId;
 }
 
-/**
- * Delete user from Firestore
- */
 export async function deleteUserFromFirestore(userId: string): Promise<void> {
-  const docRef = doc(db, USERS_COLLECTION, userId);
-  await deleteDoc(docRef);
+  await apiRequest(`users/${userId}`, { method: 'DELETE' });
+
+  fetchUsers().then((u) => {
+    listeners.users.forEach((fn) => fn(u));
+  });
 }
 
-/**
- * ============================================================================
- * LOCAL STORAGE TOKEN-BASED CART & FAVORITES HANDLERS
- * ============================================================================
- */
+// ==========================================
+// 5. VISITORS API
+// ==========================================
+
+export async function fetchVisitors(): Promise<any[]> {
+  try {
+    const data = await apiRequest<{ success: boolean; visitors: any[] }>('visitors');
+    return data.visitors || [];
+  } catch (err) {
+    return [];
+  }
+}
+
+export async function logVisitor(logData: { ip?: string; name?: string; phone?: string; location?: string; page?: string; platform?: string; time?: string }) {
+  try {
+    await apiRequest('visitors', {
+      method: 'POST',
+      body: JSON.stringify(logData)
+    });
+  } catch {
+    // Ignore logging errors
+  }
+}
+
+// ==========================================
+// 6. LOCAL STORAGE TOKEN-BASED CART & FAVORITES
+// ==========================================
 
 const TOKEN_KEY = 'ash_user_token';
 const GUEST_TOKEN_KEY = 'ash_guest_token';
+const GENERAL_CART_KEY = 'ash_cart';
+const GENERAL_WISHLIST_KEY = 'ash_wishlist';
 
 /**
  * Get or create current active token (User token or Guest token)
  */
 export function getActiveSessionToken(customToken?: string | null): string {
   if (typeof window === 'undefined') return 'guest_default';
-  
+
   if (customToken) {
     try {
       localStorage.setItem(TOKEN_KEY, customToken);
@@ -559,12 +484,25 @@ export function clearUserSessionToken() {
 /**
  * Load token-controlled Cart from localStorage
  */
-export function loadCartByToken(token: string) {
+export function loadCartByToken(token: string): any[] {
   if (typeof window === 'undefined') return [];
   try {
+    // Check token-specific key first
     const key = `ash_cart_tok_${token}`;
     const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : [];
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+
+    // Fallback to general cart key
+    const generalRaw = localStorage.getItem(GENERAL_CART_KEY);
+    if (generalRaw) {
+      const parsed = JSON.parse(generalRaw);
+      if (Array.isArray(parsed)) return parsed;
+    }
+
+    return [];
   } catch {
     return [];
   }
@@ -576,8 +514,11 @@ export function loadCartByToken(token: string) {
 export function saveCartByToken(token: string, cartItems: any[]) {
   if (typeof window === 'undefined') return;
   try {
+    const serialized = JSON.stringify(cartItems);
     const key = `ash_cart_tok_${token}`;
-    localStorage.setItem(key, JSON.stringify(cartItems));
+    localStorage.setItem(key, serialized);
+    // Also save in general cart key for universal persistence
+    localStorage.setItem(GENERAL_CART_KEY, serialized);
   } catch {}
 }
 
@@ -589,7 +530,18 @@ export function loadWishlistByToken(token: string): string[] {
   try {
     const key = `ash_wishlist_tok_${token}`;
     const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : [];
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+
+    const generalRaw = localStorage.getItem(GENERAL_WISHLIST_KEY);
+    if (generalRaw) {
+      const parsed = JSON.parse(generalRaw);
+      if (Array.isArray(parsed)) return parsed;
+    }
+
+    return [];
   } catch {
     return [];
   }
@@ -601,8 +553,9 @@ export function loadWishlistByToken(token: string): string[] {
 export function saveWishlistByToken(token: string, wishlistIds: string[]) {
   if (typeof window === 'undefined') return;
   try {
+    const serialized = JSON.stringify(wishlistIds);
     const key = `ash_wishlist_tok_${token}`;
-    localStorage.setItem(key, JSON.stringify(wishlistIds));
+    localStorage.setItem(key, serialized);
+    localStorage.setItem(GENERAL_WISHLIST_KEY, serialized);
   } catch {}
 }
-
