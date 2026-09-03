@@ -122,7 +122,7 @@ export const ProductDetailPage: React.FC = () => {
       const origin = window.location.origin;
       return `${origin}/product/${product.id}`;
     }
-    return `https://ashall.com/product/${product.id}`;
+    return `https://ashaal.com.bd/product/${product.id}`;
   };
 
   const handleCopyLink = async () => {
@@ -317,13 +317,13 @@ export const ProductDetailPage: React.FC = () => {
         item:
           typeof window !== "undefined"
             ? window.location.origin
-            : "https://ashall.com",
+            : "https://ashaal.com.bd",
       },
       {
         "@type": "ListItem",
         position: 2,
         name: product.category,
-        item: `${typeof window !== "undefined" ? window.location.origin : "https://ashall.com"}/category/${product.categorySlug}`,
+        item: `${typeof window !== "undefined" ? window.location.origin : "https://ashaal.com.bd"}/category/${product.categorySlug}`,
       },
       {
         "@type": "ListItem",

@@ -251,7 +251,7 @@ export const Footer: React.FC = () => {
                   src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&margin=0&color=16-163-74&data=${encodeURIComponent(
                     typeof window !== "undefined"
                       ? window.location.origin
-                      : "https://ashall.com",
+                      : "https://ashaal.com.bd",
                   )}`}
                   alt="Ashaal Website QR Code"
                   className="w-full h-full object-contain"
