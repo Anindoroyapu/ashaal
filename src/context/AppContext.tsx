@@ -1,5 +1,7 @@
+'use client';
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useNavigate as useRouterNavigate, useLocation } from 'react-router-dom';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Product, CartItem, Voucher, DeliveryAddress, Order, PageView, Language, Banner, UserProfile } from '../types';
 import { PRODUCTS_DATA } from '../data/productsData';
 import { VOUCHERS_DATA, HERO_BANNERS } from '../data/bannersData';
@@ -216,6 +218,7 @@ interface AppContextType {
   login: (identifierOrData?: string | Partial<UserProfile>, password?: string) => Promise<{ success: boolean; message?: string }>;
   signup: (userData: { name: string; email: string; phone: string; password?: string }) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
+  addCoins: (amount: number) => void;
   updateUserProfile: (userId: string, data: Partial<UserProfile>) => Promise<void>;
   deleteUserAccount: (userId: string) => Promise<void>;
   vouchers: Voucher[];
@@ -347,8 +350,9 @@ const INITIAL_ORDERS: Order[] = [
 const AppContext = createContext<AppContextType | null>(null);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const routerNavigate = useRouterNavigate();
-  const location = useLocation();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   // Initialize route from current browser URL
   const initialRoute = parseRouteFromBrowserLocation();
@@ -522,7 +526,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (route.searchQuery !== undefined) setSearchQuery(route.searchQuery);
     if (route.searchFilter !== undefined) setSearchFilter(route.searchFilter);
     if (route.orderId !== undefined) setCurrentOrderId(route.orderId);
-  }, [location.pathname, location.search]);
+  }, [pathname, searchParams]);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -539,7 +543,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     page: PageView,
     params?: { productId?: string; categorySlug?: string; searchQuery?: string; orderId?: string; filter?: string }
   ) => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
     const targetUrl = buildRouteUrl(page, params);
 
     if (params?.productId !== undefined) setSelectedProductId(params.productId);
@@ -549,7 +555,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (params?.filter !== undefined) setSearchFilter(params.filter);
     setCurrentPage(page);
 
-    routerNavigate(targetUrl);
+    router.push(targetUrl);
   };
 
   const selectedProduct =
@@ -780,6 +786,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   /**
+   * Add Coins to user balance
+   */
+  const addCoins = (amount: number) => {
+    const newCoins = (user.coins || 0) + amount;
+    updateUserProfile(user.id, { coins: newCoins });
+  };
+
+  /**
    * Update User Profile
    */
   const updateUserProfile = async (userId: string, data: Partial<UserProfile>) => {
@@ -982,6 +996,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         login,
         signup,
         logout,
+        addCoins,
         updateUserProfile,
         deleteUserAccount,
         vouchers,

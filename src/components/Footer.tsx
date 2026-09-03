@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { useApp } from '../context/AppContext';
 import { ShieldCheck, Truck, RotateCcw, Headphones, Smartphone, CreditCard } from 'lucide-react';
@@ -137,7 +139,7 @@ export const Footer: React.FC = () => {
                   className="h-10 px-2 bg-white flex items-center justify-center hover:border-gray-300 transition-colors  "
                 >
                   <img
-                    src={imgSrc}
+                    src={typeof imgSrc === 'string' ? imgSrc : (imgSrc as any)?.src}
                     alt={`Payment Method ${idx + 1}`}
                     className="h-10 w-auto max-w-[120px] object-contain"
                   />

@@ -1,5 +1,7 @@
+'use client';
+
 import React, { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { usePathname, useSearchParams } from 'next/navigation';
 
 export interface SEOProps {
   title?: string;
@@ -22,9 +24,11 @@ export const SEO: React.FC<SEOProps> = ({
   noindex = false,
   structuredData
 }) => {
-  const location = useLocation();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const siteUrl = typeof window !== 'undefined' ? window.location.origin : 'https://ashall.com';
-  const currentUrl = canonical || `${siteUrl}${location.pathname}${location.search}`;
+  const queryStr = searchParams?.toString();
+  const currentUrl = canonical || `${siteUrl}${pathname || ''}${queryStr ? '?' + queryStr : ''}`;
   const fullTitle = title ? `${title} | Ashaal.com.bd` : 'Ashaal.com.bd | Online Shopping in Bangladesh - Best Deals & Fast Delivery';
 
   useEffect(() => {
