@@ -158,3 +158,4 @@ export function generateCategoryMetadata(slug: string): Metadata {
     },
   };
 }
+

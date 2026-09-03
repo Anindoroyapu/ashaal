@@ -66,7 +66,9 @@ export const ProductDetailPage: React.FC = () => {
     productsList[0] ||
     null;
 
-  const [selectedImage, setSelectedImage] = useState<string>(product?.mainImage || "");
+  const [selectedImage, setSelectedImage] = useState<string>(
+    product?.mainImage || "",
+  );
   const [selectedVariations, setSelectedVariations] = useState<
     Record<string, string>
   >(() => {
