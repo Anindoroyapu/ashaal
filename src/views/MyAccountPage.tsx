@@ -26,6 +26,7 @@ import {
 export const MyAccountPage: React.FC = () => {
   const {
     user,
+    products,
     orders,
     wishlist,
     vouchers,
@@ -44,9 +45,7 @@ export const MyAccountPage: React.FC = () => {
     "all" | "pending" | "processing" | "shipped" | "delivered"
   >("all");
 
-  const wishlistedProducts = products.filter((p) =>
-    wishlist.includes(p.id),
-  );
+  const wishlistedProducts = products.filter((p) => wishlist.includes(p.id));
 
   const filteredOrders = orders.filter((o) => {
     if (orderStatusFilter === "all") return true;

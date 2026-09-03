@@ -25,72 +25,7 @@ async function apiRequest<T>(endpoint: string, options?: RequestInit): Promise<T
   return response.json() as Promise<T>;
 }
 
-export const INITIAL_SEED_USERS: UserProfile[] = [
-  {
-    id: 'usr-tanvir-1',
-    name: 'Tanvir Ahmed',
-    phone: '+880 1712-345678',
-    email: 'tanvir.ahmed@example.com',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80',
-    coins: 480,
-    memberTier: 'Gold Member',
-    joinDate: 'Jan 2023',
-    role: 'customer',
-    status: 'active',
-    token: 'usr_tok_tanvir_94821',
-    totalOrders: 14,
-    totalSpent: 28400,
-    createdAt: '2023-01-15T10:00:00.000Z'
-  },
-  {
-    id: 'usr-anindo-2',
-    name: 'Anindo Roy',
-    phone: '+880 1819-876543',
-    email: 'anindo.roy@gmail.com',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&q=80',
-    coins: 850,
-    memberTier: 'Diamond Club',
-    joinDate: 'Mar 2023',
-    role: 'customer',
-    status: 'active',
-    token: 'usr_tok_anindo_55102',
-    totalOrders: 28,
-    totalSpent: 64200,
-    createdAt: '2023-03-20T14:30:00.000Z'
-  },
-  {
-    id: 'usr-sadia-3',
-    name: 'Sadia Islam',
-    phone: '+880 1911-223344',
-    email: 'sadia.islam@yahoo.com',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&q=80',
-    coins: 210,
-    memberTier: 'Silver Member',
-    joinDate: 'Aug 2024',
-    role: 'customer',
-    status: 'active',
-    token: 'usr_tok_sadia_88301',
-    totalOrders: 5,
-    totalSpent: 9800,
-    createdAt: '2024-08-10T09:15:00.000Z'
-  },
-  {
-    id: 'usr-rafiq-4',
-    name: 'Rafiqul Hasan',
-    phone: '+880 1622-998877',
-    email: 'rafiqul.hasan@outlook.com',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&q=80',
-    coins: 120,
-    memberTier: 'Silver Member',
-    joinDate: 'Nov 2024',
-    role: 'customer',
-    status: 'active',
-    token: 'usr_tok_rafiq_47291',
-    totalOrders: 3,
-    totalSpent: 4500,
-    createdAt: '2024-11-05T16:45:00.000Z'
-  }
-];
+export const INITIAL_SEED_USERS: UserProfile[] = [];
 
 // Simple event bus for immediate UI updates on mutations
 const listeners = {

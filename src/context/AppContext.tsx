@@ -14,8 +14,7 @@ import {
   UserProfile,
 } from "../types";
 
-import { VOUCHERS_DATA, HERO_BANNERS } from "../data/bannersData";
-import {
+import { VOUCHERS_DATA } from "../data/bannersData";
   subscribeToProducts,
   subscribeToOrders,
   subscribeToBanners,
@@ -31,7 +30,6 @@ import {
   saveCartByToken,
   loadWishlistByToken,
   saveWishlistByToken,
-  INITIAL_SEED_USERS,
 } from "../services/firestoreService";
 import confetti from "canvas-confetti";
 
@@ -294,16 +292,13 @@ interface AppContextType {
   t: (en: string, bn: string) => string;
 }
 
-const INITIAL_USER: UserProfile =
-  INITIAL_SEED_USERS.find((u) => u.role === "customer") ||
-  INITIAL_SEED_USERS[2] ||
-  INITIAL_SEED_USERS[0];
-
-const INITIAL_ADDRESSES: DeliveryAddress[] = [
-  {
-    id: "addr-1",
-    fullName: "Tanvir Ahmed",
-    phone: "+880 1712-345678",
+const INITIAL_USER: UserProfile = {
+  id: "usr-guest",
+  name: "Guest User",
+  phone: "",
+  email: "",
+  avatar:
+    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80",
     division: "Dhaka",
     district: "Dhaka North",
     thana: "Gulshan-2",
@@ -326,82 +321,7 @@ const INITIAL_ADDRESSES: DeliveryAddress[] = [
   },
 ];
 
-const INITIAL_ORDERS: Order[] = [
-  {
-    id: "ord-bd-98421",
-    orderNumber: "68294721901",
-    createdAt: "Yesterday at 04:30 PM",
-    items: [
-      {
-        id: "cart-init-1",
-        productId: "prod-2",
-        product: PRODUCTS_DATA[1],
-        quantity: 1,
-        selectedVariations: { Color: "Black" },
-        selected: true,
-      },
-      {
-        id: "cart-init-2",
-        productId: "prod-9",
-        product: PRODUCTS_DATA[8],
-        quantity: 1,
-        selectedVariations: {},
-        selected: true,
-      },
-    ],
-    shippingAddress: INITIAL_ADDRESSES[0],
-    paymentMethod: "bkash",
-    paymentStatus: "PAID",
-    orderStatus: "SHIPPED",
-    subtotal: 2940,
-    shippingFee: 0,
-    voucherDiscount: 100,
-    coinDiscount: 40,
-    total: 2800,
-    trackingNumber: "DEX-BD-948201",
-    courier: "Ashaal Express (DEX)",
-    timeline: [
-      {
-        title: "Order Placed & Verified",
-        titleBn: "অর্ডার গ্রহণ এবং নিশ্চিত করা হয়েছে",
-        description: "Payment via bKash verified (TrxID: 8N2K90L4)",
-        descriptionBn: "বিকাশ পেমেন্ট ভেরিফাইড হয়েছে",
-        timestamp: "14 Aug 2026, 04:30 PM",
-        completed: true,
-        current: false,
-      },
-      {
-        title: "Package Processed by Ashaal Hub",
-        titleBn: "আশাল হাব থেকে প্যাকেট প্রস্তুত",
-        description:
-          "Packed with bubble wrap & handed over to DEX sorting facility",
-        descriptionBn: "আশাল তেজগাঁও সেন্টারে পাঠানো হয়েছে",
-        timestamp: "15 Aug 2026, 09:15 AM",
-        completed: true,
-        current: false,
-      },
-      {
-        title: "In Transit - Out for Delivery Soon",
-        titleBn: "ডেলিভারির জন্য পাঠানো হয়েছে",
-        description:
-          "Package arrived at Gulshan Distribution Station. Rider assigned.",
-        descriptionBn: "গুলশান হাব থেকে রাইডার ডেলিভারি করছে",
-        timestamp: "Today, 10:45 AM",
-        completed: true,
-        current: true,
-      },
-      {
-        title: "Delivered",
-        titleBn: "ডেলিভারি সম্পন্ন",
-        description: "Will be delivered to House #45, Road #11, Gulshan-2",
-        descriptionBn: "গ্রাহকের ঠিকানায় পৌঁছে দেয়া হবে",
-        timestamp: "Expected today by 06:00 PM",
-        completed: false,
-        current: false,
-      },
-    ],
-  },
-];
+const INITIAL_ORDERS: Order[] = [];
 
 const AppContext = createContext<AppContextType | null>(null);
 
@@ -464,24 +384,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     return savedUser || INITIAL_USER;
   });
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
-    return getStoredItem<boolean>("ash_is_logged_in", true);
+    return getStoredItem<boolean>("ash_is_logged_in", false);
   });
 
   // Token-controlled Cart & Wishlist state
   const [cart, setCart] = useState<CartItem[]>(() => {
     const activeTok = getActiveSessionToken();
     const tokenCart = loadCartByToken(activeTok);
-    if (tokenCart && tokenCart.length > 0) return tokenCart;
-    return [
-      {
-        id: "cart-item-default-1",
-        productId: "prod-1",
-        product: PRODUCTS_DATA[0],
-        quantity: 1,
-        selectedVariations: { Color: "Midnight Black", Storage: "8GB/256GB" },
-        selected: true,
-      },
-    ];
+    return tokenCart || [];
   });
 
   const [wishlist, setWishlist] = useState<string[]>(() => {
@@ -493,10 +403,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const [vouchers, setVouchers] = useState<Voucher[]>(VOUCHERS_DATA);
   const [orders, setOrders] = useState<Order[]>(() =>
-    getStoredItem<Order[]>("ash_orders", []),
   );
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(
-    initialRoute.orderId || "ord-bd-98421",
+    initialRoute.orderId || null,
   );
   const [addresses, setAddresses] = useState<DeliveryAddress[]>(
     user.addresses && user.addresses.length > 0
@@ -557,7 +466,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         } catch {}
         // If current user is in loadedUsers, sync details
         setUser((currentUser) => {
-          const matched = loadedUsers.find((u) => u.id === currentUser.id);
           return matched ? { ...currentUser, ...matched } : currentUser;
         });
       }
@@ -575,7 +483,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     if (sessionToken) {
       saveCartByToken(sessionToken, cart);
-    }
   }, [cart, sessionToken]);
 
   useEffect(() => {
@@ -591,7 +498,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
       localStorage.setItem("ash_is_logged_in", JSON.stringify(isLoggedIn));
     } catch {}
   }, [user, isLoggedIn]);
-
   useEffect(() => {
     try {
       localStorage.setItem("ash_orders", JSON.stringify(orders));
@@ -658,11 +564,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const selectedProduct =
-    products.find((p) => p.id === selectedProductId) ||
-    PRODUCTS_DATA.find((p) => p.id === selectedProductId) ||
-    products[0] ||
-    PRODUCTS_DATA[0] ||
-    null;
+    products.find((p) => p.id === selectedProductId) || products[0] || null;
   const currentOrder =
     orders.find((o) => o.id === currentOrderId) || orders[0] || null;
 
