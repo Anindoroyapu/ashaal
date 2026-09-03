@@ -31,6 +31,41 @@ if (process.env.NODE_ENV !== 'production') {
 
 export const INITIAL_SEED_USERS: UserProfile[] = [
   {
+    id: 'usr-admin-0',
+    name: 'Ashaal Admin',
+    phone: '+880 1700-123456',
+    email: 'admin@ashaal.com',
+    password: 'password123',
+    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&q=80',
+    coins: 5000,
+    memberTier: 'Diamond Club',
+    joinDate: 'Jan 2022',
+    role: 'admin',
+    status: 'active',
+    token: 'usr_tok_admin_00001',
+    totalOrders: 0,
+    totalSpent: 0,
+    addresses: [],
+    createdAt: '2022-01-01T00:00:00.000Z'
+  },
+  {
+    id: 'usr-anindo-2',
+    name: 'Anindo Roy',
+    phone: '+880 1819-876543',
+    email: 'anindo.roy@gmail.com',
+    password: 'password123',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&q=80',
+    coins: 850,
+    memberTier: 'Diamond Club',
+    joinDate: 'Mar 2023',
+    role: 'admin',
+    status: 'active',
+    token: 'usr_tok_anindo_55102',
+    totalOrders: 28,
+    totalSpent: 64200,
+    createdAt: '2023-03-20T14:30:00.000Z'
+  },
+  {
     id: 'usr-tanvir-1',
     name: 'Tanvir Ahmed',
     phone: '+880 1712-345678',
@@ -60,23 +95,6 @@ export const INITIAL_SEED_USERS: UserProfile[] = [
       }
     ],
     createdAt: '2023-01-15T10:00:00.000Z'
-  },
-  {
-    id: 'usr-anindo-2',
-    name: 'Anindo Roy',
-    phone: '+880 1819-876543',
-    email: 'anindo.roy@gmail.com',
-    password: 'password123',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&q=80',
-    coins: 850,
-    memberTier: 'Diamond Club',
-    joinDate: 'Mar 2023',
-    role: 'customer',
-    status: 'active',
-    token: 'usr_tok_anindo_55102',
-    totalOrders: 28,
-    totalSpent: 64200,
-    createdAt: '2023-03-20T14:30:00.000Z'
   },
   {
     id: 'usr-sadia-3',
@@ -280,6 +298,40 @@ export async function initDatabase() {
         updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
+
+    // Dedicated tables for each order status
+    const statusTables = [
+      'orders_placed',
+      'orders_processing',
+      'orders_shipped',
+      'orders_delivered',
+      'orders_cancelled'
+    ];
+    for (const table of statusTables) {
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS ${table} (
+          id VARCHAR(128) PRIMARY KEY,
+          orderNumber VARCHAR(64) NOT NULL,
+          userId VARCHAR(128),
+          userEmail VARCHAR(255),
+          createdAt VARCHAR(128),
+          items JSON NOT NULL,
+          shippingAddress JSON NOT NULL,
+          paymentMethod VARCHAR(64),
+          paymentStatus VARCHAR(64),
+          orderStatus VARCHAR(64),
+          subtotal DECIMAL(12, 2) DEFAULT 0,
+          shippingFee DECIMAL(10, 2) DEFAULT 0,
+          voucherDiscount DECIMAL(10, 2) DEFAULT 0,
+          coinDiscount DECIMAL(10, 2) DEFAULT 0,
+          total DECIMAL(12, 2) DEFAULT 0,
+          trackingNumber VARCHAR(128),
+          courier VARCHAR(128),
+          timeline JSON,
+          updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+      `);
+    }
 
     await connection.query(`
       CREATE TABLE IF NOT EXISTS banners (
@@ -658,7 +710,10 @@ export async function saveOrderRecord(connOrPool: mysql.Pool | mysql.PoolConnect
     ON DUPLICATE KEY UPDATE
       paymentStatus = VALUES(paymentStatus),
       orderStatus = VALUES(orderStatus),
-      timeline = VALUES(timeline)`,
+      trackingNumber = VALUES(trackingNumber),
+      courier = VALUES(courier),
+      timeline = VALUES(timeline),
+      shippingAddress = VALUES(shippingAddress)`,
     [
       id, orderNumber, userId, userEmail, createdAt, items, shippingAddress,
       paymentMethod, paymentStatus, orderStatus, subtotal, shippingFee,
@@ -666,11 +721,83 @@ export async function saveOrderRecord(connOrPool: mysql.Pool | mysql.PoolConnect
     ]
   );
 
+  // Sync to dedicated status table
+  await syncOrderStatusTable(connOrPool, id, orderStatus);
+
   return formatOrderRow({
     id, orderNumber, userId, userEmail, createdAt, items, shippingAddress,
     paymentMethod, paymentStatus, orderStatus, subtotal, shippingFee,
     voucherDiscount, coinDiscount, total, trackingNumber, courier, timeline
   });
+}
+
+/**
+ * Synchronize order into its dedicated status table and remove from other status tables
+ */
+export async function syncOrderStatusTable(
+  connOrPool: mysql.Pool | mysql.PoolConnection,
+  orderId: string,
+  targetStatus: string
+) {
+  const statusTables = [
+    'orders_placed',
+    'orders_processing',
+    'orders_shipped',
+    'orders_delivered',
+    'orders_cancelled'
+  ];
+  const targetTable = `orders_${targetStatus.toLowerCase()}`;
+
+  // Fetch current order from master orders table
+  const [rows]: any = await connOrPool.query('SELECT * FROM orders WHERE id = ?', [orderId]);
+  if (!rows || rows.length === 0) return;
+
+  const ord = rows[0];
+
+  // Remove from all other status tables
+  for (const t of statusTables) {
+    if (t !== targetTable) {
+      await connOrPool.query(`DELETE FROM ${t} WHERE id = ?`, [orderId]);
+    }
+  }
+
+  // Insert or update in the target status table
+  if (statusTables.includes(targetTable)) {
+    await connOrPool.query(
+      `INSERT INTO ${targetTable} (
+        id, orderNumber, userId, userEmail, createdAt, items, shippingAddress,
+        paymentMethod, paymentStatus, orderStatus, subtotal, shippingFee,
+        voucherDiscount, coinDiscount, total, trackingNumber, courier, timeline
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE
+        paymentStatus = VALUES(paymentStatus),
+        orderStatus = VALUES(orderStatus),
+        trackingNumber = VALUES(trackingNumber),
+        courier = VALUES(courier),
+        timeline = VALUES(timeline),
+        shippingAddress = VALUES(shippingAddress)`,
+      [
+        ord.id,
+        ord.orderNumber,
+        ord.userId,
+        ord.userEmail,
+        ord.createdAt,
+        typeof ord.items === 'string' ? ord.items : JSON.stringify(ord.items || []),
+        typeof ord.shippingAddress === 'string' ? ord.shippingAddress : JSON.stringify(ord.shippingAddress || {}),
+        ord.paymentMethod,
+        ord.paymentStatus,
+        ord.orderStatus,
+        ord.subtotal,
+        ord.shippingFee,
+        ord.voucherDiscount,
+        ord.coinDiscount,
+        ord.total,
+        ord.trackingNumber,
+        ord.courier,
+        typeof ord.timeline === 'string' ? ord.timeline : JSON.stringify(ord.timeline || [])
+      ]
+    );
+  }
 }
 
 /**

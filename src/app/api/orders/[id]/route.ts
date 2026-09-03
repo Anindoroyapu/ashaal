@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool, initDatabase, formatOrderRow } from '@/lib/db';
-
+import { pool, initDatabase, formatOrderRow, syncOrderStatusTable } from '@/lib/db';
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -72,7 +71,7 @@ export async function PUT(
     }
 
     const [rows]: any = await pool.query('SELECT * FROM orders WHERE id = ?', [id]);
-    return NextResponse.json({ success: true, message: 'Order updated successfully', order: formatOrderRow(rows[0]) });
+    if (rows.length > 0) {
   } catch (err: any) {
     console.error('PUT /api/orders/[id] error:', err);
     return NextResponse.json({ success: false, message: 'Failed to update order: ' + err.message }, { status: 500 });
@@ -92,7 +91,7 @@ export async function DELETE(
       return NextResponse.json({ success: false, message: `Order not found with id: ${id}` }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, message: 'Order deleted successfully' });
+    // Delete from all status tables
   } catch (err: any) {
     console.error('DELETE /api/orders/[id] error:', err);
     return NextResponse.json({ success: false, message: 'Failed to delete order: ' + err.message }, { status: 500 });

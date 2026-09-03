@@ -9,10 +9,23 @@ export async function GET(request: NextRequest) {
     const orderId = searchParams.get('orderId');
     const userId = searchParams.get('userId');
 
-    let sql = 'SELECT * FROM orders WHERE 1=1';
+    const validStatusTables: Record<string, string> = {
+      placed: 'orders_placed',
+      processing: 'orders_processing',
+      shipped: 'orders_shipped',
+      delivered: 'orders_delivered',
+      cancelled: 'orders_cancelled',
+    };
+
+    const cleanStatus = status?.toLowerCase();
+    const sourceTable = cleanStatus && validStatusTables[cleanStatus]
+      ? validStatusTables[cleanStatus]
+      : 'orders';
+
+    let sql = `SELECT * FROM ${sourceTable} WHERE 1=1`;
     const params: any[] = [];
 
-    if (status && status !== 'all') {
+    if (status && status !== 'all' && sourceTable === 'orders') {
       sql += ' AND orderStatus = ?';
       params.push(status);
     }

@@ -294,7 +294,8 @@ interface AppContextType {
   t: (en: string, bn: string) => string;
 }
 
-const INITIAL_USER: UserProfile = INITIAL_SEED_USERS[0];
+const INITIAL_USER: UserProfile =
+  INITIAL_SEED_USERS.find((u) => u.role === "customer") || INITIAL_SEED_USERS[2] || INITIAL_SEED_USERS[0];
 
 const INITIAL_ADDRESSES: DeliveryAddress[] = [
   {

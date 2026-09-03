@@ -236,31 +236,77 @@ export const LoginModal: React.FC = () => {
                   )}
                 </p>
                 <div className="grid grid-cols-2 gap-2">
-                  {(allUsers && allUsers.length > 0
-                    ? allUsers.slice(0, 2)
-                    : []
-                  ).map((u) => (
-                    <button
-                      key={u.id}
-                      type="button"
-                      onClick={() => handleQuickDemoUser(u)}
-                      className="p-1.5 text-left border border-gray-200 hover:border-[#16a34a] hover:bg-green-50 rounded-lg text-[11px] transition-colors flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <img
-                        src={u.avatar}
-                        alt={u.name}
-                        className="w-5 h-5 rounded-full object-cover"
-                      />
-                      <div className="truncate">
-                        <p className="font-bold text-gray-800 truncate">
-                          {u.name.split(" ")[0]}
-                        </p>
-                        <p className="text-[10px] text-gray-500">
-                          {u.coins} {t("coins", "কয়েন")}
-                        </p>
-                      </div>
-                    </button>
-                  ))}
+                  {/* Admin Account Button */}
+                  {(() => {
+                    const adminUser = allUsers.find(u => u.role === "admin") || {
+                      id: "usr-admin-0",
+                      name: "Ashaal Admin",
+                      email: "admin@ashaal.com",
+                      role: "admin",
+                      avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&q=80",
+                      coins: 5000,
+                    };
+                    return (
+                      <button
+                        type="button"
+                        onClick={() => handleQuickDemoUser(adminUser as any)}
+                        className="p-1.5 text-left border border-purple-200 bg-purple-50/60 hover:bg-purple-100/80 rounded-lg text-[11px] transition-colors flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <img
+                          src={adminUser.avatar}
+                          alt={adminUser.name}
+                          className="w-5 h-5 rounded-full object-cover"
+                        />
+                        <div className="truncate flex-1">
+                          <p className="font-bold text-purple-900 truncate flex items-center gap-1">
+                            <span>Admin</span>
+                            <span className="px-1 py-0.2 bg-purple-200 text-purple-800 text-[8px] font-black rounded uppercase">
+                              ADMIN
+                            </span>
+                          </p>
+                          <p className="text-[10px] text-purple-700 truncate">
+                            {adminUser.email}
+                          </p>
+                        </div>
+                      </button>
+                    );
+                  })()}
+
+                  {/* Customer Account Button */}
+                  {(() => {
+                    const custUser = allUsers.find(u => u.role !== "admin") || {
+                      id: "usr-tanvir-1",
+                      name: "Tanvir Ahmed",
+                      email: "tanvir.ahmed@example.com",
+                      role: "customer",
+                      avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80",
+                      coins: 480,
+                    };
+                    return (
+                      <button
+                        type="button"
+                        onClick={() => handleQuickDemoUser(custUser as any)}
+                        className="p-1.5 text-left border border-emerald-200 bg-emerald-50/60 hover:bg-emerald-100/80 rounded-lg text-[11px] transition-colors flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <img
+                          src={custUser.avatar}
+                          alt={custUser.name}
+                          className="w-5 h-5 rounded-full object-cover"
+                        />
+                        <div className="truncate flex-1">
+                          <p className="font-bold text-slate-900 truncate flex items-center gap-1">
+                            <span>{custUser.name.split(" ")[0]}</span>
+                            <span className="px-1 py-0.2 bg-slate-200 text-slate-700 text-[8px] font-bold rounded uppercase">
+                              USER
+                            </span>
+                          </p>
+                          <p className="text-[10px] text-slate-500 truncate">
+                            {custUser.email}
+                          </p>
+                        </div>
+                      </button>
+                    );
+                  })()}
                 </div>
               </div>
 
