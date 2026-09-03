@@ -28,7 +28,7 @@ export async function PUT(
   try {
     await initDatabase();
     const { id } = await params;
-    const { orderStatus, paymentStatus, timeline } = await request.json();
+    const { orderStatus, paymentStatus, timeline, trackingNumber, courier, shippingAddress } = await request.json();
     const updates: string[] = [];
     const queryParams: any[] = [];
 
@@ -40,9 +40,21 @@ export async function PUT(
       updates.push('paymentStatus = ?');
       queryParams.push(paymentStatus);
     }
+    if (trackingNumber !== undefined) {
+      updates.push('trackingNumber = ?');
+      queryParams.push(trackingNumber);
+    }
+    if (courier !== undefined) {
+      updates.push('courier = ?');
+      queryParams.push(courier);
+    }
     if (timeline) {
       updates.push('timeline = ?');
       queryParams.push(JSON.stringify(timeline));
+    }
+    if (shippingAddress) {
+      updates.push('shippingAddress = ?');
+      queryParams.push(JSON.stringify(shippingAddress));
     }
 
     if (updates.length === 0) {

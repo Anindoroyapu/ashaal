@@ -256,6 +256,30 @@ export async function updateOrderStatusInFirestore(
 }
 
 /**
+ * Update comprehensive Order Details in MySQL (Status, Payment, Tracking, Courier, Timeline, Address)
+ */
+export async function updateOrderDetailsInFirestore(
+  orderId: string,
+  updateData: {
+    orderStatus?: Order['orderStatus'];
+    paymentStatus?: Order['paymentStatus'];
+    trackingNumber?: string;
+    courier?: string;
+    timeline?: any;
+    shippingAddress?: any;
+  }
+): Promise<void> {
+  await apiRequest(`orders/${orderId}`, {
+    method: 'PUT',
+    body: JSON.stringify(updateData)
+  });
+
+  fetchOrders().then((ords) => {
+    listeners.orders.forEach((fn) => fn(ords));
+  });
+}
+
+/**
  * Delete Order from MySQL
  */
 export async function deleteOrderFromFirestore(orderId: string): Promise<void> {
