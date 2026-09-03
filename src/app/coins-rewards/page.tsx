@@ -1,4 +1,4 @@
-import { CoinsRewardsPage } from "@/pages/SellerCenterPage";
+import { CoinsRewardsPage } from '@/views/SellerCenterPage';
 
 export default function Page() {
   return <CoinsRewardsPage />;

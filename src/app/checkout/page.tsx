@@ -1,4 +1,4 @@
-import { CheckoutPage } from "@/pages/CheckoutPage";
+import { CheckoutPage } from '@/views/CheckoutPage';
 
 export default function Page() {
   return <CheckoutPage />;
