@@ -51,10 +51,7 @@ export const ProductDetailPage: React.FC = () => {
     t,
   } = useApp();
 
-  const productsList =
-    dynamicProducts && dynamicProducts.length > 0
-      ? dynamicProducts
-      : PRODUCTS_DATA;
+  const productsList = dynamicProducts || [];
   const params = useParams();
   const routeProductId = params?.id
     ? Array.isArray(params.id)
@@ -67,9 +64,9 @@ export const ProductDetailPage: React.FC = () => {
       : null) ||
     selectedProduct ||
     productsList[0] ||
-    PRODUCTS_DATA[0];
+    null;
 
-  const [selectedImage, setSelectedImage] = useState<string>(product.mainImage);
+  const [selectedImage, setSelectedImage] = useState<string>(product?.mainImage || "");
   const [selectedVariations, setSelectedVariations] = useState<
     Record<string, string>
   >(() => {
@@ -973,7 +970,7 @@ export const ProductDetailPage: React.FC = () => {
               >
                 <span className="text-gray-500 font-medium">{key}</span>
                 <span className="text-gray-900 font-semibold text-right">
-                  {val}
+                  {String(val)}
                 </span>
               </div>
             ))}

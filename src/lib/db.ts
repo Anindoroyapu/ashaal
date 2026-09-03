@@ -203,85 +203,14 @@ export async function initDatabase() {
 }
 
 /**
- * Seed all products
+ * Database seeding functions - all demo data removed.
+ * Data is exclusively stored and fetched from MySQL (51.79.229.154:3306).
  */
-export async function seedProducts(connection?: mysql.PoolConnection) {
-  const conn = connection || (await pool.getConnection());
-  try {
-    for (const p of PRODUCTS_DATA) {
-      await saveProductRecord(conn, p);
-    }
-  } finally {
-    if (!connection) conn.release();
-  }
-}
-
-/**
- * Seed all banners
- */
-export async function seedBanners(connection?: mysql.PoolConnection) {
-  const conn = connection || (await pool.getConnection());
-  try {
-    for (const b of HERO_BANNERS) {
-      await conn.query(
-        `INSERT INTO banners (id, title, subtitle, image, linkType, targetId, bgColor, badge)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-         ON DUPLICATE KEY UPDATE
-          title = VALUES(title), subtitle = VALUES(subtitle), image = VALUES(image),
-          linkType = VALUES(linkType), targetId = VALUES(targetId), bgColor = VALUES(bgColor), badge = VALUES(badge)`,
-        [b.id, b.title, b.subtitle, b.image, b.linkType, b.targetId || null, b.bgColor || null, b.badge || null]
-      );
-    }
-  } finally {
-    if (!connection) conn.release();
-  }
-}
-
-/**
- * Seed all initial users
- */
-export async function seedUsers(connection?: mysql.PoolConnection) {
-  const conn = connection || (await pool.getConnection());
-  try {
-    for (const u of INITIAL_SEED_USERS) {
-      await saveUserRecord(conn, u);
-    }
-  } finally {
-    if (!connection) conn.release();
-  }
-}
-
-/**
- * Seed initial orders
- */
-export async function seedOrders(connection?: mysql.PoolConnection) {
-  const conn = connection || (await pool.getConnection());
-  try {
-    for (const o of INITIAL_ORDERS) {
-      await saveOrderRecord(conn, o);
-    }
-  } finally {
-    if (!connection) conn.release();
-  }
-}
-
-/**
- * Seed initial visitors
- */
-export async function seedVisitors(connection?: mysql.PoolConnection) {
-  const conn = connection || (await pool.getConnection());
-  try {
-    for (const v of INITIAL_VISITORS) {
-      await conn.query(
-        `INSERT INTO visitors (ip, name, phone, location, page, platform, time)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [v.ip, v.name, v.phone, v.location, v.page, v.platform, v.time]
-      );
-    }
-  } finally {
-    if (!connection) conn.release();
-  }
-}
+export async function seedProducts() {}
+export async function seedBanners() {}
+export async function seedUsers() {}
+export async function seedOrders() {}
+export async function seedVisitors() {}
 
 /**
  * Format raw row to Product object
