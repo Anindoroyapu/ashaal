@@ -29,7 +29,7 @@ export const SEO: React.FC<SEOProps> = ({
   const siteUrl =
     typeof window !== "undefined"
       ? window.location.origin
-      : "https://ashall.com";
+      : "https://ashaal.com.bd";
   const queryStr = searchParams?.toString();
   const currentUrl =
     canonical || `${siteUrl}${pathname || ""}${queryStr ? "?" + queryStr : ""}`;

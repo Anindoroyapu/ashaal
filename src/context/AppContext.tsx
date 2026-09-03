@@ -15,6 +15,7 @@ import {
 } from "../types";
 
 import { VOUCHERS_DATA } from "../data/bannersData";
+import {
   subscribeToProducts,
   subscribeToOrders,
   subscribeToBanners,
@@ -299,27 +300,18 @@ const INITIAL_USER: UserProfile = {
   email: "",
   avatar:
     "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80",
-    division: "Dhaka",
-    district: "Dhaka North",
-    thana: "Gulshan-2",
-    addressLine: "House #45, Road #11, Block D, Gulshan-2",
-    landmark: "Near Pink City Shopping Mall",
-    label: "HOME",
-    isDefault: true,
-  },
-  {
-    id: "addr-2",
-    fullName: "Tanvir Ahmed",
-    phone: "+880 1712-345678",
-    division: "Dhaka",
-    district: "Dhaka South",
-    thana: "Dhanmondi",
-    addressLine: "Suite 402, Level 4, Concord Tower, Road 27, Dhanmondi",
-    landmark: "Opposite Rapa Plaza",
-    label: "OFFICE",
-    isDefault: false,
-  },
-];
+  coins: 0,
+  memberTier: "Silver Member",
+  joinDate: "2026",
+  role: "customer",
+  status: "active",
+  token: "",
+  totalOrders: 0,
+  totalSpent: 0,
+  addresses: [],
+};
+
+const INITIAL_ADDRESSES: DeliveryAddress[] = [];
 
 const INITIAL_ORDERS: Order[] = [];
 
@@ -403,6 +395,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const [vouchers, setVouchers] = useState<Voucher[]>(VOUCHERS_DATA);
   const [orders, setOrders] = useState<Order[]>(() =>
+    getStoredItem<Order[]>("ash_orders", []),
   );
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(
     initialRoute.orderId || null,
@@ -466,6 +459,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         } catch {}
         // If current user is in loadedUsers, sync details
         setUser((currentUser) => {
+          const matched = loadedUsers.find((u) => u.id === currentUser.id);
           return matched ? { ...currentUser, ...matched } : currentUser;
         });
       }
@@ -483,6 +477,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     if (sessionToken) {
       saveCartByToken(sessionToken, cart);
+    }
   }, [cart, sessionToken]);
 
   useEffect(() => {
