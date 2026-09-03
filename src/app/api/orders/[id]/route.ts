@@ -72,6 +72,9 @@ export async function PUT(
 
     const [rows]: any = await pool.query('SELECT * FROM orders WHERE id = ?', [id]);
     if (rows.length > 0) {
+      await syncOrderStatusTable(pool, id, rows[0].orderStatus);
+    }
+    return NextResponse.json({ success: true, message: 'Order updated successfully', order: formatOrderRow(rows[0]) });
   } catch (err: any) {
     console.error('PUT /api/orders/[id] error:', err);
     return NextResponse.json({ success: false, message: 'Failed to update order: ' + err.message }, { status: 500 });

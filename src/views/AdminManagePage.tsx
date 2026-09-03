@@ -55,6 +55,7 @@ import {
   X,
   ExternalLink,
   ShieldCheck,
+  ShieldAlert,
   Menu,
   Calendar,
   User,
@@ -239,6 +240,10 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
   productId,
 }) => {
   const {
+    user,
+    isLoggedIn,
+    setIsLoginModalOpen,
+    logout,
     products,
     orders,
     banners,
@@ -248,6 +253,9 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
     language,
     deleteUserAccount,
   } = useApp();
+
+  // Strict Administrator Role Check: profile data must have role === "admin"
+  const isAuthorizedAdmin = Boolean(isLoggedIn && user && user.role === "admin");
 
   const [userRoleFilter, setUserRoleFilter] = useState<string>("all");
 
@@ -385,6 +393,7 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
     } catch {}
     setIsAuthenticated(false);
     setPasscode("");
+    logout();
   };
 
   // Open Full-Page Product Creator
@@ -1006,7 +1015,120 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
     activeRoute === "orders-cancelled";
 
   // =========================================================================
-  // PASSCODE AUTHENTICATION SCREEN (Sakai / Prime Styled)
+  // 1. STRICT SECURITY GATEKEEPER: ROLE MUST BE ADMIN
+  // =========================================================================
+  if (!isAuthorizedAdmin) {
+    return (
+      <div className="min-h-screen bg-[#0f172a] flex flex-col justify-center items-center p-4 font-sans antialiased text-white selection:bg-red-500 selection:text-white">
+        <SEO
+          title="403 Access Denied | Ashaal Management"
+          description="Ashaal Management Portal - Administrator clearance required"
+        />
+
+        <div className="max-w-md w-full bg-slate-900/90 backdrop-blur-xl border border-slate-800 rounded-3xl p-8 shadow-2xl space-y-6 relative overflow-hidden">
+          {/* Ambient Glow */}
+          <div className="absolute -top-24 -right-24 w-48 h-48 bg-red-500/15 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+
+          {/* Security Header */}
+          <div className="text-center space-y-3 relative z-10">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 shadow-lg shadow-red-500/10 mb-1">
+              <ShieldAlert className="w-9 h-9" />
+            </div>
+            <div className="inline-block px-3 py-1 bg-red-500/10 border border-red-500/20 rounded-full text-[10px] font-mono font-bold text-red-400 tracking-wider uppercase">
+              SECURITY CLEARANCE REQUIRED • 403 FORBIDDEN
+            </div>
+            <h1 className="text-2xl font-black tracking-tight text-white uppercase">
+              Administrative Portal
+            </h1>
+            <p className="text-xs text-slate-400 max-w-sm mx-auto leading-relaxed">
+              Access to <span className="font-mono text-emerald-400 font-bold">/manage</span> and MySQL management operations is strictly restricted to accounts verified with the{" "}
+              <span className="font-mono text-red-400 font-bold">admin</span> role.
+            </p>
+          </div>
+
+          {/* Current Account Card */}
+          <div className="p-4 bg-slate-800/80 border border-slate-700/80 rounded-2xl space-y-2.5 relative z-10 text-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-slate-400 font-medium">Authentication State:</span>
+              {isLoggedIn && user ? (
+                <span className="font-bold text-emerald-400 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                  <span>Signed In</span>
+                </span>
+              ) : (
+                <span className="text-slate-500 italic">Guest (Not Signed In)</span>
+              )}
+            </div>
+
+            {isLoggedIn && user && (
+              <>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400 font-medium">Current Account:</span>
+                  <span className="font-bold text-white truncate max-w-[180px]">{user.name}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400 font-medium">Account Email:</span>
+                  <span className="font-mono text-slate-300 truncate max-w-[180px]">{user.email}</span>
+                </div>
+                <div className="flex items-center justify-between pt-2 border-t border-slate-700/60">
+                  <span className="text-slate-400 font-medium">Assigned Role:</span>
+                  <span className="px-2 py-0.5 bg-red-500/20 border border-red-500/30 text-red-400 font-mono font-bold rounded uppercase text-[10px]">
+                    {user.role || "customer"} (NO ADMIN ACCESS)
+                  </span>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Action Buttons */}
+          <div className="space-y-2.5 relative z-10">
+            <button
+              type="button"
+              onClick={() => setIsLoginModalOpen(true)}
+              className="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-xl text-xs sm:text-sm shadow-lg shadow-emerald-600/20 transition-all cursor-pointer flex items-center justify-center gap-2"
+            >
+              <Lock className="w-4 h-4" />
+              <span>
+                {isLoggedIn ? "Switch to Administrator Account" : "Sign In with Admin Account"}
+              </span>
+            </button>
+
+            {isLoggedIn && (
+              <button
+                type="button"
+                onClick={() => logout()}
+                className="w-full py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Log Out Current Account</span>
+              </button>
+            )}
+
+            <a
+              href="/"
+              className="w-full py-2.5 bg-transparent hover:bg-slate-800/60 border border-slate-700/60 text-slate-400 hover:text-white rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 text-center"
+            >
+              <Store className="w-3.5 h-3.5" />
+              <span>Return to Storefront</span>
+            </a>
+          </div>
+
+          {/* Security Footer Notice */}
+          <div className="pt-3 border-t border-slate-800/80 text-center relative z-10">
+            <p className="text-[11px] text-slate-500">
+              Authorized admin accounts:{" "}
+              <span className="text-emerald-400 font-mono">admin@ashaal.com</span> or{" "}
+              <span className="text-emerald-400 font-mono">anindo.roy@gmail.com</span>
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // 2. PASSCODE 2FA SCREEN (FOR VERIFIED ADMINS)
   // =========================================================================
   if (!isAuthenticated) {
     return (
@@ -1028,9 +1150,15 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
             <p className="text-xs font-semibold text-emerald-600 uppercase tracking-widest">
               PrimeNG Sakai Layout System
             </p>
+            <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 space-y-1">
+              <div className="flex items-center justify-between font-bold">
+                <span>Verified Admin:</span>
+                <span className="px-1.5 py-0.2 bg-emerald-200 text-emerald-900 rounded text-[9px] uppercase font-mono">ROLE: ADMIN</span>
+              </div>
+              <p className="font-semibold text-slate-900">{user?.name} ({user?.email})</p>
+            </div>
             <p className="text-xs text-slate-500">
-              Enter authorized administrator passcode to manage inventory &
-              orders.
+              Enter authorized administrator passcode to unlock the management dashboard.
             </p>
           </div>
 
@@ -1171,10 +1299,10 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
             </div>
             <div className="hidden sm:block text-left">
               <p className="text-xs font-bold text-slate-800 leading-none">
-                Admin
+                {user?.name || "Admin"}
               </p>
-              <p className="text-[10px] text-slate-400 leading-none mt-0.5">
-                Super User
+              <p className="text-[10px] text-emerald-600 font-bold leading-none mt-0.5">
+                ROLE: {user?.role?.toUpperCase() || "ADMIN"}
               </p>
             </div>
             <button

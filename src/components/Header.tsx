@@ -182,6 +182,27 @@ export const Header: React.FC = () => {
                         {t("Ashaal Coins & Rewards", "আশাল কয়েন ও রিওয়ার্ড")}
                       </span>
                     </button>
+                    {user?.role === "admin" && (
+                      <>
+                        <div className="border-t border-[#e2e2e2] my-1"></div>
+                        <a
+                          href="/manage"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full text-left px-3 py-2 hover:bg-emerald-50 text-emerald-800 font-bold flex items-center justify-between transition-colors"
+                        >
+                          <div className="flex items-center gap-2">
+                            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>
+                              {t("Admin Portal", "অ্যাডমিন পোর্টাল")}
+                            </span>
+                          </div>
+                          <span className="px-1.5 py-0.2 bg-emerald-100 text-emerald-800 text-[9px] font-black rounded uppercase">
+                            ADMIN
+                          </span>
+                        </a>
+                      </>
+                    )}
                     <div className="border-t border-[#e2e2e2] my-1"></div>
                     <button
                       onClick={() => {
