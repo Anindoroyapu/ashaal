@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { useApp } from "../context/AppContext";
-
 import { ProductCard } from "../components/ProductCard";
 import { SEO } from "../components/SEO";
 import {
