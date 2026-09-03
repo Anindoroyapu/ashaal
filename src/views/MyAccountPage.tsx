@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useApp } from "../context/AppContext";
-import { PRODUCTS_DATA } from "../data/productsData";
+
 import { ProductCard } from "../components/ProductCard";
 import { SEO } from "../components/SEO";
 import {
@@ -44,7 +44,7 @@ export const MyAccountPage: React.FC = () => {
     "all" | "pending" | "processing" | "shipped" | "delivered"
   >("all");
 
-  const wishlistedProducts = PRODUCTS_DATA.filter((p) =>
+  const wishlistedProducts = products.filter((p) =>
     wishlist.includes(p.id),
   );
 

@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useApp } from '../context/AppContext';
-import { PRODUCTS_DATA } from '../data/productsData';
+
 import { CATEGORIES_DATA } from '../data/categoriesData';
 import { ProductCard } from '../components/ProductCard';
 import { SEO } from '../components/SEO';
@@ -34,7 +34,7 @@ export const SearchListingPage: React.FC = () => {
     products: dynamicProducts
   } = useApp();
 
-  const productsList = dynamicProducts && dynamicProducts.length > 0 ? dynamicProducts : PRODUCTS_DATA;
+  const productsList = dynamicProducts || [];
 
   const params = useParams();
   const routeCategorySlug = params?.slug ? (Array.isArray(params.slug) ? params.slug[0] : params.slug) : undefined;

@@ -1,6 +1,6 @@
 import { Product, Order, Banner, UserProfile } from '../types';
-import { PRODUCTS_DATA } from '../data/productsData';
-import { HERO_BANNERS } from '../data/bannersData';
+
+
 
 const BASE_API_URL = typeof window !== 'undefined' ? `${window.location.origin}/api` : 'http://localhost:3000/api';
 
@@ -110,7 +110,7 @@ export async function fetchProducts(): Promise<Product[]> {
     return data.products || [];
   } catch (err) {
     console.warn('API fetchProducts error, fallback to static:', err);
-    return PRODUCTS_DATA;
+    return [];
   }
 }
 
@@ -125,7 +125,7 @@ export function subscribeToProducts(onProductsChange: (products: Product[]) => v
     if (prods && prods.length > 0) {
       onProductsChange(prods);
     } else {
-      onProductsChange(PRODUCTS_DATA);
+      onProductsChange([]);
     }
   });
 
@@ -300,7 +300,7 @@ export async function fetchBanners(): Promise<Banner[]> {
     return data.banners || [];
   } catch (err) {
     console.warn('API fetchBanners error:', err);
-    return HERO_BANNERS;
+    return [];
   }
 }
 
@@ -309,7 +309,7 @@ export function subscribeToBanners(onBannersChange: (banners: Banner[]) => void)
 
   fetchBanners().then((b) => {
     if (b && b.length > 0) onBannersChange(b);
-    else onBannersChange(HERO_BANNERS);
+    else onBannersChange([]);
   });
 
   const interval = setInterval(() => {
@@ -361,7 +361,7 @@ export async function fetchUsers(): Promise<UserProfile[]> {
     return data.users || [];
   } catch (err) {
     console.warn('API fetchUsers error:', err);
-    return INITIAL_SEED_USERS;
+    return [];
   }
 }
 
@@ -370,7 +370,7 @@ export function subscribeToUsers(onUsersChange: (users: UserProfile[]) => void) 
 
   fetchUsers().then((u) => {
     if (u && u.length > 0) onUsersChange(u);
-    else onUsersChange(INITIAL_SEED_USERS);
+    else onUsersChange([]);
   });
 
   const interval = setInterval(() => {

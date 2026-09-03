@@ -171,48 +171,7 @@ interface VisitorLog {
   referrer: string;
 }
 
-const INITIAL_VISITORS: VisitorLog[] = [
-  {
-    id: "v-1",
-    ip: "103.205.71.12",
-    page: "/product/prod-1",
-    device: "Chrome (Android 14)",
-    country: "Bangladesh",
-    city: "Dhaka",
-    timestamp: "2 mins ago",
-    referrer: "Google Search",
-  },
-  {
-    id: "v-2",
-    ip: "103.145.118.89",
-    page: "/flash-sale",
-    device: "Safari (iPhone 15)",
-    country: "Bangladesh",
-    city: "Chittagong",
-    timestamp: "5 mins ago",
-    referrer: "Facebook Ads",
-  },
-  {
-    id: "v-3",
-    ip: "182.160.112.44",
-    page: "/checkout",
-    device: "Edge (Windows 11)",
-    country: "Bangladesh",
-    city: "Sylhet",
-    timestamp: "12 mins ago",
-    referrer: "Direct Link",
-  },
-  {
-    id: "v-4",
-    ip: "103.230.106.18",
-    page: "/",
-    device: "Chrome (Windows 10)",
-    country: "Bangladesh",
-    city: "Rajshahi",
-    timestamp: "18 mins ago",
-    referrer: "Direct Link",
-  },
-];
+const INITIAL_VISITORS: VisitorLog[] = [];
 
 export type NavRoute =
   | "dashboard"

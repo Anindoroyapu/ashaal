@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { HERO_BANNERS, PROMO_CHANNELS } from '../data/bannersData';
+import { PROMO_CHANNELS } from '../data/bannersData';
 import { CATEGORIES_DATA } from '../data/categoriesData';
-import { PRODUCTS_DATA } from '../data/productsData';
+
 import { ProductCard } from '../components/ProductCard';
 import { SEO } from '../components/SEO';
 import {
@@ -28,8 +28,8 @@ import {
 export const HomePage: React.FC = () => {
   const { language, navigate, vouchers, claimVoucher, t, products: dynamicProducts, banners: dynamicBanners } = useApp();
 
-  const productsList = dynamicProducts && dynamicProducts.length > 0 ? dynamicProducts : PRODUCTS_DATA;
-  const bannersList = dynamicBanners && dynamicBanners.length > 0 ? dynamicBanners : HERO_BANNERS;
+  const productsList = dynamicProducts || [];
+  const bannersList = dynamicBanners || [];
 
   // Carousel slider state
   const [currentSlide, setCurrentSlide] = useState(0);

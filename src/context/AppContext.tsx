@@ -13,7 +13,7 @@ import {
   Banner,
   UserProfile,
 } from "../types";
-import { PRODUCTS_DATA } from "../data/productsData";
+
 import { VOUCHERS_DATA, HERO_BANNERS } from "../data/bannersData";
 import {
   subscribeToProducts,
@@ -75,7 +75,7 @@ export function parseRouteFromBrowserLocation(): RouteState {
     const qId = searchParams.get("id") || searchParams.get("productId");
     return {
       page: "product-details",
-      productId: qId || PRODUCTS_DATA[0].id,
+      productId: qId || null,
     };
   }
 
@@ -295,7 +295,9 @@ interface AppContextType {
 }
 
 const INITIAL_USER: UserProfile =
-  INITIAL_SEED_USERS.find((u) => u.role === "customer") || INITIAL_SEED_USERS[2] || INITIAL_SEED_USERS[0];
+  INITIAL_SEED_USERS.find((u) => u.role === "customer") ||
+  INITIAL_SEED_USERS[2] ||
+  INITIAL_SEED_USERS[0];
 
 const INITIAL_ADDRESSES: DeliveryAddress[] = [
   {
@@ -441,13 +443,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     initialRoute.searchFilter || null,
   );
   const [products, setProducts] = useState<Product[]>(() =>
-    getStoredItem<Product[]>("ash_products", PRODUCTS_DATA),
+    getStoredItem<Product[]>("ash_products", []),
   );
-  const [banners, setBanners] = useState<Banner[]>(() => HERO_BANNERS);
+  const [banners, setBanners] = useState<Banner[]>(() => []);
 
   // Users state from Firestore
   const [allUsers, setAllUsers] = useState<UserProfile[]>(() =>
-    getStoredItem<UserProfile[]>("ash_all_users", INITIAL_SEED_USERS),
+    getStoredItem<UserProfile[]>("ash_all_users", []),
   );
 
   // Active Logged-in User and Token
@@ -486,12 +488,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     const activeTok = getActiveSessionToken();
     const tokenWishlist = loadWishlistByToken(activeTok);
     if (tokenWishlist && tokenWishlist.length > 0) return tokenWishlist;
-    return ["prod-1", "prod-3"];
+    return [];
   });
 
   const [vouchers, setVouchers] = useState<Voucher[]>(VOUCHERS_DATA);
   const [orders, setOrders] = useState<Order[]>(() =>
-    getStoredItem<Order[]>("ash_orders", INITIAL_ORDERS),
+    getStoredItem<Order[]>("ash_orders", []),
   );
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(
     initialRoute.orderId || "ord-bd-98421",

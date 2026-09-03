@@ -2,14 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { PRODUCTS_DATA } from '../data/productsData';
+
 import { ProductCard } from '../components/ProductCard';
 import { SEO } from '../components/SEO';
 import { Zap, Clock, Flame, ChevronRight, ShieldCheck, Truck, Sparkles } from 'lucide-react';
 
 export const FlashSalePage: React.FC = () => {
   const { language, t, products: dynamicProducts } = useApp();
-  const productsList = dynamicProducts && dynamicProducts.length > 0 ? dynamicProducts : PRODUCTS_DATA;
+  const productsList = dynamicProducts || [];
 
   const [activeSlot, setActiveSlot] = useState<'current' | 'next' | 'tomorrow'>('current');
   const [activeCategory, setActiveCategory] = useState<'all' | 'electronics' | 'fashion' | 'home' | 'groceries'>('all');
@@ -152,7 +152,7 @@ export const FlashSalePage: React.FC = () => {
 
 export const DarazMallPage: React.FC = () => {
   const { language, navigate, vouchers, claimVoucher, t, products: dynamicProducts } = useApp();
-  const productsList = dynamicProducts && dynamicProducts.length > 0 ? dynamicProducts : PRODUCTS_DATA;
+  const productsList = dynamicProducts || [];
 
   const mallBrands = [
     { name: 'Xiaomi', logo: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=120&q=80', followers: '1.4M', banner: 'https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=500&q=80' },

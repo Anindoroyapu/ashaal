@@ -1,7 +1,7 @@
 import mysql from 'mysql2/promise';
 import { Product, Order, Banner, UserProfile } from '../types';
-import { PRODUCTS_DATA } from '../data/productsData';
-import { HERO_BANNERS } from '../data/bannersData';
+
+
 
 const DB_CONFIG = {
   host: process.env.DB_HOST || '51.79.229.154',
@@ -29,202 +29,11 @@ if (process.env.NODE_ENV !== 'production') {
   globalForDb.mysqlPool = pool;
 }
 
-export const INITIAL_SEED_USERS: UserProfile[] = [
-  {
-    id: 'usr-admin-0',
-    name: 'Ashaal Admin',
-    phone: '+880 1700-123456',
-    email: 'admin@ashaal.com',
-    password: 'password123',
-    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&q=80',
-    coins: 5000,
-    memberTier: 'Diamond Club',
-    joinDate: 'Jan 2022',
-    role: 'admin',
-    status: 'active',
-    token: 'usr_tok_admin_00001',
-    totalOrders: 0,
-    totalSpent: 0,
-    addresses: [],
-    createdAt: '2022-01-01T00:00:00.000Z'
-  },
-  {
-    id: 'usr-anindo-2',
-    name: 'Anindo Roy',
-    phone: '+880 1819-876543',
-    email: 'anindo.roy@gmail.com',
-    password: 'password123',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&q=80',
-    coins: 850,
-    memberTier: 'Diamond Club',
-    joinDate: 'Mar 2023',
-    role: 'admin',
-    status: 'active',
-    token: 'usr_tok_anindo_55102',
-    totalOrders: 28,
-    totalSpent: 64200,
-    createdAt: '2023-03-20T14:30:00.000Z'
-  },
-  {
-    id: 'usr-tanvir-1',
-    name: 'Tanvir Ahmed',
-    phone: '+880 1712-345678',
-    email: 'tanvir.ahmed@example.com',
-    password: 'password123',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80',
-    coins: 480,
-    memberTier: 'Gold Member',
-    joinDate: 'Jan 2023',
-    role: 'customer',
-    status: 'active',
-    token: 'usr_tok_tanvir_94821',
-    totalOrders: 14,
-    totalSpent: 28400,
-    addresses: [
-      {
-        id: 'addr-1',
-        fullName: 'Tanvir Ahmed',
-        phone: '+880 1712-345678',
-        division: 'Dhaka',
-        district: 'Dhaka North',
-        thana: 'Gulshan-2',
-        addressLine: 'House #45, Road #11, Block D, Gulshan-2',
-        landmark: 'Near Pink City Shopping Mall',
-        label: 'HOME',
-        isDefault: true
-      }
-    ],
-    createdAt: '2023-01-15T10:00:00.000Z'
-  },
-  {
-    id: 'usr-sadia-3',
-    name: 'Sadia Islam',
-    phone: '+880 1911-223344',
-    email: 'sadia.islam@yahoo.com',
-    password: 'password123',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&q=80',
-    coins: 210,
-    memberTier: 'Silver Member',
-    joinDate: 'Aug 2024',
-    role: 'customer',
-    status: 'active',
-    token: 'usr_tok_sadia_88301',
-    totalOrders: 5,
-    totalSpent: 9800,
-    createdAt: '2024-08-10T09:15:00.000Z'
-  },
-  {
-    id: 'usr-rafiq-4',
-    name: 'Rafiqul Hasan',
-    phone: '+880 1622-998877',
-    email: 'rafiqul.hasan@outlook.com',
-    password: 'password123',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&q=80',
-    coins: 120,
-    memberTier: 'Silver Member',
-    joinDate: 'Nov 2024',
-    role: 'customer',
-    status: 'active',
-    token: 'usr_tok_rafiq_47291',
-    totalOrders: 3,
-    totalSpent: 4500,
-    createdAt: '2024-11-05T16:45:00.000Z'
-  }
-];
+export const INITIAL_SEED_USERS: UserProfile[] = [];
 
-export const INITIAL_ORDERS: Order[] = [
-  {
-    id: 'ord-bd-98421',
-    orderNumber: '68294721901',
-    createdAt: 'Yesterday at 04:30 PM',
-    items: [
-      {
-        id: 'cart-init-1',
-        productId: 'prod-2',
-        product: PRODUCTS_DATA[1],
-        quantity: 1,
-        selectedVariations: { Color: 'Black' },
-        selected: true
-      },
-      {
-        id: 'cart-init-2',
-        productId: 'prod-9',
-        product: PRODUCTS_DATA[8],
-        quantity: 1,
-        selectedVariations: {},
-        selected: true
-      }
-    ],
-    shippingAddress: {
-      id: 'addr-1',
-      fullName: 'Tanvir Ahmed',
-      phone: '+880 1712-345678',
-      division: 'Dhaka',
-      district: 'Dhaka North',
-      thana: 'Gulshan-2',
-      addressLine: 'House #45, Road #11, Block D, Gulshan-2',
-      landmark: 'Near Pink City Shopping Mall',
-      label: 'HOME',
-      isDefault: true
-    },
-    paymentMethod: 'bkash',
-    paymentStatus: 'PAID',
-    orderStatus: 'SHIPPED',
-    subtotal: 2940,
-    shippingFee: 0,
-    voucherDiscount: 100,
-    coinDiscount: 40,
-    total: 2800,
-    trackingNumber: 'DEX-BD-948201',
-    courier: 'Ashaal Express (DEX)',
-    timeline: [
-      {
-        title: 'Order Placed & Verified',
-        titleBn: 'অর্ডার গ্রহণ এবং নিশ্চিত করা হয়েছে',
-        description: 'Payment via bKash verified (TrxID: 8N2K90L4)',
-        descriptionBn: 'বিকাশ পেমেন্ট ভেরিফাইড হয়েছে',
-        timestamp: '14 Aug 2026, 04:30 PM',
-        completed: true,
-        current: false
-      },
-      {
-        title: 'Package Processed by Ashaal Hub',
-        titleBn: 'আশাল হাব থেকে প্যাকেট প্রস্তুত',
-        description: 'Packed with bubble wrap & handed over to DEX sorting facility',
-        descriptionBn: 'আশাল তেজগাঁও সেন্টারে পাঠানো হয়েছে',
-        timestamp: '15 Aug 2026, 09:15 AM',
-        completed: true,
-        current: false
-      },
-      {
-        title: 'In Transit - Out for Delivery Soon',
-        titleBn: 'ডেলিভারির জন্য পাঠানো হয়েছে',
-        description: 'Package arrived at Gulshan Distribution Station. Rider assigned.',
-        descriptionBn: 'গুলশান হাব থেকে রাইডার ডেলিভারি করছে',
-        timestamp: 'Today, 10:45 AM',
-        completed: true,
-        current: true
-      },
-      {
-        title: 'Delivered',
-        titleBn: 'ডেলিভারি সম্পন্ন',
-        description: 'Will be delivered to House #45, Road #11, Gulshan-2',
-        descriptionBn: 'গ্রাহকের ঠিকানায় পৌঁছে দেয়া হবে',
-        timestamp: 'Expected today by 06:00 PM',
-        completed: false,
-        current: false
-      }
-    ]
-  }
-];
+export const INITIAL_ORDERS: Order[] = [];
 
-export const INITIAL_VISITORS = [
-  { ip: '172.71.31.62', name: '—', phone: '—', location: 'Dhaka, BD', page: 'https://ashaa.xyz/', platform: 'Linux x86_64', time: '1 min ago' },
-  { ip: '104.22.56.28', name: '—', phone: '—', location: 'Chittagong, BD', page: 'https://ashaa.xyz/', platform: 'Linux x86_64', time: '3 mins ago' },
-  { ip: '172.69.159.176', name: '—', phone: '—', location: 'Sylhet, BD', page: 'https://ashaa.xyz/booking', platform: 'Win32', time: '7 mins ago' },
-  { ip: '172.71.223.162', name: '—', phone: '—', location: 'Dhaka, BD', page: 'https://ashaa.xyz/', platform: 'Win32', time: '12 mins ago' },
-  { ip: '172.71.183.5', name: '—', phone: '—', location: 'Rajshahi, BD', page: 'https://ashaa.xyz/?fbclid=IwY2xjaw...', platform: 'Windows', time: '15 mins ago' }
-];
+export const INITIAL_VISITORS: any[] = [];
 
 /**
  * Initialize all database tables and seed if empty
@@ -383,35 +192,7 @@ export async function initDatabase() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
 
-    // Check if products table is empty
-    const [prodRows]: any = await connection.query('SELECT COUNT(*) as count FROM products');
-    if (prodRows[0].count === 0) {
-      await seedProducts(connection);
-    }
-
-    // Check if banners table is empty
-    const [bannerRows]: any = await connection.query('SELECT COUNT(*) as count FROM banners');
-    if (bannerRows[0].count === 0) {
-      await seedBanners(connection);
-    }
-
-    // Check if users table is empty
-    const [userRows]: any = await connection.query('SELECT COUNT(*) as count FROM users');
-    if (userRows[0].count === 0) {
-      await seedUsers(connection);
-    }
-
-    // Check if orders table is empty
-    const [orderRows]: any = await connection.query('SELECT COUNT(*) as count FROM orders');
-    if (orderRows[0].count === 0) {
-      await seedOrders(connection);
-    }
-
-    // Check if visitors table is empty
-    const [visitorRows]: any = await connection.query('SELECT COUNT(*) as count FROM visitors');
-    if (visitorRows[0].count === 0) {
-      await seedVisitors(connection);
-    }
+    // Tables initialized. Data is managed live through MySQL and Admin panel.
 
     globalForDb.dbInitialized = true;
   } catch (err) {

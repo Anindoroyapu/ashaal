@@ -193,9 +193,7 @@ export const Header: React.FC = () => {
                         >
                           <div className="flex items-center gap-2">
                             <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                            <span>
-                              {t("Admin Portal", "অ্যাডমিন পোর্টাল")}
-                            </span>
+                            <span>{t("Admin Portal", "অ্যাডমিন পোর্টাল")}</span>
                           </div>
                           <span className="px-1.5 py-0.2 bg-emerald-100 text-emerald-800 text-[9px] font-black rounded uppercase">
                             ADMIN

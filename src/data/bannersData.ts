@@ -1,50 +1,10 @@
 import { Banner, Voucher } from '../types';
 
-export const HERO_BANNERS: Banner[] = [
-  {
-    id: 'b-1',
-    title: '11.11 Biggest Mega Sale of the Year',
-    subtitle: 'Up to 80% OFF + Free Delivery + ৳1500 Voucher Code',
-    image: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1200&q=80',
-    linkType: 'flash-sale',
-    badge: 'MEGA SALE'
-  },
-  {
-    id: 'b-2',
-    title: 'AshaalMall Brand Festival 2025',
-    subtitle: '100% Authentic Brands | 14 Days Free Return Guarantee',
-    image: 'https://images.unsplash.com/photo-1555421689-491a97ff2040?w=1200&q=80',
-    linkType: 'daraz-mall',
-    badge: 'ASHAALMALL'
-  },
-  {
-    id: 'b-3',
-    title: 'Electronics Super Fair: Smartphones & Laptops',
-    subtitle: 'Extra 10% bKash & Nagad Cashback Instant Discount',
-    image: 'https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=1200&q=80',
-    linkType: 'category',
-    targetId: 'electronic-devices',
-    badge: 'TECH GALA'
-  },
-  {
-    id: 'b-4',
-    title: 'Bangladeshi Traditional & Festive Fashion Collection',
-    subtitle: 'Exclusive Eid & Puja Sarees, Premium Panjabis & Kurtis',
-    image: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=1200&q=80',
-    linkType: 'category',
-    targetId: 'womens-fashion',
-    badge: 'FASHION WEEK'
-  },
-  {
-    id: 'b-5',
-    title: 'Ashaal Mart: Grocery Express Delivery in 2 Hours',
-    subtitle: 'Fresh Food, Cooking Essentials & Household Care at Best Prices',
-    image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=1200&q=80',
-    linkType: 'category',
-    targetId: 'groceries-pets',
-    badge: 'ASHAAL MART'
-  }
-];
+/**
+ * Hero Banners are loaded directly from MySQL database (51.79.229.154:3306).
+ * No hardcoded demo data in code.
+ */
+export const HERO_BANNERS: Banner[] = [];
 
 export const PROMO_CHANNELS = [
   {

@@ -238,12 +238,15 @@ export const LoginModal: React.FC = () => {
                 <div className="grid grid-cols-2 gap-2">
                   {/* Admin Account Button */}
                   {(() => {
-                    const adminUser = allUsers.find(u => u.role === "admin") || {
+                    const adminUser = allUsers.find(
+                      (u) => u.role === "admin",
+                    ) || {
                       id: "usr-admin-0",
                       name: "Ashaal Admin",
                       email: "admin@ashaal.com",
                       role: "admin",
-                      avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&q=80",
+                      avatar:
+                        "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&q=80",
                       coins: 5000,
                     };
                     return (
@@ -274,12 +277,15 @@ export const LoginModal: React.FC = () => {
 
                   {/* Customer Account Button */}
                   {(() => {
-                    const custUser = allUsers.find(u => u.role !== "admin") || {
+                    const custUser = allUsers.find(
+                      (u) => u.role !== "admin",
+                    ) || {
                       id: "usr-tanvir-1",
                       name: "Tanvir Ahmed",
                       email: "tanvir.ahmed@example.com",
                       role: "customer",
-                      avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80",
+                      avatar:
+                        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80",
                       coins: 480,
                     };
                     return (
