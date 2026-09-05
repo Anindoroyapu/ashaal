@@ -310,6 +310,66 @@ export async function initDatabase() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
 
+    // Safe migration: Add all enterprise product columns to both products & Product tables if not present
+    const extraProductCols = [
+      'uuid VARCHAR(128)',
+      'name VARCHAR(512)',
+      'short_description TEXT',
+      'category_id VARCHAR(128)',
+      'subcategory_id VARCHAR(128)',
+      'child_category_id VARCHAR(128)',
+      'brand_id VARCHAR(128)',
+      'vendor_id VARCHAR(128)',
+      'supplier_id VARCHAR(128)',
+      'sku VARCHAR(128)',
+      'barcode VARCHAR(128)',
+      "discount_type VARCHAR(64) DEFAULT 'percentage'",
+      'discount_value DECIMAL(12, 2) DEFAULT 0',
+      'final_price DECIMAL(12, 2) DEFAULT 0',
+      'purchase_price DECIMAL(12, 2) DEFAULT 0',
+      'cost_price DECIMAL(12, 2) DEFAULT 0',
+      'profit_margin DECIMAL(12, 2) DEFAULT 0',
+      'stock_quantity INT DEFAULT 50',
+      'stock_alert_quantity INT DEFAULT 5',
+      "stock_status VARCHAR(64) DEFAULT 'in_stock'",
+      "unit VARCHAR(64) DEFAULT 'piece'",
+      'weight DECIMAL(10, 2) DEFAULT 0',
+      'length DECIMAL(10, 2) DEFAULT 0',
+      'width DECIMAL(10, 2) DEFAULT 0',
+      'height DECIMAL(10, 2) DEFAULT 0',
+      'color_options JSON',
+      'size_options JSON',
+      'thumbnail_image TEXT',
+      'gallery_images JSON',
+      'video_url TEXT',
+      'warranty_period VARCHAR(128)',
+      'return_policy VARCHAR(255)',
+      "origin_country VARCHAR(128) DEFAULT 'Bangladesh'",
+      'manufacturing_date VARCHAR(64)',
+      'expiry_date VARCHAR(64)',
+      'is_featured BOOLEAN DEFAULT FALSE',
+      'is_trending BOOLEAN DEFAULT FALSE',
+      'is_best_seller BOOLEAN DEFAULT FALSE',
+      'total_reviews INT DEFAULT 0',
+      'total_sales INT DEFAULT 0',
+      'meta_title VARCHAR(512)',
+      'meta_description TEXT',
+      'meta_keywords TEXT',
+      "status VARCHAR(64) DEFAULT 'active'",
+      "visibility VARCHAR(64) DEFAULT 'public'",
+      "created_by VARCHAR(128) DEFAULT 'admin'",
+      "updated_by VARCHAR(128) DEFAULT 'admin'"
+    ];
+
+    for (const col of extraProductCols) {
+      try {
+        await connection.query(`ALTER TABLE products ADD COLUMN ${col}`);
+      } catch (e) {}
+      try {
+        await connection.query(`ALTER TABLE Product ADD COLUMN ${col}`);
+      } catch (e) {}
+    }
+
     // Tables initialized. Data is managed live through MySQL and Admin panel.
 
     globalForDb.dbInitialized = true;
@@ -334,41 +394,128 @@ export async function seedVisitors() {}
  * Format raw row to Product object
  */
 export function formatProductRow(row: any): Product {
+  const parseJsonField = (val: any, fallback: any) => {
+    if (!val) return fallback;
+    if (typeof val === 'object') return val;
+    if (typeof val === 'string') {
+      try {
+        return JSON.parse(val);
+      } catch (e) {
+        return typeof fallback === 'string' ? val : [val];
+      }
+    }
+    return fallback;
+  };
+
+  const id = row.id || `prod-${Date.now()}`;
+  const title = row.title || row.name || 'Product';
+  const name = row.name || title;
+  const mainImage = row.mainImage || row.thumbnail_image || '';
+  const thumbnail_image = row.thumbnail_image || mainImage;
+  const images = parseJsonField(row.images || row.gallery_images, [mainImage].filter(Boolean));
+  const gallery_images = parseJsonField(row.gallery_images || row.images, images);
+  const price = Number(row.price) || 0;
+  const originalPrice = Number(row.originalPrice) || price;
+  const discountPercentage = Number(row.discountPercentage) || 0;
+  const discount_value = Number(row.discount_value) || discountPercentage;
+  const final_price = Number(row.final_price) || price;
+  const inStock = Number(row.inStock ?? row.stock_quantity) ?? 50;
+  const stock_quantity = Number(row.stock_quantity ?? inStock);
+  const stock_alert_quantity = Number(row.stock_alert_quantity) || 5;
+  const stock_status = row.stock_status || (inStock > 0 ? 'in_stock' : 'out_of_stock');
+  const soldCount = Number(row.soldCount ?? row.total_sales) || 0;
+  const total_sales = soldCount;
+  const reviewsCount = Number(row.reviewsCount ?? row.total_reviews) || 0;
+  const total_reviews = reviewsCount;
+  const warranty = row.warranty || row.warranty_period || '1 Year Brand Warranty';
+  const warranty_period = row.warranty_period || warranty;
+  const returnPolicy = row.returnPolicy || row.return_policy || '14 Days Easy Free Return';
+  const return_policy = row.return_policy || returnPolicy;
+
   return {
-    id: row.id,
-    title: row.title,
-    titleBn: row.titleBn || row.title,
+    id,
+    uuid: row.uuid || id,
+    name,
+    title,
+    titleBn: row.titleBn || title,
     slug: row.slug || '',
-    brand: row.brand || '',
-    category: row.category || '',
-    categorySlug: row.categorySlug || '',
-    subCategory: row.subCategory || '',
-    price: Number(row.price) || 0,
-    originalPrice: Number(row.originalPrice) || Number(row.price) || 0,
-    discountPercentage: Number(row.discountPercentage) || 0,
+    short_description: row.short_description || (Array.isArray(row.description) ? row.description[0] : (typeof row.description === 'string' ? row.description : '')),
+    description: parseJsonField(row.description, ['High quality authentic product on Ashaal.']),
+    descriptionBn: parseJsonField(row.descriptionBn, ['আশাল এ সেরা মানের আসল পণ্য।']),
+    category: row.category || 'Electronic Devices',
+    categorySlug: row.categorySlug || 'electronic-devices',
+    category_id: row.category_id || row.categorySlug || 'electronic-devices',
+    subcategory_id: row.subcategory_id || row.subCategory || 'general',
+    child_category_id: row.child_category_id || '',
+    subCategory: row.subCategory || row.subcategory_id || 'general',
+    brand: row.brand || 'Ashaal',
+    brand_id: row.brand_id || '',
+    vendor_id: row.vendor_id || '',
+    supplier_id: row.supplier_id || '',
+    sku: row.sku || `SKU-${id.toUpperCase()}`,
+    barcode: row.barcode || '',
+    price,
+    discount_type: row.discount_type || 'percentage',
+    discount_value,
+    final_price,
+    purchase_price: Number(row.purchase_price) || 0,
+    cost_price: Number(row.cost_price) || 0,
+    profit_margin: Number(row.profit_margin) || 0,
+    originalPrice,
+    discountPercentage,
+    stock_quantity,
+    stock_alert_quantity,
+    stock_status,
+    unit: row.unit || 'piece',
+    weight: Number(row.weight) || 0,
+    length: Number(row.length) || 0,
+    width: Number(row.width) || 0,
+    height: Number(row.height) || 0,
+    color_options: parseJsonField(row.color_options, []),
+    size_options: parseJsonField(row.size_options, []),
+    tags: parseJsonField(row.tags, []),
+    thumbnail_image,
+    gallery_images,
+    video_url: row.video_url || '',
+    warranty,
+    warranty_period,
+    returnPolicy,
+    return_policy,
+    origin_country: row.origin_country || 'Bangladesh',
+    manufacturing_date: row.manufacturing_date || '',
+    expiry_date: row.expiry_date || '',
+    is_featured: Boolean(row.is_featured),
+    is_trending: Boolean(row.is_trending),
+    is_best_seller: Boolean(row.is_best_seller),
     rating: Number(row.rating) || 5.0,
-    reviewsCount: Number(row.reviewsCount) || 0,
+    reviewsCount,
+    total_reviews,
+    soldCount,
+    total_sales,
     questionsCount: Number(row.questionsCount) || 0,
-    soldCount: Number(row.soldCount) || 0,
-    inStock: Number(row.inStock) ?? 50,
+    inStock,
     isDarazMall: Boolean(row.isDarazMall),
     isFreeDelivery: Boolean(row.isFreeDelivery),
     isFlashSale: Boolean(row.isFlashSale),
     flashSaleEndTime: row.flashSaleEndTime || '',
     coinsCashback: Number(row.coinsCashback) || 0,
-    mainImage: row.mainImage || '',
-    images: typeof row.images === 'string' ? JSON.parse(row.images) : (row.images || [row.mainImage]),
-    description: typeof row.description === 'string' ? JSON.parse(row.description) : (row.description || []),
-    descriptionBn: typeof row.descriptionBn === 'string' ? JSON.parse(row.descriptionBn) : (row.descriptionBn || []),
-    specifications: typeof row.specifications === 'string' ? JSON.parse(row.specifications) : (row.specifications || {}),
-    variations: typeof row.variations === 'string' ? JSON.parse(row.variations) : (row.variations || []),
-    seller: typeof row.seller === 'string' ? JSON.parse(row.seller) : (row.seller || { name: 'Ashaal Official Flagship Store', isOfficial: true }),
-    reviews: typeof row.reviews === 'string' ? JSON.parse(row.reviews) : (row.reviews || []),
-    warranty: row.warranty || '1 Year Brand Warranty',
-    returnPolicy: row.returnPolicy || '14 Days Easy Free Return',
-    tags: typeof row.tags === 'string' ? JSON.parse(row.tags) : (row.tags || []),
+    mainImage,
+    images,
+    specifications: parseJsonField(row.specifications, { Warranty: '1 Year Brand Warranty', Origin: 'Genuine Import' }),
+    variations: parseJsonField(row.variations, []),
+    seller: parseJsonField(row.seller, { name: 'Ashaal Official Flagship Store', isOfficial: true, rating: 98, shipOnTime: 99, chatResponse: 97, joinedYears: 3, location: 'Dhaka' }),
+    reviews: parseJsonField(row.reviews, []),
+    meta_title: row.meta_title || `${title} | Ashaal Bangladesh`,
+    meta_description: row.meta_description || row.short_description || '',
+    meta_keywords: row.meta_keywords || '',
+    status: row.status || 'active',
+    visibility: row.visibility || 'public',
+    created_by: row.created_by || 'admin',
+    updated_by: row.updated_by || 'admin',
     deliveryFee: Number(row.deliveryFee) || 0,
-    estimatedDeliveryDays: row.estimatedDeliveryDays || '2-4 Days'
+    estimatedDeliveryDays: row.estimatedDeliveryDays || '2-4 Days',
+    created_at: row.createdAt || row.created_at || new Date().toISOString(),
+    updated_at: row.updatedAt || row.updated_at || new Date().toISOString()
   };
 }
 
@@ -377,32 +524,65 @@ export function formatProductRow(row: any): Product {
  */
 export async function saveProductRecord(connOrPool: mysql.Pool | mysql.PoolConnection, product: Partial<Product> & { id?: string }): Promise<Product> {
   const id = product.id || `prod-${Date.now()}`;
-  const title = product.title || 'New Product';
+  const uuid = product.uuid || `uuid-${id}`;
+  const name = product.name || product.title || 'New Product';
+  const title = product.title || product.name || name;
   const titleBn = product.titleBn || title;
   const slug = product.slug || title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-  const brand = product.brand || 'Ashaal';
+  const short_description = product.short_description || (Array.isArray(product.description) ? product.description[0] : (typeof product.description === 'string' ? product.description : ''));
   const category = product.category || 'Electronic Devices';
   const categorySlug = product.categorySlug || 'electronic-devices';
-  const subCategory = product.subCategory || 'general';
+  const category_id = product.category_id || categorySlug;
+  const subcategory_id = product.subcategory_id || product.subCategory || 'general';
+  const child_category_id = product.child_category_id || '';
+  const subCategory = product.subCategory || subcategory_id;
+  const brand = product.brand || 'Ashaal';
+  const brand_id = product.brand_id || '';
+  const vendor_id = product.vendor_id || '';
+  const supplier_id = product.supplier_id || '';
+  const sku = product.sku || `SKU-${id.toUpperCase()}`;
+  const barcode = product.barcode || `880${Math.floor(1000000000 + Math.random() * 9000000000)}`;
   const price = Number(product.price) || 0;
   const originalPrice = Number(product.originalPrice) || price;
   const discountPercentage = product.originalPrice && product.price && product.originalPrice > product.price
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : Number(product.discountPercentage) || 0;
+  const discount_type = product.discount_type || 'percentage';
+  const discount_value = Number(product.discount_value) || discountPercentage;
+  const final_price = Number(product.final_price) || price;
+  const purchase_price = Number(product.purchase_price) || Math.round(price * 0.7);
+  const cost_price = Number(product.cost_price) || purchase_price;
+  const profit_margin = Number(product.profit_margin) || Math.max(0, price - cost_price);
+  const stock_quantity = Number(product.stock_quantity ?? product.inStock) || 50;
+  const stock_alert_quantity = Number(product.stock_alert_quantity) || 5;
+  const inStock = stock_quantity;
+  const stock_status = product.stock_status || (stock_quantity > 0 ? 'in_stock' : 'out_of_stock');
+  const unit = product.unit || 'piece';
+  const weight = Number(product.weight) || 0;
+  const length = Number(product.length) || 0;
+  const width = Number(product.width) || 0;
+  const height = Number(product.height) || 0;
+  const color_options = JSON.stringify(product.color_options || []);
+  const size_options = JSON.stringify(product.size_options || []);
   const rating = Number(product.rating) || 5.0;
-  const reviewsCount = Number(product.reviewsCount) || 0;
+  const reviewsCount = Number(product.reviewsCount ?? product.total_reviews) || 0;
+  const total_reviews = reviewsCount;
   const questionsCount = Number(product.questionsCount) || 0;
-  const soldCount = Number(product.soldCount) || 0;
-  const inStock = Number(product.inStock) ?? 50;
+  const soldCount = Number(product.soldCount ?? product.total_sales) || 0;
+  const total_sales = soldCount;
   const isDarazMall = product.isDarazMall ? 1 : 0;
   const isFreeDelivery = product.isFreeDelivery ? 1 : 0;
   const isFlashSale = product.isFlashSale ? 1 : 0;
   const flashSaleEndTime = product.flashSaleEndTime || '12h 00m 00s';
   const coinsCashback = Number(product.coinsCashback) || 50;
-  const mainImage = product.mainImage || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80';
-  const images = JSON.stringify(product.images && product.images.length > 0 ? product.images : [mainImage]);
-  const description = JSON.stringify(product.description || ['High quality authentic product on Ashaal.']);
-  const descriptionBn = JSON.stringify(product.descriptionBn || ['আশাল এ সেরা মানের আসল পণ্য।']);
+  const mainImage = product.mainImage || product.thumbnail_image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80';
+  const thumbnail_image = product.thumbnail_image || mainImage;
+  const rawImages = product.images && product.images.length > 0 ? product.images : (product.gallery_images && product.gallery_images.length > 0 ? product.gallery_images : [mainImage]);
+  const images = JSON.stringify(rawImages);
+  const gallery_images = images;
+  const video_url = product.video_url || '';
+  const description = JSON.stringify(Array.isArray(product.description) ? product.description : [product.description || 'High quality authentic product on Ashaal.']);
+  const descriptionBn = JSON.stringify(Array.isArray(product.descriptionBn) ? product.descriptionBn : [product.descriptionBn || 'আশাল এ সেরা মানের আসল পণ্য।']);
   const specifications = JSON.stringify(product.specifications || { Warranty: '1 Year Brand Warranty', Origin: 'Genuine Import' });
   const variations = JSON.stringify(product.variations || []);
   const seller = JSON.stringify(product.seller || {
@@ -416,130 +596,77 @@ export async function saveProductRecord(connOrPool: mysql.Pool | mysql.PoolConne
     location: 'Dhaka'
   });
   const reviews = JSON.stringify(product.reviews || []);
-  const warranty = product.warranty || '100% Authentic Brand Warranty';
-  const returnPolicy = product.returnPolicy || '14 Days Easy Free Return';
+  const warranty = product.warranty || product.warranty_period || '1 Year Brand Warranty';
+  const warranty_period = product.warranty_period || warranty;
+  const returnPolicy = product.returnPolicy || product.return_policy || '14 Days Easy Free Return';
+  const return_policy = product.return_policy || returnPolicy;
+  const origin_country = product.origin_country || 'Bangladesh';
+  const manufacturing_date = product.manufacturing_date || '';
+  const expiry_date = product.expiry_date || '';
+  const is_featured = product.is_featured ? 1 : 0;
+  const is_trending = product.is_trending ? 1 : 0;
+  const is_best_seller = product.is_best_seller ? 1 : 0;
+  const meta_title = product.meta_title || `${title} | Ashaal Bangladesh`;
+  const meta_description = product.meta_description || short_description || '';
+  const meta_keywords = product.meta_keywords || `${title}, ${brand}, ${category}, online shopping bd`;
+  const status = product.status || 'active';
+  const visibility = product.visibility || 'public';
+  const created_by = product.created_by || 'admin';
+  const updated_by = product.updated_by || 'admin';
   const tags = JSON.stringify(product.tags || []);
   const deliveryFee = product.isFreeDelivery ? 0 : (product.deliveryFee ?? 60);
   const estimatedDeliveryDays = product.estimatedDeliveryDays || '2-4 Days';
 
+  const productData = {
+    id, uuid, name, title, titleBn, slug, short_description, description, descriptionBn,
+    category, categorySlug, category_id, subcategory_id, child_category_id, subCategory,
+    brand, brand_id, vendor_id, supplier_id, sku, barcode,
+    price, discount_type, discount_value, final_price, purchase_price, cost_price, profit_margin,
+    originalPrice, discountPercentage, stock_quantity, stock_alert_quantity, stock_status,
+    unit, weight, length, width, height, color_options, size_options, tags,
+    thumbnail_image, gallery_images, video_url, warranty, warranty_period, returnPolicy, return_policy,
+    origin_country, manufacturing_date, expiry_date, is_featured, is_trending, is_best_seller,
+    rating, reviewsCount, total_reviews, soldCount, total_sales, questionsCount, inStock,
+    isDarazMall, isFreeDelivery, isFlashSale, flashSaleEndTime, coinsCashback,
+    mainImage, images, specifications, variations, seller, reviews,
+    meta_title, meta_description, meta_keywords, status, visibility, created_by, updated_by,
+    deliveryFee, estimatedDeliveryDays
+  };
+
+  const cols = Object.keys(productData);
+  const vals = Object.values(productData);
+  const placeholders = cols.map(() => '?').join(', ');
+  const updateClause = cols.map((col) => `${col} = VALUES(${col})`).join(', ');
+
+  // 1. Insert/Update into products
   await connOrPool.query(
-    `INSERT INTO products (
-      id, title, titleBn, slug, brand, category, categorySlug, subCategory,
-      price, originalPrice, discountPercentage, rating, reviewsCount, questionsCount,
-      soldCount, inStock, isDarazMall, isFreeDelivery, isFlashSale, flashSaleEndTime,
-      coinsCashback, mainImage, images, description, descriptionBn, specifications,
-      variations, seller, reviews, warranty, returnPolicy, tags, deliveryFee, estimatedDeliveryDays
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ON DUPLICATE KEY UPDATE
-      title = VALUES(title),
-      titleBn = VALUES(titleBn),
-      slug = VALUES(slug),
-      brand = VALUES(brand),
-      category = VALUES(category),
-      categorySlug = VALUES(categorySlug),
-      subCategory = VALUES(subCategory),
-      price = VALUES(price),
-      originalPrice = VALUES(originalPrice),
-      discountPercentage = VALUES(discountPercentage),
-      rating = VALUES(rating),
-      reviewsCount = VALUES(reviewsCount),
-      questionsCount = VALUES(questionsCount),
-      soldCount = VALUES(soldCount),
-      inStock = VALUES(inStock),
-      isDarazMall = VALUES(isDarazMall),
-      isFreeDelivery = VALUES(isFreeDelivery),
-      isFlashSale = VALUES(isFlashSale),
-      flashSaleEndTime = VALUES(flashSaleEndTime),
-      coinsCashback = VALUES(coinsCashback),
-      mainImage = VALUES(mainImage),
-      images = VALUES(images),
-      description = VALUES(description),
-      descriptionBn = VALUES(descriptionBn),
-      specifications = VALUES(specifications),
-      variations = VALUES(variations),
-      seller = VALUES(seller),
-      reviews = VALUES(reviews),
-      warranty = VALUES(warranty),
-      returnPolicy = VALUES(returnPolicy),
-      tags = VALUES(tags),
-      deliveryFee = VALUES(deliveryFee),
-      estimatedDeliveryDays = VALUES(estimatedDeliveryDays)`,
-    [
-      id, title, titleBn, slug, brand, category, categorySlug, subCategory,
-      price, originalPrice, discountPercentage, rating, reviewsCount, questionsCount,
-      soldCount, inStock, isDarazMall, isFreeDelivery, isFlashSale, flashSaleEndTime,
-      coinsCashback, mainImage, images, description, descriptionBn, specifications,
-      variations, seller, reviews, warranty, returnPolicy, tags, deliveryFee, estimatedDeliveryDays
-    ]
+    `INSERT INTO products (${cols.join(', ')}) VALUES (${placeholders}) ON DUPLICATE KEY UPDATE ${updateClause}`,
+    vals
   );
 
-  // Also sync to normalized Product table
+  // 2. Insert/Update into Product
   try {
     await connOrPool.query(
-      `INSERT INTO Product (
-        id, title, titleBn, slug, brand, category, categorySlug, subCategory,
-        price, originalPrice, discountPercentage, rating, reviewsCount, questionsCount,
-        soldCount, inStock, isDarazMall, isFreeDelivery, isFlashSale, flashSaleEndTime,
-        coinsCashback, mainImage, description, descriptionBn, specifications,
-        seller, reviews, warranty, returnPolicy, tags, deliveryFee, estimatedDeliveryDays
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      ON DUPLICATE KEY UPDATE
-        title = VALUES(title),
-        titleBn = VALUES(titleBn),
-        slug = VALUES(slug),
-        brand = VALUES(brand),
-        category = VALUES(category),
-        categorySlug = VALUES(categorySlug),
-        subCategory = VALUES(subCategory),
-        price = VALUES(price),
-        originalPrice = VALUES(originalPrice),
-        discountPercentage = VALUES(discountPercentage),
-        rating = VALUES(rating),
-        reviewsCount = VALUES(reviewsCount),
-        questionsCount = VALUES(questionsCount),
-        soldCount = VALUES(soldCount),
-        inStock = VALUES(inStock),
-        isDarazMall = VALUES(isDarazMall),
-        isFreeDelivery = VALUES(isFreeDelivery),
-        isFlashSale = VALUES(isFlashSale),
-        flashSaleEndTime = VALUES(flashSaleEndTime),
-        coinsCashback = VALUES(coinsCashback),
-        mainImage = VALUES(mainImage),
-        description = VALUES(description),
-        descriptionBn = VALUES(descriptionBn),
-        specifications = VALUES(specifications),
-        seller = VALUES(seller),
-        reviews = VALUES(reviews),
-        warranty = VALUES(warranty),
-        returnPolicy = VALUES(returnPolicy),
-        tags = VALUES(tags),
-        deliveryFee = VALUES(deliveryFee),
-        estimatedDeliveryDays = VALUES(estimatedDeliveryDays)`,
-      [
-        id, title, titleBn, slug, brand, category, categorySlug, subCategory,
-        price, originalPrice, discountPercentage, rating, reviewsCount, questionsCount,
-        soldCount, inStock, isDarazMall, isFreeDelivery, isFlashSale, flashSaleEndTime,
-        coinsCashback, mainImage, description, descriptionBn, specifications,
-        seller, reviews, warranty, returnPolicy, tags, deliveryFee, estimatedDeliveryDays
-      ]
+      `INSERT INTO Product (${cols.join(', ')}) VALUES (${placeholders}) ON DUPLICATE KEY UPDATE ${updateClause}`,
+      vals
     );
   } catch (prodErr) {
     console.warn('[saveProductRecord] Could not sync Product table:', prodErr);
   }
 
-  // 1. Save all product media to ProductMedia table (matched by productId)
+  // 3. Save all product media to ProductMedia table (matched by productId)
   try {
     await connOrPool.query('DELETE FROM ProductMedia WHERE productId = ?', [id]);
-    if (mainImage) {
+    if (thumbnail_image || mainImage) {
+      const mainImgUrl = thumbnail_image || mainImage;
       await connOrPool.query(
         'INSERT INTO ProductMedia (id, productId, url, type, isMain, displayOrder) VALUES (?, ?, ?, ?, ?, ?)',
-        [`pm-${id}-main`, id, mainImage, 'IMAGE', 1, 0]
+        [`pm-${id}-main`, id, mainImgUrl, 'IMAGE', 1, 0]
       );
     }
-    const rawImages: string[] = product.images && Array.isArray(product.images) ? product.images : [];
     let mediaOrder = 1;
     for (const imgUrl of rawImages) {
-      if (imgUrl && imgUrl !== mainImage) {
+      if (imgUrl && imgUrl !== thumbnail_image && imgUrl !== mainImage) {
         await connOrPool.query(
           'INSERT INTO ProductMedia (id, productId, url, type, isMain, displayOrder) VALUES (?, ?, ?, ?, ?, ?)',
           [`pm-${id}-${mediaOrder}`, id, imgUrl, 'IMAGE', 0, mediaOrder]
@@ -551,11 +678,13 @@ export async function saveProductRecord(connOrPool: mysql.Pool | mysql.PoolConne
     console.warn('[saveProductRecord] Could not sync ProductMedia table:', mediaErr);
   }
 
-  // 2. Save all variants to ProductVariant table (matched by productId)
+  // 4. Save all variants to ProductVariant table (matched by productId)
   try {
     await connOrPool.query('DELETE FROM ProductVariant WHERE productId = ?', [id]);
-    const rawVars = product.variations && Array.isArray(product.variations) ? product.variations : [];
     let varCounter = 1;
+
+    // Structured variations
+    const rawVars = product.variations && Array.isArray(product.variations) ? product.variations : [];
     for (const vGroup of rawVars) {
       if (vGroup && vGroup.name && Array.isArray(vGroup.options)) {
         for (const optVal of vGroup.options) {
@@ -569,17 +698,35 @@ export async function saveProductRecord(connOrPool: mysql.Pool | mysql.PoolConne
         }
       }
     }
+
+    // Color options
+    const rawColors = product.color_options && Array.isArray(product.color_options) ? product.color_options : [];
+    for (const color of rawColors) {
+      if (color) {
+        await connOrPool.query(
+          'INSERT INTO ProductVariant (id, productId, name, optionValue) VALUES (?, ?, ?, ?)',
+          [`pv-${id}-c-${varCounter}`, id, 'Color', String(color)]
+        );
+        varCounter++;
+      }
+    }
+
+    // Size options
+    const rawSizes = product.size_options && Array.isArray(product.size_options) ? product.size_options : [];
+    for (const size of rawSizes) {
+      if (size) {
+        await connOrPool.query(
+          'INSERT INTO ProductVariant (id, productId, name, optionValue) VALUES (?, ?, ?, ?)',
+          [`pv-${id}-s-${varCounter}`, id, 'Size', String(size)]
+        );
+        varCounter++;
+      }
+    }
   } catch (varErr) {
     console.warn('[saveProductRecord] Could not sync ProductVariant table:', varErr);
   }
 
-  return formatProductRow({
-    id, title, titleBn, slug, brand, category, categorySlug, subCategory,
-    price, originalPrice, discountPercentage, rating, reviewsCount, questionsCount,
-    soldCount, inStock, isDarazMall, isFreeDelivery, isFlashSale, flashSaleEndTime,
-    coinsCashback, mainImage, images, description, descriptionBn, specifications,
-    variations, seller, reviews, warranty, returnPolicy, tags, deliveryFee, estimatedDeliveryDays
-  });
+  return formatProductRow(productData);
 }
 
 /**

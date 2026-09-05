@@ -30,6 +30,13 @@ import {
   Copy,
   Send,
   MessageSquare,
+  Video,
+  Flame,
+  Award,
+  AlertTriangle,
+  Package,
+  Calendar,
+  Globe,
 } from "lucide-react";
 
 export const ProductDetailPage: React.FC = () => {
@@ -446,17 +453,47 @@ export const ProductDetailPage: React.FC = () => {
           <div className="lg:col-span-5 space-y-4">
             {/* Title & Brand */}
             <div>
-              {product.isDarazMall && (
-                <span className="inline-flex items-center gap-1 bg-[#0f136d] text-white text-[10px] font-bold px-2 py-0.5 mr-2 align-middle">
-                  <ShieldCheck className="w-3 h-3 text-emerald-400" />{" "}
-                  AshaalMall Flagship
-                </span>
-              )}
+              <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
+                {product.isDarazMall && (
+                  <span className="inline-flex items-center gap-1 bg-[#0f136d] text-white text-[10px] font-bold px-2 py-0.5 align-middle">
+                    <ShieldCheck className="w-3 h-3 text-emerald-400" />{" "}
+                    AshaalMall Flagship
+                  </span>
+                )}
+                {product.is_featured && (
+                  <span className="inline-flex items-center gap-1 bg-amber-500 text-white text-[10px] font-black px-2 py-0.5 uppercase tracking-wide">
+                    ★ {t("FEATURED", "ফিচার্ড")}
+                  </span>
+                )}
+                {product.is_trending && (
+                  <span className="inline-flex items-center gap-1 bg-rose-600 text-white text-[10px] font-black px-2 py-0.5 uppercase tracking-wide">
+                    <Flame className="w-3 h-3" /> {t("TRENDING", "ট্রেন্ডিং")}
+                  </span>
+                )}
+                {product.is_best_seller && (
+                  <span className="inline-flex items-center gap-1 bg-blue-600 text-white text-[10px] font-black px-2 py-0.5 uppercase tracking-wide">
+                    <Award className="w-3 h-3" />{" "}
+                    {t("BEST SELLER", "বেস্ট সেলার")}
+                  </span>
+                )}
+                {product.sku && (
+                  <span className="text-[10px] font-mono text-gray-500 bg-gray-100 px-1.5 py-0.5 border border-gray-200">
+                    SKU: {product.sku}
+                  </span>
+                )}
+              </div>
+
               <h1 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 leading-snug mt-1">
                 {language === "BN" ? product.titleBn : product.title}
               </h1>
 
-              {/* Brand & Ratings */}
+              {product.short_description && (
+                <p className="text-xs text-gray-600 mt-1.5 line-clamp-2 leading-relaxed">
+                  {product.short_description}
+                </p>
+              )}
+
+              {/* Brand, Ratings & Total Sales */}
               <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-gray-500">
                 <div className="flex items-center gap-1">
                   <div className="flex text-amber-400">
@@ -475,9 +512,15 @@ export const ProductDetailPage: React.FC = () => {
                     {product.rating}
                   </span>
                   <span className="text-gray-400">
-                    ({product.reviewsCount} {t("Ratings", "রেটিং")})
+                    ({product.reviewsCount ?? product.total_reviews}{" "}
+                    {t("Ratings", "রেটিং")})
                   </span>
                 </div>
+                <span>|</span>
+                <span>
+                  {product.total_sales || product.soldCount}{" "}
+                  {t("Sold", "বিক্রি হয়েছে")}
+                </span>
                 <span>|</span>
                 <span>
                   {product.questionsCount}{" "}
@@ -492,10 +535,10 @@ export const ProductDetailPage: React.FC = () => {
             </div>
 
             {/* Price Block */}
-            <div className="bg-green-50/60 p-3.5 space-y-1.5">
+            <div className="bg-green-50/60 p-3.5 space-y-2">
               <div className="flex items-baseline gap-2.5">
                 <span className="text-2xl sm:text-3xl font-black text-[#16a34a]">
-                  {formatPrice(product.price)}
+                  {formatPrice(product.final_price || product.price)}
                 </span>
                 {product.discountPercentage > 0 && (
                   <>
@@ -509,23 +552,42 @@ export const ProductDetailPage: React.FC = () => {
                 )}
               </div>
 
-              {/* Coins & Promo notes */}
+              {/* Stock Status & Low Stock Alert */}
               <div className="flex flex-wrap items-center gap-2 pt-1">
+                {product.stock_status === "out_of_stock" ||
+                product.inStock <= 0 ? (
+                  <span className="inline-flex items-center gap-1 bg-red-100 text-red-700 text-xs font-bold px-2.5 py-0.5">
+                    <X className="w-3.5 h-3.5" />{" "}
+                    {t("Out of Stock", "স্টক শেষ")}
+                  </span>
+                ) : product.inStock <= (product.stock_alert_quantity || 5) ? (
+                  <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-900 text-xs font-bold px-2.5 py-0.5">
+                    <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+                    {t("Low Stock: Only", "মজুত কমে এসেছে: মাত্র")}{" "}
+                    {product.inStock} {product.unit || t("units", "টি")}{" "}
+                    {t("left!", "বাকি আছে!")}
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-0.5">
+                    <Check className="w-3.5 h-3.5 text-emerald-600" />
+                    {t("In Stock", "স্টকে আছে")} ({product.inStock}{" "}
+                    {product.unit || t("units", "টি")})
+                  </span>
+                )}
+
                 {product.coinsCashback && (
                   <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-900 text-xs font-semibold px-2 py-0.5">
                     <Coins className="w-3 h-3 text-amber-600" />
                     <span>
                       {t("Earn", "আয় করুন")} {product.coinsCashback}{" "}
-                      {t("Coins on purchase", "কয়েন")}
+                      {t("Coins", "কয়েন")}
                     </span>
                   </span>
                 )}
                 {product.isFreeDelivery && (
                   <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-900 text-xs font-semibold px-2 py-0.5">
                     <Truck className="w-3 h-3 text-emerald-600" />
-                    <span>
-                      {t("Free Delivery Available", "ফ্রি ডেলিভারি প্রযোজ্য")}
-                    </span>
+                    <span>{t("Free Delivery", "ফ্রি ডেলিভারি")}</span>
                   </span>
                 )}
               </div>
@@ -612,6 +674,107 @@ export const ProductDetailPage: React.FC = () => {
                 ))}
               </div>
             )}
+
+            {/* Color Options */}
+            {product.color_options &&
+              product.color_options.length > 0 &&
+              !product.variations?.some(
+                (v) => v.name.toLowerCase() === "color",
+              ) && (
+                <div className="space-y-1.5 pt-2 border-t border-gray-100">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold text-gray-600">
+                      {t("Color", "কালার")}:{" "}
+                      <strong className="text-gray-900">
+                        {selectedVariations["Color"] ||
+                          product.color_options[0]}
+                      </strong>
+                    </span>
+                    <span className="text-[11px] text-gray-400">
+                      {product.color_options.length} {t("colors", "কালার")}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {product.color_options.map((col) => {
+                      const isSelected =
+                        (selectedVariations["Color"] ||
+                          product.color_options![0]) === col;
+                      return (
+                        <button
+                          key={col}
+                          type="button"
+                          onClick={() =>
+                            setSelectedVariations((prev) => ({
+                              ...prev,
+                              Color: col,
+                            }))
+                          }
+                          className={`px-3 py-1.5 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                            isSelected
+                              ? "bg-[#16a34a] text-white"
+                              : "text-gray-700 hover:bg-gray-100 bg-gray-100"
+                          }`}
+                        >
+                          {isSelected && (
+                            <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                          )}
+                          <span>{col}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+            {/* Size Options */}
+            {product.size_options &&
+              product.size_options.length > 0 &&
+              !product.variations?.some(
+                (v) => v.name.toLowerCase() === "size",
+              ) && (
+                <div className="space-y-1.5 pt-2 border-t border-gray-100">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold text-gray-600">
+                      {t("Size", "সাইজ")}:{" "}
+                      <strong className="text-gray-900">
+                        {selectedVariations["Size"] || product.size_options[0]}
+                      </strong>
+                    </span>
+                    <span className="text-[11px] text-gray-400">
+                      {product.size_options.length} {t("sizes", "সাইজ")}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {product.size_options.map((sz) => {
+                      const isSelected =
+                        (selectedVariations["Size"] ||
+                          product.size_options![0]) === sz;
+                      return (
+                        <button
+                          key={sz}
+                          type="button"
+                          onClick={() =>
+                            setSelectedVariations((prev) => ({
+                              ...prev,
+                              Size: sz,
+                            }))
+                          }
+                          className={`px-3 py-1.5 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                            isSelected
+                              ? "bg-[#16a34a] text-white"
+                              : "text-gray-700 hover:bg-gray-100 bg-gray-100"
+                          }`}
+                        >
+                          {isSelected && (
+                            <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                          )}
+                          <span>{sz}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
             {/* Quantity Selector */}
             <div className="flex items-center gap-4 pt-2">
@@ -957,24 +1120,200 @@ export const ProductDetailPage: React.FC = () => {
           </ul>
         </div>
 
-        {/* Specifications Table */}
+        {/* Enterprise Key Features & Attributes Overview */}
         <div className="pt-4 border-t border-gray-150">
-          <h3 className="text-sm font-bold text-gray-900 mb-3">
-            {t("Specifications", "টেকনিক্যাল স্পেসিফিকেশন")}
+          <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+            <Package className="w-4 h-4 text-[#16a34a]" />
+            <span>
+              {t(
+                "Product Attributes & Specifications",
+                "পণ্যের বৈশিষ্ট্য ও স্পেসিফিকেশন",
+              )}
+            </span>
           </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-xs">
-            {Object.entries(product.specifications).map(([key, val]) => (
-              <div
-                key={key}
-                className="flex justify-between py-1.5 border-b border-gray-100"
-              >
-                <span className="text-gray-500 font-medium">{key}</span>
-                <span className="text-gray-900 font-semibold text-right">
-                  {String(val)}
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 text-xs mb-4">
+            <div className="bg-gray-50 p-2.5 rounded border border-gray-100">
+              <span className="text-[11px] text-gray-400 block">
+                {t("Origin Country", "উৎস দেশ")}
+              </span>
+              <strong className="text-gray-800 flex items-center gap-1 mt-0.5">
+                <Globe className="w-3.5 h-3.5 text-blue-500" />
+                <span>{product.origin_country || "Bangladesh"}</span>
+              </strong>
+            </div>
+
+            <div className="bg-gray-50 p-2.5 rounded border border-gray-100">
+              <span className="text-[11px] text-gray-400 block">
+                {t("Unit Type", "ইউনিট")}
+              </span>
+              <strong className="text-gray-800 capitalize mt-0.5 block">
+                {product.unit || "piece"}
+              </strong>
+            </div>
+
+            {(product.weight || 0) > 0 && (
+              <div className="bg-gray-50 p-2.5 rounded border border-gray-100">
+                <span className="text-[11px] text-gray-400 block">
+                  {t("Net Weight", "ওজন")}
                 </span>
+                <strong className="text-gray-800 mt-0.5 block">
+                  {product.weight} kg
+                </strong>
               </div>
-            ))}
+            )}
+
+            {product.length || product.width || product.height ? (
+              <div className="bg-gray-50 p-2.5 rounded border border-gray-100">
+                <span className="text-[11px] text-gray-400 block">
+                  {t("Dimensions (L×W×H)", "পরিমাপ")}
+                </span>
+                <strong className="text-gray-800 mt-0.5 block">
+                  {product.length || 0}×{product.width || 0}×
+                  {product.height || 0} cm
+                </strong>
+              </div>
+            ) : null}
+
+            <div className="bg-gray-50 p-2.5 rounded border border-gray-100">
+              <span className="text-[11px] text-gray-400 block">
+                {t("Warranty Period", "ওয়ারেন্টি")}
+              </span>
+              <strong className="text-gray-800 flex items-center gap-1 mt-0.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                <span>
+                  {product.warranty_period ||
+                    product.warranty ||
+                    "1 Year Brand Warranty"}
+                </span>
+              </strong>
+            </div>
+
+            <div className="bg-gray-50 p-2.5 rounded border border-gray-100">
+              <span className="text-[11px] text-gray-400 block">
+                {t("Return Policy", "রিটার্ন পলিসি")}
+              </span>
+              <strong className="text-gray-800 flex items-center gap-1 mt-0.5">
+                <RotateCcw className="w-3.5 h-3.5 text-blue-600" />
+                <span>
+                  {product.return_policy ||
+                    product.returnPolicy ||
+                    "14 Days Free Return"}
+                </span>
+              </strong>
+            </div>
+
+            {product.sku && (
+              <div className="bg-gray-50 p-2.5 rounded border border-gray-100">
+                <span className="text-[11px] text-gray-400 block">
+                  SKU Code
+                </span>
+                <strong className="text-gray-800 font-mono text-[11px] mt-0.5 block truncate">
+                  {product.sku}
+                </strong>
+              </div>
+            )}
+
+            {product.barcode && (
+              <div className="bg-gray-50 p-2.5 rounded border border-gray-100">
+                <span className="text-[11px] text-gray-400 block">Barcode</span>
+                <strong className="text-gray-800 font-mono text-[11px] mt-0.5 block truncate">
+                  {product.barcode}
+                </strong>
+              </div>
+            )}
+
+            {product.manufacturing_date && (
+              <div className="bg-gray-50 p-2.5 rounded border border-gray-100">
+                <span className="text-[11px] text-gray-400 block">
+                  {t("Mfg Date", "উৎপাদন তারিখ")}
+                </span>
+                <strong className="text-gray-800 flex items-center gap-1 mt-0.5">
+                  <Calendar className="w-3.5 h-3.5 text-gray-500" />
+                  <span>{product.manufacturing_date}</span>
+                </strong>
+              </div>
+            )}
+
+            {product.expiry_date && (
+              <div className="bg-gray-50 p-2.5 rounded border border-gray-100">
+                <span className="text-[11px] text-gray-400 block">
+                  {t("Exp Date", "মেয়াদ উত্তীর্ণ")}
+                </span>
+                <strong className="text-gray-800 flex items-center gap-1 mt-0.5 text-rose-700">
+                  <Calendar className="w-3.5 h-3.5 text-rose-500" />
+                  <span>{product.expiry_date}</span>
+                </strong>
+              </div>
+            )}
           </div>
+
+          {/* Video Demonstration if video_url is present */}
+          {product.video_url && (
+            <div className="my-4 p-4 bg-emerald-50/50 rounded-xl border border-emerald-100 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <h4 className="font-bold text-xs sm:text-sm text-gray-900 flex items-center gap-2">
+                  <Video className="w-4 h-4 text-rose-600" />
+                  <span>
+                    {t("Official Video Demonstration", "অফিসিয়াল ভিডিও রিভিউ")}
+                  </span>
+                </h4>
+                <a
+                  href={product.video_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-bold text-[#16a34a] hover:underline"
+                >
+                  {t("Open Video", "ভিডিও দেখুন ↗")}
+                </a>
+              </div>
+              <div className="relative aspect-video max-w-2xl rounded-lg overflow-hidden bg-black shadow-md">
+                {product.video_url.includes("youtube.com") ||
+                product.video_url.includes("youtu.be") ? (
+                  <iframe
+                    src={
+                      product.video_url.includes("embed")
+                        ? product.video_url
+                        : product.video_url.replace("watch?v=", "embed/")
+                    }
+                    title="Product Video"
+                    className="w-full h-full border-0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                ) : (
+                  <video
+                    src={product.video_url}
+                    controls
+                    className="w-full h-full object-contain"
+                  />
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Specifications Table */}
+          {product.specifications &&
+            Object.keys(product.specifications).length > 0 && (
+              <div className="mt-4 pt-3 border-t border-gray-100">
+                <h4 className="text-xs font-bold text-gray-700 mb-2">
+                  {t("Additional Specifications", "অতিরিক্ত স্পেসিফিকেশন")}
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-xs">
+                  {Object.entries(product.specifications).map(([key, val]) => (
+                    <div
+                      key={key}
+                      className="flex justify-between py-1.5 border-b border-gray-100"
+                    >
+                      <span className="text-gray-500 font-medium">{key}</span>
+                      <span className="text-gray-900 font-semibold text-right">
+                        {String(val)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
         </div>
       </div>
 

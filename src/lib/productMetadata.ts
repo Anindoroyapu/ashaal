@@ -26,13 +26,16 @@ export async function generateProductMetadata(id: string): Promise<Metadata> {
     };
   }
 
-  const priceBdt = `৳${product.price.toLocaleString('en-BD')}`;
-  const title = `${product.title} - ${priceBdt} | Ashaal.com.bd`;
-  const description = `Buy ${product.title} online at best price ${priceBdt} in Bangladesh${
-    product.originalPrice > product.price
-      ? ` (Discounted from ৳${product.originalPrice.toLocaleString('en-BD')})`
-      : ''
-  }. 100% Authentic Brand, Cash on Delivery across all 64 districts, and fast DEX Express delivery.`;
+  const priceBdt = `৳${(product.final_price || product.price).toLocaleString('en-BD')}`;
+  const title = product.meta_title || `${product.title} - ${priceBdt} | Ashaal.com.bd`;
+  const description =
+    product.meta_description ||
+    product.short_description ||
+    `Buy ${product.title} online at best price ${priceBdt} in Bangladesh${
+      product.originalPrice > product.price
+        ? ` (Discounted from ৳${product.originalPrice.toLocaleString('en-BD')})`
+        : ''
+    }. 100% Authentic Brand, Cash on Delivery across all 64 districts, and fast DEX Express delivery.`;
 
   const imageUrl = product.mainImage.startsWith('http')
     ? product.mainImage
@@ -45,6 +48,7 @@ export async function generateProductMetadata(id: string): Promise<Metadata> {
     title,
     description,
     keywords: [
+      ...(product.meta_keywords ? product.meta_keywords.split(',').map((k) => k.trim()) : []),
       product.title,
       product.titleBn || '',
       product.brand || 'Ashaal',
