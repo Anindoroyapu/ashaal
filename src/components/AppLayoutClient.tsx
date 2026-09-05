@@ -37,10 +37,10 @@ export const AppLayoutClient: React.FC<{ children: React.ReactNode }> = ({
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#eff0f5] text-[#212121] font-sans selection:bg-[#16a34a] selection:text-white">
+    <div className="min-h-screen flex flex-col bg-[#eff0f5] text-[#212121] font-sans selection:bg-[#16a34a] selection:text-white overflow-x-hidden">
       <ScrollToTop />
       <Header />
-      <main className="flex-1 w-full pb-16 md:pb-0">{children}</main>
+      <main className="flex-1 w-full">{children}</main>
       <Footer />
       <MobileBottomNav />
       <MobileCategoryDrawer />

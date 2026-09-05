@@ -2,14 +2,7 @@
 
 import React from "react";
 import { useApp } from "../context/AppContext";
-import {
-  ShieldCheck,
-  Truck,
-  RotateCcw,
-  Headphones,
-  Smartphone,
-  CreditCard,
-} from "lucide-react";
+import { ShieldCheck, Truck, RotateCcw, Headphones } from "lucide-react";
 
 // Import user-uploaded payment method images from /assets/paymentmethods
 import pmImg1 from "../../assets/paymentmethods/download.png";
@@ -23,19 +16,19 @@ export const Footer: React.FC = () => {
   const { navigate, t } = useApp();
 
   return (
-    <footer className="bg-white border-t border-[#e2e2e2] mt-12 text-gray-500 text-xs mb-14 md:mb-0">
+    <footer className="bg-white border-t border-[#e2e2e2] mt-8 sm:mt-12 text-gray-500 text-xs pb-24 md:pb-8">
       {/* Features Bar - Editorial Style */}
-      <div className="border-b border-[#e2e2e2] bg-[#eff0f5]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 grid grid-cols-2 md:grid-cols-4 gap-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded bg-[#dcfce7] flex items-center justify-center text-[#16a34a] shrink-0 border border-[#bbf7d0]">
-              <Truck className="w-5 h-5" />
+      <div className="border-b border-[#e2e2e2] bg-[#eff0f5]/80">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6 grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-6">
+          <div className="flex items-center gap-2.5 sm:gap-3 bg-white sm:bg-transparent p-2.5 sm:p-0 rounded-lg sm:rounded-none border border-gray-200/70 sm:border-0 shadow-2xs sm:shadow-none min-w-0">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded bg-[#dcfce7] flex items-center justify-center text-[#16a34a] shrink-0 border border-[#bbf7d0]">
+              <Truck className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <div>
-              <h4 className="font-bold text-[#212121] text-xs sm:text-sm">
+            <div className="min-w-0 flex-1">
+              <h4 className="font-bold text-[#212121] text-xs sm:text-sm leading-tight truncate">
                 {t("Nationwide Delivery", "সারাদেশে দ্রুত ডেলিভারি")}
               </h4>
-              <p className="text-[11px] text-gray-500">
+              <p className="text-[10px] sm:text-[11px] text-gray-500 leading-tight mt-0.5 truncate sm:whitespace-normal">
                 {t(
                   "Direct to your doorstep in 64 districts",
                   "৬৪ জেলায় হোম ডেলিভারি সুবিধা",
@@ -44,15 +37,15 @@ export const Footer: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded bg-[#e1f5fe] flex items-center justify-center text-[#039be5] shrink-0 border border-[#b3e5fc]">
-              <ShieldCheck className="w-5 h-5" />
+          <div className="flex items-center gap-2.5 sm:gap-3 bg-white sm:bg-transparent p-2.5 sm:p-0 rounded-lg sm:rounded-none border border-gray-200/70 sm:border-0 shadow-2xs sm:shadow-none min-w-0">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded bg-[#e1f5fe] flex items-center justify-center text-[#039be5] shrink-0 border border-[#b3e5fc]">
+              <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <div>
-              <h4 className="font-bold text-[#212121] text-xs sm:text-sm">
+            <div className="min-w-0 flex-1">
+              <h4 className="font-bold text-[#212121] text-xs sm:text-sm leading-tight truncate">
                 {t("100% Authentic Products", "১০০% আসল পণ্যের নিশ্চয়তা")}
               </h4>
-              <p className="text-[11px] text-gray-500">
+              <p className="text-[10px] sm:text-[11px] text-gray-500 leading-tight mt-0.5 truncate sm:whitespace-normal">
                 {t(
                   "AshaalMall official brand warranty",
                   "অফিশিয়াল ব্র্যান্ড ওয়ারেন্টি",
@@ -61,15 +54,15 @@ export const Footer: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded bg-[#f1f8e9] flex items-center justify-center text-[#7cb342] shrink-0 border border-[#dcedc8]">
-              <RotateCcw className="w-5 h-5" />
+          <div className="flex items-center gap-2.5 sm:gap-3 bg-white sm:bg-transparent p-2.5 sm:p-0 rounded-lg sm:rounded-none border border-gray-200/70 sm:border-0 shadow-2xs sm:shadow-none min-w-0">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded bg-[#f1f8e9] flex items-center justify-center text-[#7cb342] shrink-0 border border-[#dcedc8]">
+              <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <div>
-              <h4 className="font-bold text-[#212121] text-xs sm:text-sm">
+            <div className="min-w-0 flex-1">
+              <h4 className="font-bold text-[#212121] text-xs sm:text-sm leading-tight truncate">
                 {t("14 Days Easy Return", "১৪ দিনের সহজ রিটার্ন")}
               </h4>
-              <p className="text-[11px] text-gray-500">
+              <p className="text-[10px] sm:text-[11px] text-gray-500 leading-tight mt-0.5 truncate sm:whitespace-normal">
                 {t(
                   "Hassle-free refund guarantee",
                   "দ্রুত রিফান্ড ও রিটার্ন পলিসি",
@@ -78,15 +71,15 @@ export const Footer: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded bg-[#fff3e0] flex items-center justify-center text-[#fb8c00] shrink-0 border border-[#ffe0b2]">
-              <Headphones className="w-5 h-5" />
+          <div className="flex items-center gap-2.5 sm:gap-3 bg-white sm:bg-transparent p-2.5 sm:p-0 rounded-lg sm:rounded-none border border-gray-200/70 sm:border-0 shadow-2xs sm:shadow-none min-w-0">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded bg-[#fff3e0] flex items-center justify-center text-[#fb8c00] shrink-0 border border-[#ffe0b2]">
+              <Headphones className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <div>
-              <h4 className="font-bold text-[#212121] text-xs sm:text-sm">
+            <div className="min-w-0 flex-1">
+              <h4 className="font-bold text-[#212121] text-xs sm:text-sm leading-tight truncate">
                 {t("24/7 Customer Support", "২৪/৭ গ্রাহক সেবা")}
               </h4>
-              <p className="text-[11px] text-gray-500">
+              <p className="text-[10px] sm:text-[11px] text-gray-500 leading-tight mt-0.5 truncate sm:whitespace-normal">
                 {t(
                   "Live chat & instant assistance",
                   "যেকোনো প্রশ্নে সরাসরি সাপোর্ট",
@@ -98,14 +91,14 @@ export const Footer: React.FC = () => {
       </div>
 
       {/* Main Footer Links */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 mb-6 sm:mb-8">
           {/* Col 1: Customer Care */}
-          <div>
+          <div className="col-span-1">
             <h4 className="font-bold text-xs text-[#212121] mb-3 uppercase tracking-wider">
               {t("Customer Care", "গ্রাহক সেবা")}
             </h4>
-            <ul className="space-y-2 text-[12px] text-gray-500">
+            <ul className="space-y-2 text-[12px] text-gray-600">
               <li>
                 <button
                   onClick={() => navigate("customer-care")}
@@ -150,11 +143,11 @@ export const Footer: React.FC = () => {
           </div>
 
           {/* Col 2: Ashaal */}
-          <div>
+          <div className="col-span-1">
             <h4 className="font-bold text-xs text-[#212121] mb-3 uppercase tracking-wider">
               Ashaal Bangladesh
             </h4>
-            <ul className="space-y-2 text-[12px] text-gray-500">
+            <ul className="space-y-2 text-[12px] text-gray-600">
               <li>
                 <button
                   onClick={() => navigate("daraz-mall")}
@@ -199,16 +192,16 @@ export const Footer: React.FC = () => {
           </div>
 
           {/* Col 3: Payment Methods */}
-          <div>
+          <div className="col-span-2 md:col-span-1 pt-4 sm:pt-0 border-t border-gray-100 md:border-t-0">
             <h4 className="font-bold text-xs text-[#212121] mb-3 uppercase tracking-wider">
               {t("Payment Methods", "পেমেন্ট মাধ্যমসমূহ")}
             </h4>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
               {[pmImg1, pmImg2, pmImg3, pmImg4, pmImg5, pmImg6].map(
                 (imgSrc, idx) => (
                   <div
                     key={idx}
-                    className="h-10 px-2 bg-white flex items-center justify-center hover:border-gray-300 transition-colors  "
+                    className="h-8 sm:h-9 px-2 sm:px-2.5 bg-gray-50/80 rounded border border-gray-200/80 flex items-center justify-center hover:border-[#16a34a] hover:bg-white transition-all shadow-2xs"
                   >
                     <img
                       src={
@@ -217,7 +210,7 @@ export const Footer: React.FC = () => {
                           : (imgSrc as any)?.src
                       }
                       alt={`Payment Method ${idx + 1}`}
-                      className="h-10 w-auto max-w-[120px] object-contain"
+                      className="h-5 sm:h-6 w-auto max-w-[75px] sm:max-w-[90px] object-contain"
                     />
                   </div>
                 ),
@@ -226,21 +219,21 @@ export const Footer: React.FC = () => {
           </div>
 
           {/* Col 4: Download App & Follow */}
-          <div>
+          <div className="col-span-2 md:col-span-1 pt-4 sm:pt-0 border-t border-gray-100 md:border-t-0">
             <h4 className="font-bold text-xs text-[#212121] mb-2 uppercase tracking-wider">
               {t("Exclusive Mobile Deals", "আশাল মোবাইল ডিল")}
             </h4>
-            <p className="text-[11px] text-gray-500 mb-3">
+            <p className="text-[11px] text-gray-500 mb-3 leading-relaxed">
               {t(
                 "Scan QR or download the app for extra ৳200 voucher discount on your first order!",
                 "প্রথম অর্ডারে অতিরিক্ত ২০০ টাকা ভাউচার পেতে অ্যাপ ডাউনলোড করুন!",
               )}
             </p>
-            <div className="flex items-start gap-3">
+            <div className="flex items-center sm:items-start gap-3">
               {/* Real dynamic scannable QR Code that redirects to this website */}
               <div
                 title="Scan to open Ashaal on Mobile"
-                className="w-20 h-20 bg-white border border-[#e2e2e2] p-1 shrink-0 flex flex-col items-center justify-center shadow-xs group cursor-pointer"
+                className="w-18 h-18 sm:w-20 sm:h-20 bg-white border border-gray-200 rounded p-1 shrink-0 flex flex-col items-center justify-center shadow-2xs group cursor-pointer hover:border-[#16a34a] transition-all"
                 onClick={() => {
                   if (typeof window !== "undefined") {
                     window.open(window.location.origin, "_blank");
@@ -260,7 +253,7 @@ export const Footer: React.FC = () => {
               </div>
 
               {/* Badges: App Store, Google Play, AppGallery */}
-              <div className="space-y-1.5 flex-1 min-w-[130px]">
+              <div className="space-y-1.5 flex-1 min-w-0 max-w-[170px]">
                 {/* App Store Badge */}
                 <a
                   href="#download-appstore"
@@ -370,15 +363,17 @@ export const Footer: React.FC = () => {
         </div>
 
         {/* Bottom Copyright */}
-        <div className="pt-6 border-t border-[#e2e2e2] flex flex-col sm:flex-row items-center justify-between gap-4 text-gray-500 text-[11px]">
-          <div className="flex items-center gap-2">
+        <div className="pt-6 border-t border-[#e2e2e2] flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left text-gray-500 text-[11px]">
+          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5 sm:gap-2">
             <span className="font-bold text-[#16a34a]">ashaal.com.bd</span>
+            <span className="text-gray-300">•</span>
             <span>© 2026 Ashaal Bangladesh Ltd. All Rights Reserved.</span>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-4 text-[10px] sm:text-[11px]">
             <span className="hover:underline cursor-pointer">
               DBID: 749204821
             </span>
+            <span className="text-gray-300">•</span>
             <span className="hover:underline cursor-pointer">
               Trade License: TRAD/DNCC/098421
             </span>
