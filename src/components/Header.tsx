@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { usePathname } from "next/navigation";
 import { useApp } from "../context/AppContext";
 import { CATEGORIES_DATA } from "../data/categoriesData";
 import {
@@ -21,6 +22,8 @@ import {
   LogOut,
   Package,
   Coins,
+  ArrowLeft,
+  X,
 } from "lucide-react";
 
 export const Header: React.FC = () => {
@@ -38,9 +41,13 @@ export const Header: React.FC = () => {
     logout,
     setIsLoginModalOpen,
     setIsLocationModalOpen,
+    setIsMobileCategoryDrawerOpen,
     activeLocation,
     t,
   } = useApp();
+
+  const pathname = usePathname();
+  const isHome = pathname === "/";
 
   const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
   const [activeHoverCat, setActiveHoverCat] = useState<string | null>(
@@ -65,8 +72,8 @@ export const Header: React.FC = () => {
 
   return (
     <header className="sticky top-0 z-50 bg-white shadow-xs border-b border-[#e2e2e2]">
-      {/* Top Utility Bar - Editorial Style */}
-      <div className="bg-[#f7f7f7] text-[#212121] text-[12px] py-1 border-b border-[#e2e2e2]">
+      {/* Top Utility Bar - Editorial Style (Desktop only) */}
+      <div className="hidden md:block bg-[#f7f7f7] text-[#212121] text-[12px] py-1 border-b border-[#e2e2e2]">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 flex items-center justify-between">
           <div className="flex items-center gap-4 text-[12px]">
             <button
@@ -236,8 +243,156 @@ export const Header: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Header */}
-      <div className="bg-white border-b border-[#e2e2e2]">
+      {/* 1. Native Mobile App Bar (< 768px) */}
+      <div className="md:hidden bg-white border-b border-[#e2e2e2]">
+        {/* Row 1: Back/Logo + Search Pill + Language + Wishlist */}
+        <div className="px-3 py-2 flex items-center gap-2">
+          {!isHome ? (
+            <button
+              onClick={() => window.history.back()}
+              className="p-1.5 -ml-1 text-gray-700 hover:text-[#16a34a] rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
+              title="Go Back"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+          ) : (
+            <button
+              onClick={() => navigate("home")}
+              className="flex items-center gap-1 focus:outline-none shrink-0 cursor-pointer"
+            >
+              <span className="text-2xl font-black italic text-[#16a34a] tracking-tight leading-none">
+                ashaal
+              </span>
+              <span className="px-1 py-0.2 bg-green-100 text-green-800 text-[8px] font-black rounded uppercase">
+                BD
+              </span>
+            </button>
+          )}
+
+          {/* Native Search Pill */}
+          <form onSubmit={handleSearch} className="flex-1 min-w-0">
+            <div className="relative flex items-center bg-[#eff0f5] rounded-full px-3 py-1.5 border border-transparent focus-within:border-[#16a34a] focus-within:bg-white transition-all">
+              <Search className="w-4 h-4 text-gray-400 shrink-0 mr-1.5" />
+              <input
+                type="text"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder={t("Search in Ashaal...", "আশালে খুঁজুন...")}
+                className="w-full text-xs bg-transparent focus:outline-none text-[#212121] placeholder:text-gray-400"
+              />
+              {searchInput && (
+                <button
+                  type="button"
+                  onClick={() => setSearchInput("")}
+                  className="text-gray-400 hover:text-gray-600 ml-1 shrink-0"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          </form>
+
+          {/* Quick Actions: Language Pill & Wishlist */}
+          <div className="flex items-center gap-1 shrink-0">
+            <button
+              onClick={() => setLanguage(language === "EN" ? "BN" : "EN")}
+              className="px-2 py-1 bg-gray-100 hover:bg-green-50 text-[#16a34a] font-bold text-[10px] rounded-full border border-gray-200 transition-colors"
+            >
+              {language === "EN" ? "বাং" : "EN"}
+            </button>
+            <button
+              onClick={() => navigate("my-account")}
+              className="relative p-1.5 text-gray-700 hover:text-[#16a34a] transition-colors rounded-full"
+              title="Wishlist"
+            >
+              <Heart className="w-5 h-5" />
+              {wishlist.length > 0 && (
+                <span className="absolute top-0 right-0 bg-[#16a34a] text-white text-[8px] font-black w-3.5 h-3.5 rounded-full flex items-center justify-center">
+                  {wishlist.length}
+                </span>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Row 2 on Mobile (Homepage Only): Location Strip & Quick Category/Channel Chips */}
+        {isHome && (
+          <div>
+            {/* Delivery address strip */}
+            <div className="px-3 py-1.5 bg-gray-50 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-600">
+              <button
+                onClick={() => setIsLocationModalOpen(true)}
+                className="flex items-center gap-1.5 truncate text-left hover:text-[#16a34a] transition-colors"
+              >
+                <MapPin className="w-3.5 h-3.5 text-[#16a34a] shrink-0" />
+                <span className="text-gray-400">
+                  {t("Deliver to:", "ডেলিভারি:")}
+                </span>
+                <span className="font-semibold text-gray-800 truncate max-w-[190px]">
+                  {activeLocation.city}
+                </span>
+                <ChevronDown className="w-3 h-3 text-gray-400 shrink-0" />
+              </button>
+
+              <button
+                onClick={() => setIsMobileCategoryDrawerOpen(true)}
+                className="text-[#16a34a] font-bold flex items-center gap-0.5 text-[10px] uppercase shrink-0"
+              >
+                <span>{t("All", "সকল")}</span>
+                <ChevronDown className="w-3 h-3" />
+              </button>
+            </div>
+
+            {/* Horizontal Swipeable Category/Channel Chips */}
+            <div className="flex items-center gap-1.5 overflow-x-auto px-3 py-1.5 border-t border-gray-100 scrollbar-none text-[11px] font-semibold whitespace-nowrap bg-white">
+              <button
+                onClick={() => navigate("flash-sale")}
+                className="px-2.5 py-1 bg-red-50 text-red-600 border border-red-200 rounded-full font-bold flex items-center gap-1 shrink-0 active:scale-95"
+              >
+                <Zap className="w-3 h-3 fill-red-500 text-red-500" />
+                <span>{t("Flash Sale", "ফ্ল্যাশ সেল")}</span>
+              </button>
+
+              <button
+                onClick={() => navigate("daraz-mall")}
+                className="px-2.5 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-full font-bold flex items-center gap-1 shrink-0 active:scale-95"
+              >
+                <ShieldCheck className="w-3 h-3 text-blue-600" />
+                <span>AshaalMall</span>
+              </button>
+
+              <button
+                onClick={() => navigate("search", { filter: "free-delivery" })}
+                className="px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full font-bold flex items-center gap-1 shrink-0 active:scale-95"
+              >
+                <Truck className="w-3 h-3 text-emerald-600" />
+                <span>{t("Free Delivery", "ফ্রি ডেলিভারি")}</span>
+              </button>
+
+              <button
+                onClick={() => navigate("coins-rewards")}
+                className="px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full font-bold flex items-center gap-1 shrink-0 active:scale-95"
+              >
+                <Coins className="w-3 h-3 text-amber-600" />
+                <span>{t("Coins", "কয়েন")}</span>
+              </button>
+
+              {CATEGORIES_DATA.slice(0, 5).map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => navigate("search", { categorySlug: cat.slug })}
+                  className="px-2.5 py-1 bg-gray-100 hover:bg-green-50 text-gray-700 hover:text-[#16a34a] border border-gray-200 rounded-full shrink-0 active:scale-95"
+                >
+                  {language === "BN" ? cat.nameBn : cat.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* 2. Desktop Main Header (>= 768px) */}
+      <div className="hidden md:block bg-white border-b border-[#e2e2e2]">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3.5 flex items-center justify-between gap-3 sm:gap-6">
           {/* Logo & Category Button */}
           <div className="flex items-center gap-4">

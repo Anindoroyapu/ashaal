@@ -290,6 +290,8 @@ interface AppContextType {
   setIsLoginModalOpen: (open: boolean) => void;
   isLocationModalOpen: boolean;
   setIsLocationModalOpen: (open: boolean) => void;
+  isMobileCategoryDrawerOpen: boolean;
+  setIsMobileCategoryDrawerOpen: (open: boolean) => void;
   toast: string | null;
   showToast: (msg: string) => void;
   t: (en: string, bn: string) => string;
@@ -416,6 +418,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   });
   const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(false);
   const [isLocationModalOpen, setIsLocationModalOpen] =
+    useState<boolean>(false);
+  const [isMobileCategoryDrawerOpen, setIsMobileCategoryDrawerOpen] =
     useState<boolean>(false);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -1076,6 +1080,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         setIsLoginModalOpen,
         isLocationModalOpen,
         setIsLocationModalOpen,
+        isMobileCategoryDrawerOpen,
+        setIsMobileCategoryDrawerOpen,
         toast,
         showToast,
         t,

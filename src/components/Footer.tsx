@@ -23,7 +23,7 @@ export const Footer: React.FC = () => {
   const { navigate, t } = useApp();
 
   return (
-    <footer className="bg-white border-t border-[#e2e2e2] mt-12 text-gray-500 text-xs">
+    <footer className="bg-white border-t border-[#e2e2e2] mt-12 text-gray-500 text-xs mb-14 md:mb-0">
       {/* Features Bar - Editorial Style */}
       <div className="border-b border-[#e2e2e2] bg-[#eff0f5]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 grid grid-cols-2 md:grid-cols-4 gap-6">

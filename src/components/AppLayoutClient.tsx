@@ -5,6 +5,8 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { LoginModal, LocationModal } from "./Modals";
+import { MobileBottomNav } from "./MobileBottomNav";
+import { MobileCategoryDrawer } from "./MobileCategoryDrawer";
 
 const ScrollToTop: React.FC = () => {
   const pathname = usePathname();
@@ -38,8 +40,10 @@ export const AppLayoutClient: React.FC<{ children: React.ReactNode }> = ({
     <div className="min-h-screen flex flex-col bg-[#eff0f5] text-[#212121] font-sans selection:bg-[#16a34a] selection:text-white">
       <ScrollToTop />
       <Header />
-      <main className="flex-1 w-full">{children}</main>
+      <main className="flex-1 w-full pb-16 md:pb-0">{children}</main>
       <Footer />
+      <MobileBottomNav />
+      <MobileCategoryDrawer />
       <LoginModal />
       <LocationModal />
     </div>
