@@ -696,15 +696,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
       // Authenticate directly with MySQL database via API
       const res = await loginUserViaApi(cleanIdent, password);
       if (!res.success || !res.user) {
-        showToast(res.message || (language === "BN" ? "লগইন ব্যর্থ হয়েছে" : "Login failed"));
-        return { success: false, message: res.message || "Invalid credentials" };
+        showToast(
+          res.message ||
+            (language === "BN" ? "লগইন ব্যর্থ হয়েছে" : "Login failed"),
+        );
+        return {
+          success: false,
+          message: res.message || "Invalid credentials",
+        };
       }
       targetUser = res.user;
       userToken = res.token || targetUser.token || `usr_tok_${targetUser.id}`;
     } else {
       return {
         success: false,
-        message: language === "BN" ? "ফোন নম্বর অথবা ইমেইল দিন" : "Please enter phone or email",
+        message:
+          language === "BN"
+            ? "ফোন নম্বর অথবা ইমেইল দিন"
+            : "Please enter phone or email",
       };
     }
 
@@ -748,7 +757,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       const res = await signupUserViaApi(userData);
       if (!res.success || !res.user) {
-        showToast(res.message || (language === "BN" ? "রেজিস্ট্রেশন ব্যর্থ হয়েছে" : "Signup failed"));
+        showToast(
+          res.message ||
+            (language === "BN"
+              ? "রেজিস্ট্রেশন ব্যর্থ হয়েছে"
+              : "Signup failed"),
+        );
         return { success: false, message: res.message || "Signup failed" };
       }
 
@@ -773,7 +787,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
       return { success: true };
     } catch (err: any) {
       console.error("Signup error:", err);
-      const errMsg = err?.message || (language === "BN" ? "রেজিস্ট্রেশন ব্যর্থ হয়েছে" : "Signup failed");
+      const errMsg =
+        err?.message ||
+        (language === "BN" ? "রেজিস্ট্রেশন ব্যর্থ হয়েছে" : "Signup failed");
       showToast(errMsg);
       return { success: false, message: errMsg };
     }

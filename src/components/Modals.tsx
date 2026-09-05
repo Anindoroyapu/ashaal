@@ -82,8 +82,7 @@ export const LoginModal: React.FC = () => {
       setLoading(false);
       if (!res.success) {
         setErrorMessage(
-          res.message ||
-            t("Signup failed", "রেজিস্ট্রেশন সম্পন্ন করা যায়নি"),
+          res.message || t("Signup failed", "রেজিস্ট্রেশন সম্পন্ন করা যায়নি"),
         );
       } else {
         setFullName("");
@@ -99,7 +98,10 @@ export const LoginModal: React.FC = () => {
     // Login mode
     if (!phoneOrEmail.trim()) {
       setErrorMessage(
-        t("Please enter phone or email", "অনুগ্রহ করে ফোন নম্বর অথবা ইমেইল দিন"),
+        t(
+          "Please enter phone or email",
+          "অনুগ্রহ করে ফোন নম্বর অথবা ইমেইল দিন",
+        ),
       );
       setLoading(false);
       return;
@@ -117,10 +119,7 @@ export const LoginModal: React.FC = () => {
     if (!res.success) {
       setErrorMessage(
         res.message ||
-          t(
-            "Invalid credentials",
-            "ভুল ফোন নম্বর/ইমেইল অথবা পাসওয়ার্ড",
-          ),
+          t("Invalid credentials", "ভুল ফোন নম্বর/ইমেইল অথবা পাসওয়ার্ড"),
       );
     } else {
       setPhoneOrEmail("");
@@ -176,7 +175,8 @@ export const LoginModal: React.FC = () => {
               <>
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1">
-                    {t("Full Name", "পুরো নাম")} <span className="text-red-500">*</span>
+                    {t("Full Name", "পুরো নাম")}{" "}
+                    <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <User className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
@@ -205,10 +205,7 @@ export const LoginModal: React.FC = () => {
                       type="tel"
                       value={registerPhone}
                       onChange={(e) => setRegisterPhone(e.target.value)}
-                      placeholder={t(
-                        "e.g. 01712345678",
-                        "যেমন: ০১৭১২৩৪৫৬৭৮",
-                      )}
+                      placeholder={t("e.g. 01712345678", "যেমন: ০১৭১২৩৪৫৬৭৮")}
                       autoComplete="tel"
                       className="w-full pl-9 pr-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:border-[#16a34a]"
                     />
@@ -237,7 +234,8 @@ export const LoginModal: React.FC = () => {
 
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1">
-                    {t("Password", "পাসওয়ার্ড")} <span className="text-red-500">*</span>
+                    {t("Password", "পাসওয়ার্ড")}{" "}
+                    <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <Lock className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
@@ -245,7 +243,10 @@ export const LoginModal: React.FC = () => {
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder={t("Enter secure password (min 4 characters)", "কমপক্ষে ৪ অক্ষরের পাসওয়ার্ড দিন")}
+                      placeholder={t(
+                        "Enter secure password (min 4 characters)",
+                        "কমপক্ষে ৪ অক্ষরের পাসওয়ার্ড দিন",
+                      )}
                       autoComplete="new-password"
                       className="w-full pl-9 pr-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:border-[#16a34a]"
                       required
@@ -309,7 +310,9 @@ export const LoginModal: React.FC = () => {
               {loading ? (
                 <span>{t("Verifying...", "যাচাই করা হচ্ছে...")}</span>
               ) : isRegister ? (
-                <span>{t("SIGN UP (+500 COINS)", "সাইন আপ করুন (+৫০০ কয়েন)")}</span>
+                <span>
+                  {t("SIGN UP (+500 COINS)", "সাইন আপ করুন (+৫০০ কয়েন)")}
+                </span>
               ) : (
                 <span>{t("SIGN IN", "লগইন করুন")}</span>
               )}
