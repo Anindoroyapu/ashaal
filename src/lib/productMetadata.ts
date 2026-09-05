@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { pool, initDatabase, formatProductRow } from '@/lib/db';
+import { pool, initDatabase, fetchProductByIdWithRelations } from '@/lib/db';
 import { Product } from '@/types';
 import { CATEGORIES_DATA } from '@/data/categoriesData';
 
@@ -8,12 +8,7 @@ const SITE_URL = 'https://ashaal.com.bd';
 export async function getProductFromDb(id: string): Promise<Product | null> {
   try {
     await initDatabase();
-    const [rows]: any = await pool.query(
-      'SELECT * FROM products WHERE id = ? OR slug = ? LIMIT 1',
-      [id, id]
-    );
-    if (!rows || rows.length === 0) return null;
-    return formatProductRow(rows[0]);
+    return await fetchProductByIdWithRelations(pool, id);
   } catch (err) {
     console.warn('[productMetadata] Failed to fetch product:', err);
     return null;

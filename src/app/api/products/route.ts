@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool, initDatabase, formatProductRow, saveProductRecord } from '@/lib/db';
+import { pool, initDatabase, formatProductRow, saveProductRecord, attachProductRelations } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
   try {
@@ -52,7 +52,8 @@ export async function GET(request: NextRequest) {
     }
 
     const [rows]: any = await pool.query(sql, params);
-    const products = rows.map(formatProductRow);
+    const rawProducts = rows.map(formatProductRow);
+    const products = await attachProductRelations(pool, rawProducts);
 
     return NextResponse.json({
       success: true,

@@ -15,20 +15,20 @@ import {
 } from "lucide-react";
 
 export const LoginModal: React.FC = () => {
-  const { isLoginModalOpen, setIsLoginModalOpen, login, signup, allUsers, t } =
-    useApp();
+  const { isLoginModalOpen, setIsLoginModalOpen, login, signup, t } = useApp();
   const [isRegister, setIsRegister] = useState(false);
-  const [phoneOrEmail, setPhoneOrEmail] = useState("+880 1712-345678");
-  const [password, setPassword] = useState("ashaal12345");
-  const [fullName, setFullName] = useState("Tanvir Ahmed");
+  const [phoneOrEmail, setPhoneOrEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
   const [otpStep, setOtpStep] = useState(false);
-  const [otpCode, setOtpCode] = useState("8492");
+  const [otpCode, setOtpCode] = useState("");
   const [loading, setLoading] = useState(false);
 
   if (!isLoginModalOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!phoneOrEmail.trim()) return;
     setLoading(true);
 
     if (isRegister) {
@@ -58,11 +58,6 @@ export const LoginModal: React.FC = () => {
     await login(phoneOrEmail, password);
     setLoading(false);
     setOtpStep(false);
-    setIsLoginModalOpen(false);
-  };
-
-  const handleQuickDemoUser = (userProfile: any) => {
-    login(userProfile);
     setIsLoginModalOpen(false);
   };
 
@@ -128,15 +123,13 @@ export const LoginModal: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">
-                  {t(
-                    "4-Digit SMS Code (Pre-filled for Demo)",
-                    "৪ ডিজিট কোড (ডেমো কোড দেওয়া আছে)",
-                  )}
+                  {t("4-Digit SMS Verification Code", "৪ ডিজিট ভেরিফিকেশন কোড")}
                 </label>
                 <input
                   type="text"
                   value={otpCode}
                   onChange={(e) => setOtpCode(e.target.value)}
+                  placeholder="••••"
                   maxLength={6}
                   className="w-full text-center tracking-widest text-xl font-bold py-2 border-2 border-green-300 rounded-lg focus:outline-none focus:border-[#16a34a]"
                   required
@@ -166,7 +159,11 @@ export const LoginModal: React.FC = () => {
                       type="text"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
-                      placeholder="e.g. Nusrat Jahan"
+                      placeholder={t(
+                        "Enter your full name",
+                        "আপনার পুরো নাম লিখুন",
+                      )}
+                      autoComplete="name"
                       className="w-full pl-9 pr-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:border-[#16a34a]"
                       required
                     />
@@ -184,7 +181,11 @@ export const LoginModal: React.FC = () => {
                     type="text"
                     value={phoneOrEmail}
                     onChange={(e) => setPhoneOrEmail(e.target.value)}
-                    placeholder="+880 17XXXXXXXX or user@example.com"
+                    placeholder={t(
+                      "Enter phone or email",
+                      "ফোন নম্বর অথবা ইমেইল দিন",
+                    )}
+                    autoComplete="username"
                     className="w-full pl-9 pr-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:border-[#16a34a]"
                     required
                   />
@@ -198,7 +199,7 @@ export const LoginModal: React.FC = () => {
                   </label>
                   {!isRegister && (
                     <span className="text-[11px] text-[#16a34a]">
-                      {t("Token protected", "টোকেন সুরক্ষিত")}
+                      {t("Secure Login", "সুরক্ষিত লগইন")}
                     </span>
                   )}
                 </div>
@@ -208,7 +209,10 @@ export const LoginModal: React.FC = () => {
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
+                    placeholder={t("Enter your password", "পাসওয়ার্ড দিন")}
+                    autoComplete={
+                      isRegister ? "new-password" : "current-password"
+                    }
                     className="w-full pl-9 pr-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:border-[#16a34a]"
                     required
                   />
@@ -223,98 +227,9 @@ export const LoginModal: React.FC = () => {
                 {loading
                   ? t("Processing...", "প্রসেসিং হচ্ছে...")
                   : isRegister
-                    ? t("SIGN UP & GET 500 COINS", "সাইন আপ করুন (+৫০০ কয়েন)")
-                    : t("SIGN IN (LOAD DATA)", "লগইন করুন")}
+                    ? t("SIGN UP", "সাইন আপ করুন")
+                    : t("SIGN IN", "লগইন করুন")}
               </button>
-
-              {/* Quick 1-Click Demo Accounts */}
-              <div className="pt-2">
-                <p className="text-[11px] text-gray-400 font-medium mb-1.5 text-center">
-                  {t(
-                    "Or instant login with demo accounts:",
-                    "অথবা ডেমো একাউন্টে দ্রুত লগইন:",
-                  )}
-                </p>
-                <div className="grid grid-cols-2 gap-2">
-                  {/* Admin Account Button */}
-                  {(() => {
-                    const adminUser = allUsers.find(
-                      (u) => u.role === "admin",
-                    ) || {
-                      id: "usr-admin-0",
-                      name: "Ashaal Admin",
-                      email: "admin@ashaal.com",
-                      role: "admin",
-                      avatar:
-                        "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&q=80",
-                      coins: 5000,
-                    };
-                    return (
-                      <button
-                        type="button"
-                        onClick={() => handleQuickDemoUser(adminUser as any)}
-                        className="p-1.5 text-left border border-purple-200 bg-purple-50/60 hover:bg-purple-100/80 rounded-lg text-[11px] transition-colors flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <img
-                          src={adminUser.avatar}
-                          alt={adminUser.name}
-                          className="w-5 h-5 rounded-full object-cover"
-                        />
-                        <div className="truncate flex-1">
-                          <p className="font-bold text-purple-900 truncate flex items-center gap-1">
-                            <span>Admin</span>
-                            <span className="px-1 py-0.2 bg-purple-200 text-purple-800 text-[8px] font-black rounded uppercase">
-                              ADMIN
-                            </span>
-                          </p>
-                          <p className="text-[10px] text-purple-700 truncate">
-                            {adminUser.email}
-                          </p>
-                        </div>
-                      </button>
-                    );
-                  })()}
-
-                  {/* Customer Account Button */}
-                  {(() => {
-                    const custUser = allUsers.find(
-                      (u) => u.role !== "admin",
-                    ) || {
-                      id: "usr-tanvir-1",
-                      name: "Tanvir Ahmed",
-                      email: "tanvir.ahmed@example.com",
-                      role: "customer",
-                      avatar:
-                        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80",
-                      coins: 480,
-                    };
-                    return (
-                      <button
-                        type="button"
-                        onClick={() => handleQuickDemoUser(custUser as any)}
-                        className="p-1.5 text-left border border-emerald-200 bg-emerald-50/60 hover:bg-emerald-100/80 rounded-lg text-[11px] transition-colors flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <img
-                          src={custUser.avatar}
-                          alt={custUser.name}
-                          className="w-5 h-5 rounded-full object-cover"
-                        />
-                        <div className="truncate flex-1">
-                          <p className="font-bold text-slate-900 truncate flex items-center gap-1">
-                            <span>{custUser.name.split(" ")[0]}</span>
-                            <span className="px-1 py-0.2 bg-slate-200 text-slate-700 text-[8px] font-bold rounded uppercase">
-                              USER
-                            </span>
-                          </p>
-                          <p className="text-[10px] text-slate-500 truncate">
-                            {custUser.email}
-                          </p>
-                        </div>
-                      </button>
-                    );
-                  })()}
-                </div>
-              </div>
 
               <div className="text-center pt-3 border-t border-gray-100">
                 <p className="text-xs text-gray-600">

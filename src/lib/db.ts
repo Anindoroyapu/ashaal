@@ -192,6 +192,124 @@ export async function initDatabase() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
 
+    // Normalized Product master table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS Product (
+        id VARCHAR(128) PRIMARY KEY,
+        title VARCHAR(512) NOT NULL,
+        titleBn VARCHAR(512),
+        slug VARCHAR(512),
+        brand VARCHAR(255),
+        category VARCHAR(255),
+        categorySlug VARCHAR(255),
+        subCategory VARCHAR(255),
+        price DECIMAL(12, 2) NOT NULL DEFAULT 0,
+        originalPrice DECIMAL(12, 2) NOT NULL DEFAULT 0,
+        discountPercentage INT DEFAULT 0,
+        rating DECIMAL(3, 2) DEFAULT 5.0,
+        reviewsCount INT DEFAULT 0,
+        questionsCount INT DEFAULT 0,
+        soldCount INT DEFAULT 0,
+        inStock INT DEFAULT 50,
+        isDarazMall BOOLEAN DEFAULT FALSE,
+        isFreeDelivery BOOLEAN DEFAULT FALSE,
+        isFlashSale BOOLEAN DEFAULT FALSE,
+        flashSaleEndTime VARCHAR(128),
+        coinsCashback INT DEFAULT 0,
+        mainImage TEXT,
+        description TEXT,
+        descriptionBn TEXT,
+        specifications JSON,
+        seller JSON,
+        reviews JSON,
+        warranty VARCHAR(255),
+        returnPolicy VARCHAR(255),
+        tags JSON,
+        deliveryFee DECIMAL(10, 2) DEFAULT 0,
+        estimatedDeliveryDays VARCHAR(128),
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
+    // ProductMedia table - linked by productId
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS ProductMedia (
+        id VARCHAR(128) PRIMARY KEY,
+        productId VARCHAR(128) NOT NULL,
+        url TEXT NOT NULL,
+        type VARCHAR(64) DEFAULT 'IMAGE',
+        isMain BOOLEAN DEFAULT FALSE,
+        displayOrder INT DEFAULT 0,
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_pm_pid (productId)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
+    // ProductVariant table - linked by productId
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS ProductVariant (
+        id VARCHAR(128) PRIMARY KEY,
+        productId VARCHAR(128) NOT NULL,
+        name VARCHAR(128) NOT NULL,
+        optionValue VARCHAR(255) NOT NULL,
+        price DECIMAL(12, 2) DEFAULT NULL,
+        stock INT DEFAULT NULL,
+        sku VARCHAR(128) DEFAULT NULL,
+        image TEXT DEFAULT NULL,
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_pv_pid (productId)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
+    // ReturnRequest table - linked by orderId / userId
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS ReturnRequest (
+        id VARCHAR(128) PRIMARY KEY,
+        orderId VARCHAR(128) NOT NULL,
+        userId VARCHAR(128),
+        userEmail VARCHAR(255),
+        status VARCHAR(64) DEFAULT 'PENDING',
+        reason TEXT,
+        refundMethod VARCHAR(64),
+        refundAmount DECIMAL(12, 2) DEFAULT 0,
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_rr_order (orderId),
+        INDEX idx_rr_user (userId)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
+    // ReturnRequestItem table - linked by returnRequestId & productId
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS ReturnRequestItem (
+        id VARCHAR(128) PRIMARY KEY,
+        returnRequestId VARCHAR(128) NOT NULL,
+        productId VARCHAR(128) NOT NULL,
+        quantity INT DEFAULT 1,
+        itemPrice DECIMAL(12, 2) DEFAULT 0,
+        reason TEXT,
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_rri_req (returnRequestId),
+        INDEX idx_rri_prod (productId)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
+    // Session table - linked by userId & token
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS Session (
+        id VARCHAR(128) PRIMARY KEY,
+        userId VARCHAR(128) NOT NULL,
+        token VARCHAR(255) NOT NULL UNIQUE,
+        ipAddress VARCHAR(64),
+        userAgent TEXT,
+        expiresAt DATETIME,
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_sess_user (userId),
+        INDEX idx_sess_tok (token)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
     // Tables initialized. Data is managed live through MySQL and Admin panel.
 
     globalForDb.dbInitialized = true;
@@ -355,6 +473,106 @@ export async function saveProductRecord(connOrPool: mysql.Pool | mysql.PoolConne
     ]
   );
 
+  // Also sync to normalized Product table
+  try {
+    await connOrPool.query(
+      `INSERT INTO Product (
+        id, title, titleBn, slug, brand, category, categorySlug, subCategory,
+        price, originalPrice, discountPercentage, rating, reviewsCount, questionsCount,
+        soldCount, inStock, isDarazMall, isFreeDelivery, isFlashSale, flashSaleEndTime,
+        coinsCashback, mainImage, description, descriptionBn, specifications,
+        seller, reviews, warranty, returnPolicy, tags, deliveryFee, estimatedDeliveryDays
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE
+        title = VALUES(title),
+        titleBn = VALUES(titleBn),
+        slug = VALUES(slug),
+        brand = VALUES(brand),
+        category = VALUES(category),
+        categorySlug = VALUES(categorySlug),
+        subCategory = VALUES(subCategory),
+        price = VALUES(price),
+        originalPrice = VALUES(originalPrice),
+        discountPercentage = VALUES(discountPercentage),
+        rating = VALUES(rating),
+        reviewsCount = VALUES(reviewsCount),
+        questionsCount = VALUES(questionsCount),
+        soldCount = VALUES(soldCount),
+        inStock = VALUES(inStock),
+        isDarazMall = VALUES(isDarazMall),
+        isFreeDelivery = VALUES(isFreeDelivery),
+        isFlashSale = VALUES(isFlashSale),
+        flashSaleEndTime = VALUES(flashSaleEndTime),
+        coinsCashback = VALUES(coinsCashback),
+        mainImage = VALUES(mainImage),
+        description = VALUES(description),
+        descriptionBn = VALUES(descriptionBn),
+        specifications = VALUES(specifications),
+        seller = VALUES(seller),
+        reviews = VALUES(reviews),
+        warranty = VALUES(warranty),
+        returnPolicy = VALUES(returnPolicy),
+        tags = VALUES(tags),
+        deliveryFee = VALUES(deliveryFee),
+        estimatedDeliveryDays = VALUES(estimatedDeliveryDays)`,
+      [
+        id, title, titleBn, slug, brand, category, categorySlug, subCategory,
+        price, originalPrice, discountPercentage, rating, reviewsCount, questionsCount,
+        soldCount, inStock, isDarazMall, isFreeDelivery, isFlashSale, flashSaleEndTime,
+        coinsCashback, mainImage, description, descriptionBn, specifications,
+        seller, reviews, warranty, returnPolicy, tags, deliveryFee, estimatedDeliveryDays
+      ]
+    );
+  } catch (prodErr) {
+    console.warn('[saveProductRecord] Could not sync Product table:', prodErr);
+  }
+
+  // 1. Save all product media to ProductMedia table (matched by productId)
+  try {
+    await connOrPool.query('DELETE FROM ProductMedia WHERE productId = ?', [id]);
+    if (mainImage) {
+      await connOrPool.query(
+        'INSERT INTO ProductMedia (id, productId, url, type, isMain, displayOrder) VALUES (?, ?, ?, ?, ?, ?)',
+        [`pm-${id}-main`, id, mainImage, 'IMAGE', 1, 0]
+      );
+    }
+    const rawImages: string[] = product.images && Array.isArray(product.images) ? product.images : [];
+    let mediaOrder = 1;
+    for (const imgUrl of rawImages) {
+      if (imgUrl && imgUrl !== mainImage) {
+        await connOrPool.query(
+          'INSERT INTO ProductMedia (id, productId, url, type, isMain, displayOrder) VALUES (?, ?, ?, ?, ?, ?)',
+          [`pm-${id}-${mediaOrder}`, id, imgUrl, 'IMAGE', 0, mediaOrder]
+        );
+        mediaOrder++;
+      }
+    }
+  } catch (mediaErr) {
+    console.warn('[saveProductRecord] Could not sync ProductMedia table:', mediaErr);
+  }
+
+  // 2. Save all variants to ProductVariant table (matched by productId)
+  try {
+    await connOrPool.query('DELETE FROM ProductVariant WHERE productId = ?', [id]);
+    const rawVars = product.variations && Array.isArray(product.variations) ? product.variations : [];
+    let varCounter = 1;
+    for (const vGroup of rawVars) {
+      if (vGroup && vGroup.name && Array.isArray(vGroup.options)) {
+        for (const optVal of vGroup.options) {
+          if (optVal) {
+            await connOrPool.query(
+              'INSERT INTO ProductVariant (id, productId, name, optionValue) VALUES (?, ?, ?, ?)',
+              [`pv-${id}-${varCounter}`, id, String(vGroup.name), String(optVal)]
+            );
+            varCounter++;
+          }
+        }
+      }
+    }
+  } catch (varErr) {
+    console.warn('[saveProductRecord] Could not sync ProductVariant table:', varErr);
+  }
+
   return formatProductRow({
     id, title, titleBn, slug, brand, category, categorySlug, subCategory,
     price, originalPrice, discountPercentage, rating, reviewsCount, questionsCount,
@@ -362,6 +580,116 @@ export async function saveProductRecord(connOrPool: mysql.Pool | mysql.PoolConne
     coinsCashback, mainImage, images, description, descriptionBn, specifications,
     variations, seller, reviews, warranty, returnPolicy, tags, deliveryFee, estimatedDeliveryDays
   });
+}
+
+/**
+ * Attach ProductMedia and ProductVariant records joined by productId
+ */
+export async function attachProductRelations(
+  connOrPool: mysql.Pool | mysql.PoolConnection,
+  products: Product[]
+): Promise<Product[]> {
+  if (!products || products.length === 0) return [];
+  const productIds = products.map((p) => p.id).filter(Boolean);
+  if (productIds.length === 0) return products;
+
+  try {
+    // 1. Query ProductMedia by productId
+    const [mediaRows]: any = await connOrPool.query(
+      'SELECT productId, url, type, isMain, displayOrder FROM ProductMedia WHERE productId IN (?) ORDER BY isMain DESC, displayOrder ASC',
+      [productIds]
+    );
+
+    // 2. Query ProductVariant by productId
+    const [variantRows]: any = await connOrPool.query(
+      'SELECT productId, name, optionValue, price, stock, sku, image FROM ProductVariant WHERE productId IN (?) ORDER BY id ASC',
+      [productIds]
+    );
+
+    // Group media by productId
+    const mediaByProduct = new Map<string, { mainImage: string; images: string[] }>();
+    if (Array.isArray(mediaRows)) {
+      for (const m of mediaRows) {
+        if (!mediaByProduct.has(m.productId)) {
+          mediaByProduct.set(m.productId, { mainImage: '', images: [] });
+        }
+        const entry = mediaByProduct.get(m.productId)!;
+        if (m.url && !entry.images.includes(m.url)) {
+          entry.images.push(m.url);
+        }
+        if (m.isMain && !entry.mainImage) {
+          entry.mainImage = m.url;
+        }
+      }
+    }
+
+    // Group variants by productId
+    const variantsByProduct = new Map<string, Map<string, string[]>>();
+    if (Array.isArray(variantRows)) {
+      for (const v of variantRows) {
+        if (!variantsByProduct.has(v.productId)) {
+          variantsByProduct.set(v.productId, new Map());
+        }
+        const prodVarMap = variantsByProduct.get(v.productId)!;
+        if (!prodVarMap.has(v.name)) {
+          prodVarMap.set(v.name, []);
+        }
+        if (!prodVarMap.get(v.name)!.includes(v.optionValue)) {
+          prodVarMap.get(v.name)!.push(v.optionValue);
+        }
+      }
+    }
+
+    // Merge into each product
+    return products.map((p) => {
+      const media = mediaByProduct.get(p.id);
+      const varMap = variantsByProduct.get(p.id);
+
+      let mainImage = p.mainImage;
+      let images = p.images;
+      if (media && media.images.length > 0) {
+        mainImage = media.mainImage || media.images[0];
+        images = media.images;
+      }
+
+      let variations = p.variations;
+      if (varMap && varMap.size > 0) {
+        variations = Array.from(varMap.entries()).map(([name, options], idx) => ({
+          id: `var-${p.id}-${idx + 1}`,
+          name,
+          options,
+        }));
+      }
+
+      return {
+        ...p,
+        mainImage,
+        images,
+        variations,
+      };
+    });
+  } catch (err) {
+    console.warn('[attachProductRelations] Note: Relational tables query failed (fallback to product JSON):', err);
+    return products;
+  }
+}
+
+/**
+ * Fetch a single product by ID or Slug with all ProductMedia and ProductVariant relations joined
+ */
+export async function fetchProductByIdWithRelations(
+  connOrPool: mysql.Pool | mysql.PoolConnection,
+  idOrSlug: string
+): Promise<Product | null> {
+  const [rows]: any = await connOrPool.query(
+    'SELECT * FROM products WHERE id = ? OR slug = ? LIMIT 1',
+    [idOrSlug, idOrSlug]
+  );
+  if (!rows || rows.length === 0) return null;
+
+  const product = formatProductRow(rows[0]);
+  const [attached] = await attachProductRelations(connOrPool, [product]);
+  return attached || product;
 }
 
 /**
