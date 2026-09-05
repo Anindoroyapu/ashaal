@@ -370,6 +370,27 @@ export async function initDatabase() {
       } catch (e) {}
     }
 
+    // Ensure default admin exists in MySQL users table
+    try {
+      const [adminCheck]: any = await connection.query(
+        "SELECT id FROM users WHERE role = 'admin' OR email = 'admin@ashaal.com' LIMIT 1"
+      );
+      if (!adminCheck || adminCheck.length === 0) {
+        await connection.query(`
+          INSERT INTO users (
+            id, name, phone, email, password, avatar, coins, memberTier,
+            joinDate, role, status, token, totalOrders, totalSpent, addresses
+          ) VALUES (
+            'usr-admin-0', 'Ashaal Admin', '+880 1700-123456', 'admin@ashaal.com', 'password123',
+            'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&q=80', 5000,
+            'Diamond Club', 'Jan 2022', 'admin', 'active', 'usr_tok_admin_00001', 0, 0, '[]'
+          ) ON DUPLICATE KEY UPDATE role = 'admin'
+        `);
+      }
+    } catch (adminErr) {
+      console.warn('[initDatabase] Admin user check/seed error:', adminErr);
+    }
+
     // Tables initialized. Data is managed live through MySQL and Admin panel.
 
     globalForDb.dbInitialized = true;
@@ -1039,6 +1060,7 @@ export async function saveUserRecord(connOrPool: mysql.Pool | mysql.PoolConnecti
       name = VALUES(name),
       phone = VALUES(phone),
       email = VALUES(email),
+      password = VALUES(password),
       avatar = VALUES(avatar),
       coins = VALUES(coins),
       memberTier = VALUES(memberTier),

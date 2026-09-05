@@ -361,6 +361,59 @@ export async function deleteUserFromFirestore(userId: string): Promise<void> {
   });
 }
 
+export async function loginUserViaApi(identifier: string, password?: string): Promise<{
+  success: boolean;
+  message?: string;
+  user?: UserProfile;
+  token?: string;
+}> {
+  try {
+    const url = `${BASE_API_URL}/auth/login`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identifier, password: password || '' })
+    });
+    const data = await response.json();
+    return data;
+  } catch (err: any) {
+    console.error('loginUserViaApi error:', err);
+    return {
+      success: false,
+      message: 'সার্ভার সংযোগ ত্রুটি: ' + (err?.message || 'অনুগ্রহ করে আবার চেষ্টা করুন')
+    };
+  }
+}
+
+export async function signupUserViaApi(userData: {
+  name: string;
+  email: string;
+  phone: string;
+  password?: string;
+}): Promise<{
+  success: boolean;
+  message?: string;
+  user?: UserProfile;
+  token?: string;
+}> {
+  try {
+    const url = `${BASE_API_URL}/auth/signup`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(userData)
+    });
+    const data = await response.json();
+    return data;
+  } catch (err: any) {
+    console.error('signupUserViaApi error:', err);
+    return {
+      success: false,
+      message: 'সার্ভার সংযোগ ত্রুটি: ' + (err?.message || 'অনুগ্রহ করে আবার চেষ্টা করুন')
+    };
+  }
+}
+
 // ==========================================
 // 5. VISITORS API
 // ==========================================

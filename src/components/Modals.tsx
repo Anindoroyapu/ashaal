@@ -12,6 +12,7 @@ import {
   Lock,
   User,
   ArrowRight,
+  AlertCircle,
 } from "lucide-react";
 
 export const LoginModal: React.FC = () => {
@@ -20,45 +21,113 @@ export const LoginModal: React.FC = () => {
   const [phoneOrEmail, setPhoneOrEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
-  const [otpStep, setOtpStep] = useState(false);
-  const [otpCode, setOtpCode] = useState("");
+  const [registerPhone, setRegisterPhone] = useState("");
+  const [registerEmail, setRegisterEmail] = useState("");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   if (!isLoginModalOpen) return null;
 
+  const handleToggleMode = () => {
+    setIsRegister(!isRegister);
+    setErrorMessage(null);
+  };
+
+  const handleClose = () => {
+    setIsLoginModalOpen(false);
+    setErrorMessage(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!phoneOrEmail.trim()) return;
+    setErrorMessage(null);
     setLoading(true);
 
     if (isRegister) {
-      const email = phoneOrEmail.includes("@")
-        ? phoneOrEmail
-        : `user_${Date.now()}@ashaal.com.bd`;
-      const phone = phoneOrEmail.includes("@")
-        ? "+880 1700-000000"
-        : phoneOrEmail;
-      await signup({
-        name: fullName,
-        email,
-        phone,
-        password,
+      if (!fullName.trim()) {
+        setErrorMessage(
+          t("Please enter your full name", "অনুগ্রহ করে আপনার পুরো নাম লিখুন"),
+        );
+        setLoading(false);
+        return;
+      }
+      if (!registerPhone.trim() && !registerEmail.trim()) {
+        setErrorMessage(
+          t(
+            "Please enter phone number or email",
+            "অনুগ্রহ করে ফোন নম্বর অথবা ইমেইল দিন",
+          ),
+        );
+        setLoading(false);
+        return;
+      }
+      if (!password.trim() || password.length < 4) {
+        setErrorMessage(
+          t(
+            "Password must be at least 4 characters",
+            "পাসওয়ার্ড কমপক্ষে ৪ অক্ষরের হতে হবে",
+          ),
+        );
+        setLoading(false);
+        return;
+      }
+
+      const res = await signup({
+        name: fullName.trim(),
+        email: registerEmail.trim(),
+        phone: registerPhone.trim(),
+        password: password.trim(),
       });
+
       setLoading(false);
-      setIsLoginModalOpen(false);
+      if (!res.success) {
+        setErrorMessage(
+          res.message ||
+            t("Signup failed", "রেজিস্ট্রেশন সম্পন্ন করা যায়নি"),
+        );
+      } else {
+        setFullName("");
+        setRegisterPhone("");
+        setRegisterEmail("");
+        setPassword("");
+        setErrorMessage(null);
+        setIsLoginModalOpen(false);
+      }
       return;
     }
 
-    if (!otpStep && phoneOrEmail.includes("17") && !password) {
-      setOtpStep(true);
+    // Login mode
+    if (!phoneOrEmail.trim()) {
+      setErrorMessage(
+        t("Please enter phone or email", "অনুগ্রহ করে ফোন নম্বর অথবা ইমেইল দিন"),
+      );
+      setLoading(false);
+      return;
+    }
+    if (!password.trim()) {
+      setErrorMessage(
+        t("Please enter your password", "অনুগ্রহ করে পাসওয়ার্ড দিন"),
+      );
       setLoading(false);
       return;
     }
 
-    await login(phoneOrEmail, password);
+    const res = await login(phoneOrEmail.trim(), password.trim());
     setLoading(false);
-    setOtpStep(false);
-    setIsLoginModalOpen(false);
+    if (!res.success) {
+      setErrorMessage(
+        res.message ||
+          t(
+            "Invalid credentials",
+            "ভুল ফোন নম্বর/ইমেইল অথবা পাসওয়ার্ড",
+          ),
+      );
+    } else {
+      setPhoneOrEmail("");
+      setPassword("");
+      setErrorMessage(null);
+      setIsLoginModalOpen(false);
+    }
   };
 
   return (
@@ -68,34 +137,24 @@ export const LoginModal: React.FC = () => {
         <div className="bg-gradient-to-r from-[#16a34a] to-[#15803d] text-white p-5 flex items-center justify-between">
           <div>
             <h3 className="font-extrabold text-lg">
-              {otpStep
-                ? t("Verify OTP Code", "ওটিপি কোড যাচাই করুন")
-                : isRegister
-                  ? t("Create Ashaal Account", "আশাল একাউন্ট তৈরি করুন")
-                  : t("Welcome to Ashaal!", "আশালে স্বাগতম!")}
+              {isRegister
+                ? t("Create Ashaal Account", "আশাল একাউন্ট তৈরি করুন")
+                : t("Welcome to Ashaal!", "আশালে স্বাগতম!")}
             </h3>
             <p className="text-xs text-green-100">
-              {otpStep
+              {isRegister
                 ? t(
-                    "Enter 4-digit code sent to your phone",
-                    "আপনার ফোনে পাঠানো ৪ ডিজিটের কোডটি দিন",
+                    "Sign up for personal token, rewards & isolated cart",
+                    "সাইন আপ করে উপভোগ করুন পার্সোনাল টোকেন ও রিওয়ার্ড (+৫০০ কয়েন)",
                   )
-                : isRegister
-                  ? t(
-                      "Sign up for personal token, rewards & isolated cart",
-                      "সাইন আপ করে উপভোগ করুন পার্সোনাল টোকেন ও রিওয়ার্ড",
-                    )
-                  : t(
-                      "Login with phone or email to load your data",
-                      "আপনার ফোন নম্বর বা ইমেইল দিয়ে লগইন করুন",
-                    )}
+                : t(
+                    "Login with phone or email to load your data",
+                    "আপনার ফোন নম্বর বা ইমেইল দিয়ে লগইন করুন",
+                  )}
             </p>
           </div>
           <button
-            onClick={() => {
-              setIsLoginModalOpen(false);
-              setOtpStep(false);
-            }}
+            onClick={handleClose}
             className="p-1 text-white/80 hover:text-white rounded-full hover:bg-white/10 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
@@ -104,54 +163,20 @@ export const LoginModal: React.FC = () => {
 
         {/* Content Form */}
         <div className="p-6">
-          {otpStep ? (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="text-center py-2">
-                <div className="w-12 h-12 rounded-full bg-green-100 text-[#16a34a] flex items-center justify-center mx-auto mb-2 font-bold text-lg">
-                  SMS
-                </div>
-                <p className="text-xs text-gray-600">
-                  {t(
-                    "Verification code sent to",
-                    "ভেরিফিকেশন কোড পাঠানো হয়েছে",
-                  )}{" "}
-                  <span className="font-bold text-gray-900">
-                    {phoneOrEmail}
-                  </span>
-                </p>
-              </div>
+          {/* Error Message Banner */}
+          {errorMessage && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700 text-xs font-semibold animate-in fade-in duration-200">
+              <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
+              <span>{errorMessage}</span>
+            </div>
+          )}
 
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">
-                  {t("4-Digit SMS Verification Code", "৪ ডিজিট ভেরিফিকেশন কোড")}
-                </label>
-                <input
-                  type="text"
-                  value={otpCode}
-                  onChange={(e) => setOtpCode(e.target.value)}
-                  placeholder="••••"
-                  maxLength={6}
-                  className="w-full text-center tracking-widest text-xl font-bold py-2 border-2 border-green-300 rounded-lg focus:outline-none focus:border-[#16a34a]"
-                  required
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-[#16a34a] hover:bg-[#15803d] text-white font-bold py-2.5 rounded-lg text-sm transition-colors shadow-md shadow-green-600/20 cursor-pointer disabled:opacity-50"
-              >
-                {loading
-                  ? t("Verifying...", "যাচাই করা হচ্ছে...")
-                  : t("Verify & Continue", "যাচাই করে এগিয়ে যান")}
-              </button>
-            </form>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-3.5">
-              {isRegister && (
+          <form onSubmit={handleSubmit} className="space-y-3.5">
+            {isRegister ? (
+              <>
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1">
-                    {t("Full Name", "পুরো নাম")}
+                    {t("Full Name", "পুরো নাম")} <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <User className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
@@ -169,86 +194,144 @@ export const LoginModal: React.FC = () => {
                     />
                   </div>
                 </div>
-              )}
 
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">
-                  {t("Phone Number or Email", "ফোন নম্বর অথবা ইমেইল")}
-                </label>
-                <div className="relative">
-                  <Smartphone className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
-                  <input
-                    type="text"
-                    value={phoneOrEmail}
-                    onChange={(e) => setPhoneOrEmail(e.target.value)}
-                    placeholder={t(
-                      "Enter phone or email",
-                      "ফোন নম্বর অথবা ইমেইল দিন",
-                    )}
-                    autoComplete="username"
-                    className="w-full pl-9 pr-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:border-[#16a34a]"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-xs font-semibold text-gray-700">
-                    {t("Password", "পাসওয়ার্ড")}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                    {t("Phone Number", "ফোন নম্বর")}
                   </label>
-                  {!isRegister && (
+                  <div className="relative">
+                    <Smartphone className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
+                    <input
+                      type="tel"
+                      value={registerPhone}
+                      onChange={(e) => setRegisterPhone(e.target.value)}
+                      placeholder={t(
+                        "e.g. 01712345678",
+                        "যেমন: ০১৭১২৩৪৫৬৭৮",
+                      )}
+                      autoComplete="tel"
+                      className="w-full pl-9 pr-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:border-[#16a34a]"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                    {t("Email Address", "ইমেইল অ্যাড্রেস")}
+                  </label>
+                  <div className="relative">
+                    <Mail className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
+                    <input
+                      type="email"
+                      value={registerEmail}
+                      onChange={(e) => setRegisterEmail(e.target.value)}
+                      placeholder={t(
+                        "e.g. user@example.com",
+                        "যেমন: user@example.com",
+                      )}
+                      autoComplete="email"
+                      className="w-full pl-9 pr-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:border-[#16a34a]"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                    {t("Password", "পাসওয়ার্ড")} <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <Lock className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
+                    <input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder={t("Enter secure password (min 4 characters)", "কমপক্ষে ৪ অক্ষরের পাসওয়ার্ড দিন")}
+                      autoComplete="new-password"
+                      className="w-full pl-9 pr-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:border-[#16a34a]"
+                      required
+                    />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                    {t("Phone Number or Email", "ফোন নম্বর অথবা ইমেইল")}
+                  </label>
+                  <div className="relative">
+                    <Smartphone className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
+                    <input
+                      type="text"
+                      value={phoneOrEmail}
+                      onChange={(e) => setPhoneOrEmail(e.target.value)}
+                      placeholder={t(
+                        "Enter phone or email",
+                        "ফোন নম্বর অথবা ইমেইল দিন",
+                      )}
+                      autoComplete="username"
+                      className="w-full pl-9 pr-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:border-[#16a34a]"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-semibold text-gray-700">
+                      {t("Password", "পাসওয়ার্ড")}
+                    </label>
                     <span className="text-[11px] text-[#16a34a]">
                       {t("Secure Login", "সুরক্ষিত লগইন")}
                     </span>
-                  )}
+                  </div>
+                  <div className="relative">
+                    <Lock className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
+                    <input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder={t("Enter your password", "পাসওয়ার্ড দিন")}
+                      autoComplete="current-password"
+                      className="w-full pl-9 pr-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:border-[#16a34a]"
+                      required
+                    />
+                  </div>
                 </div>
-                <div className="relative">
-                  <Lock className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder={t("Enter your password", "পাসওয়ার্ড দিন")}
-                    autoComplete={
-                      isRegister ? "new-password" : "current-password"
-                    }
-                    className="w-full pl-9 pr-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:border-[#16a34a]"
-                    required
-                  />
-                </div>
-              </div>
+              </>
+            )}
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-[#16a34a] hover:bg-[#15803d] text-white font-bold py-2.5 rounded-lg text-xs sm:text-sm transition-colors shadow-md shadow-green-600/20 mt-2 cursor-pointer disabled:opacity-50"
-              >
-                {loading
-                  ? t("Processing...", "প্রসেসিং হচ্ছে...")
-                  : isRegister
-                    ? t("SIGN UP", "সাইন আপ করুন")
-                    : t("SIGN IN", "লগইন করুন")}
-              </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-[#16a34a] hover:bg-[#15803d] text-white font-bold py-2.5 rounded-lg text-xs sm:text-sm transition-colors shadow-md shadow-green-600/20 mt-2 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <span>{t("Verifying...", "যাচাই করা হচ্ছে...")}</span>
+              ) : isRegister ? (
+                <span>{t("SIGN UP (+500 COINS)", "সাইন আপ করুন (+৫০০ কয়েন)")}</span>
+              ) : (
+                <span>{t("SIGN IN", "লগইন করুন")}</span>
+              )}
+            </button>
 
-              <div className="text-center pt-3 border-t border-gray-100">
-                <p className="text-xs text-gray-600">
+            <div className="text-center pt-3 border-t border-gray-100">
+              <p className="text-xs text-gray-600">
+                {isRegister
+                  ? t("Already have an account?", "ইতিমধ্যে একাউন্ট আছে?")
+                  : t("Don't have an account?", "কোনো একাউন্ট নেই?")}{" "}
+                <button
+                  type="button"
+                  onClick={handleToggleMode}
+                  className="text-[#16a34a] font-bold hover:underline cursor-pointer"
+                >
                   {isRegister
-                    ? t("Already have an account?", "ইতিমধ্যে একাউন্ট আছে?")
-                    : t("Don't have an account?", "কোনো একাউন্ট নেই?")}{" "}
-                  <button
-                    type="button"
-                    onClick={() => setIsRegister(!isRegister)}
-                    className="text-[#16a34a] font-bold hover:underline cursor-pointer"
-                  >
-                    {isRegister
-                      ? t("Login Here", "লগইন করুন")
-                      : t("Sign Up Free", "ফ্রি সাইন আপ")}
-                  </button>
-                </p>
-              </div>
-            </form>
-          )}
+                    ? t("Login Here", "লগইন করুন")
+                    : t("Sign Up Free", "ফ্রি সাইন আপ")}
+                </button>
+              </p>
+            </div>
+          </form>
         </div>
       </div>
     </div>

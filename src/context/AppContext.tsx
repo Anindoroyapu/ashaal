@@ -24,6 +24,8 @@ import {
   updateOrderStatusInFirestore,
   saveUserToFirestore,
   deleteUserFromFirestore,
+  loginUserViaApi,
+  signupUserViaApi,
   getActiveSessionToken,
   setUserSessionToken,
   clearUserSessionToken,
@@ -670,13 +672,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   const isWishlisted = (productId: string) => wishlist.includes(productId);
 
   /**
-   * User Sign In (Supports Email, Phone, or Direct Profile Data)
+   * User Sign In (Strict database credential verification via MySQL API)
    */
   const login = async (
     identifierOrData?: string | Partial<UserProfile>,
     password?: string,
   ): Promise<{ success: boolean; message?: string }> => {
     let targetUser: UserProfile | undefined;
+    let userToken = "";
 
     if (typeof identifierOrData === "object") {
       // Direct login data passed
@@ -684,56 +687,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         ...INITIAL_USER,
         ...identifierOrData,
       };
+      userToken = targetUser.token || `usr_tok_${targetUser.id}`;
     } else if (
       typeof identifierOrData === "string" &&
       identifierOrData.trim()
     ) {
-      const cleanIdent = identifierOrData.trim().toLowerCase();
-      targetUser = allUsers.find(
-        (u) =>
-          u.email.toLowerCase() === cleanIdent ||
-          u.phone
-            .replace(/[^0-9]/g, "")
-            .includes(cleanIdent.replace(/[^0-9]/g, "")) ||
-          u.name.toLowerCase() === cleanIdent,
-      );
-
-      if (!targetUser) {
-        // Create user on the fly if not found
-        const newUserId = `usr-${Date.now()}`;
-        targetUser = {
-          id: newUserId,
-          name: identifierOrData.includes("@")
-            ? identifierOrData.split("@")[0]
-            : identifierOrData,
-          phone: identifierOrData.includes("@")
-            ? "+880 1700-000000"
-            : identifierOrData,
-          email: identifierOrData.includes("@")
-            ? identifierOrData
-            : `user${Date.now()}@example.com`,
-          avatar:
-            "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80",
-          coins: 300,
-          memberTier: "Silver Member",
-          joinDate: new Date().toLocaleDateString("en-US", {
-            month: "short",
-            year: "numeric",
-          }),
-          role: "customer",
-          status: "active",
-          token: `usr_tok_${newUserId}_${Math.random().toString(36).substring(2, 8)}`,
-          totalOrders: 0,
-          totalSpent: 0,
-        };
-        await saveUserToFirestore(targetUser);
+      const cleanIdent = identifierOrData.trim();
+      // Authenticate directly with MySQL database via API
+      const res = await loginUserViaApi(cleanIdent, password);
+      if (!res.success || !res.user) {
+        showToast(res.message || (language === "BN" ? "লগইন ব্যর্থ হয়েছে" : "Login failed"));
+        return { success: false, message: res.message || "Invalid credentials" };
       }
+      targetUser = res.user;
+      userToken = res.token || targetUser.token || `usr_tok_${targetUser.id}`;
     } else {
-      targetUser = INITIAL_USER;
+      return {
+        success: false,
+        message: language === "BN" ? "ফোন নম্বর অথবা ইমেইল দিন" : "Please enter phone or email",
+      };
     }
 
     if (targetUser) {
-      const userToken = targetUser.token || `usr_tok_${targetUser.id}`;
       setUser(targetUser);
       setIsLoggedIn(true);
       setSessionToken(userToken);
@@ -758,11 +733,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
       return { success: true };
     }
 
-    return { success: false, message: "Invalid credentials" };
+    return { success: false, message: "Login failed" };
   };
 
   /**
-   * User Sign Up (Registers to Firestore & assigns unique token)
+   * User Sign Up (Registers directly to MySQL database & assigns unique token)
    */
   const signup = async (userData: {
     name: string;
@@ -771,34 +746,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     password?: string;
   }): Promise<{ success: boolean; message?: string }> => {
     try {
-      const newUserId = `usr-${Date.now()}`;
-      const userToken = `usr_tok_${newUserId}_${Math.random().toString(36).substring(2, 9)}`;
+      const res = await signupUserViaApi(userData);
+      if (!res.success || !res.user) {
+        showToast(res.message || (language === "BN" ? "রেজিস্ট্রেশন ব্যর্থ হয়েছে" : "Signup failed"));
+        return { success: false, message: res.message || "Signup failed" };
+      }
 
-      const newUser: UserProfile = {
-        id: newUserId,
-        name: userData.name || "New Customer",
-        email: userData.email,
-        phone: userData.phone.startsWith("+880")
-          ? userData.phone
-          : `+880 ${userData.phone}`,
-        password: userData.password || "password123",
-        avatar: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80`,
-        coins: 500, // Welcome gift of 500 coins
-        memberTier: "Silver Member",
-        joinDate: new Date().toLocaleDateString("en-US", {
-          month: "short",
-          year: "numeric",
-        }),
-        role: "customer",
-        status: "active",
-        token: userToken,
-        totalOrders: 0,
-        totalSpent: 0,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-
-      await saveUserToFirestore(newUser);
+      const newUser = res.user;
+      const userToken = res.token || newUser.token || `usr_tok_${newUser.id}`;
 
       setUser(newUser);
       setIsLoggedIn(true);
@@ -818,7 +773,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
       return { success: true };
     } catch (err: any) {
       console.error("Signup error:", err);
-      return { success: false, message: err?.message || "Signup failed" };
+      const errMsg = err?.message || (language === "BN" ? "রেজিস্ট্রেশন ব্যর্থ হয়েছে" : "Signup failed");
+      showToast(errMsg);
+      return { success: false, message: errMsg };
     }
   };
 
