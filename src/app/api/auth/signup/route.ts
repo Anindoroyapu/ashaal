@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import bcrypt from 'bcryptjs';
 import { pool, initDatabase, saveUserRecord, formatUserRow } from '@/lib/db';
 import { UserProfile } from '@/types';
 
@@ -32,9 +33,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!password || String(password).trim().length < 4) {
+    if (!password || String(password).trim().length < 6) {
       return NextResponse.json(
-        { success: false, message: 'পাসওয়ার্ড কমপক্ষে ৪ অক্ষরের হতে হবে (Password must be at least 4 characters).' },
+        { success: false, message: 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে (Password must be at least 6 characters).' },
         { status: 400 }
       );
     }
@@ -77,12 +78,15 @@ export async function POST(request: NextRequest) {
     const userToken = `usr_tok_${newUserId}_${Math.random().toString(36).substring(2, 9)}`;
     const finalEmail = cleanEmail || `${cleanDigits || newUserId}@customer.ashaal.com.bd`;
 
+    // Hash password securely with bcrypt (salt=12)
+    const hashedPassword = await bcrypt.hash(String(password).trim(), 12);
+
     const userToSave: Partial<UserProfile> & { id: string } = {
       id: newUserId,
       name: String(name).trim(),
       email: finalEmail,
       phone: cleanPhone || '+880 1700-000000',
-      password: String(password).trim(),
+      password: hashedPassword,
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80',
       coins: 500, // Welcome gift of 500 coins
       memberTier: 'Silver Member' as const,
@@ -96,6 +100,7 @@ export async function POST(request: NextRequest) {
     };
 
     const saved = await saveUserRecord(pool, userToSave);
+
 
     return NextResponse.json(
       {

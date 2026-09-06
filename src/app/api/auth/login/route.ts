@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import bcrypt from 'bcryptjs';
 import { pool, initDatabase, formatUserRow } from '@/lib/db';
 
 function sanitizeUser(user: any) {
@@ -70,16 +71,32 @@ export async function POST(request: NextRequest) {
 
     const dbUser = rows[0];
 
-    // Verify password if user has password set in database
+    // Verify password
     if (dbUser.password) {
       const inputPass = String(password).trim();
       const storedPass = String(dbUser.password).trim();
 
-      if (inputPass !== storedPass) {
+      let passwordOk = false;
+
+      if (storedPass.startsWith('$2')) {
+        // Password is already bcrypt-hashed — use secure compare
+        passwordOk = await bcrypt.compare(inputPass, storedPass);
+      } else {
+        // Legacy plain-text password — compare directly
+        passwordOk = inputPass === storedPass;
+
+        // Auto-migrate: hash and save the password for next login
+        if (passwordOk) {
+          const newHash = await bcrypt.hash(inputPass, 12);
+          await pool.query('UPDATE users SET password = ? WHERE id = ?', [newHash, dbUser.id]);
+        }
+      }
+
+      if (!passwordOk) {
         return NextResponse.json(
           {
             success: false,
-            message: 'ভুল পাসওয়ার্ড! অনুগ্রহ করে সঠিক পাসওয়ার্ড দিন।'
+            message: 'ভুল পাসওয়ার্ড! অনুগ্রহ করে সঠিক পাসওয়ার্ড দিন।'
           },
           { status: 401 }
         );

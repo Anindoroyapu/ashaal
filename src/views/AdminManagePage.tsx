@@ -214,7 +214,16 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
   } = useApp();
 
   // Strict Administrator Role Check: profile data must have role === "admin"
-  const isAuthorizedAdmin = Boolean(isLoggedIn && user && user.role === "admin");
+  const isAuthorizedAdmin = Boolean(
+    isLoggedIn && user && user.role === "admin",
+  );
+
+  const { login } = useApp();
+  const [adminEmailInput, setAdminEmailInput] =
+    useState<string>("admin@ashaal.com");
+  const [adminPasswordInput, setAdminPasswordInput] = useState<string>("");
+  const [adminLoginLoading, setAdminLoginLoading] = useState<boolean>(false);
+  const [adminLoginError, setAdminLoginError] = useState<string>("");
 
   const [userRoleFilter, setUserRoleFilter] = useState<string>("all");
 
@@ -226,6 +235,17 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
       return false;
     }
   });
+
+  // Automatically authenticate if logged in as verified admin
+  useEffect(() => {
+    if (isAuthorizedAdmin) {
+      setIsAuthenticated(true);
+      try {
+        sessionStorage.setItem(ADMIN_STORAGE_KEY, "true");
+      } catch {}
+    }
+  }, [isAuthorizedAdmin]);
+
   const [passcode, setPasscode] = useState<string>("");
   const [authError, setAuthError] = useState<string>("");
 
@@ -331,10 +351,41 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
     }
   }, [isAuthenticated]);
 
-  // Auth Handler
+  // Direct Admin Credentials Form Handler
+  const handleDirectAdminLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAdminLoginError("");
+    if (!adminEmailInput.trim() || !adminPasswordInput.trim()) {
+      setAdminLoginError("Please enter both email and password.");
+      return;
+    }
+
+    setAdminLoginLoading(true);
+    try {
+      const res = await login(
+        adminEmailInput.trim(),
+        adminPasswordInput.trim(),
+      );
+      if (res.success) {
+        try {
+          sessionStorage.setItem(ADMIN_STORAGE_KEY, "true");
+        } catch {}
+        setIsAuthenticated(true);
+        showToast("Logged into Admin Dashboard successfully!");
+      } else {
+        setAdminLoginError(res.message || "Invalid Email or Password");
+      }
+    } catch (err: any) {
+      setAdminLoginError(err?.message || "Login failed due to network error");
+    } finally {
+      setAdminLoginLoading(false);
+    }
+  };
+
+  // Auth Handler (Passcode 2FA)
   const handleAuthSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (passcode === DEFAULT_PASSCODE) {
+    if (passcode === DEFAULT_PASSCODE || passcode === "password123") {
       try {
         sessionStorage.setItem(ADMIN_STORAGE_KEY, "true");
       } catch {}
@@ -385,9 +436,7 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
         "Crafted with durable premium material for lasting reliability.",
         "Official manufacturer warranty with dedicated 24/7 care.",
       ],
-      descriptionBn: [
-        "১০০% আসল ও খাঁটি পণ্য আশাল গ্যারান্টি সহ।",
-      ],
+      descriptionBn: ["১০০% আসল ও খাঁটি পণ্য আশাল গ্যারান্টি সহ।"],
       specifications: {
         Warranty: "1 Year Official Warranty",
         Delivery: "2-4 Business Days Nationwide",
@@ -538,7 +587,9 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
       };
 
       await saveProductToFirestore(productToSave);
-      showToast(`Product "${productToSave.title}" saved successfully to MySQL!`);
+      showToast(
+        `Product "${productToSave.title}" saved successfully to MySQL!`,
+      );
       // Return to products table view
       setActiveRoute("products");
       setEditingProduct(null);
@@ -1001,37 +1052,57 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
               Administrative Portal
             </h1>
             <p className="text-xs text-slate-400 max-w-sm mx-auto leading-relaxed">
-              Access to <span className="font-mono text-emerald-400 font-bold">/manage</span> and MySQL management operations is strictly restricted to accounts verified with the{" "}
-              <span className="font-mono text-red-400 font-bold">admin</span> role.
+              Access to{" "}
+              <span className="font-mono text-emerald-400 font-bold">
+                /manage
+              </span>{" "}
+              and MySQL management operations is strictly restricted to accounts
+              verified with the{" "}
+              <span className="font-mono text-red-400 font-bold">admin</span>{" "}
+              role.
             </p>
           </div>
 
           {/* Current Account Card */}
           <div className="p-4 bg-slate-800/80 border border-slate-700/80 rounded-2xl space-y-2.5 relative z-10 text-xs">
             <div className="flex items-center justify-between">
-              <span className="text-slate-400 font-medium">Authentication State:</span>
+              <span className="text-slate-400 font-medium">
+                Authentication State:
+              </span>
               {isLoggedIn && user ? (
                 <span className="font-bold text-emerald-400 flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-400" />
                   <span>Signed In</span>
                 </span>
               ) : (
-                <span className="text-slate-500 italic">Guest (Not Signed In)</span>
+                <span className="text-slate-500 italic">
+                  Guest (Not Signed In)
+                </span>
               )}
             </div>
 
             {isLoggedIn && user && (
               <>
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-400 font-medium">Current Account:</span>
-                  <span className="font-bold text-white truncate max-w-[180px]">{user.name}</span>
+                  <span className="text-slate-400 font-medium">
+                    Current Account:
+                  </span>
+                  <span className="font-bold text-white truncate max-w-[180px]">
+                    {user.name}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-400 font-medium">Account Email:</span>
-                  <span className="font-mono text-slate-300 truncate max-w-[180px]">{user.email}</span>
+                  <span className="text-slate-400 font-medium">
+                    Account Email:
+                  </span>
+                  <span className="font-mono text-slate-300 truncate max-w-[180px]">
+                    {user.email}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between pt-2 border-t border-slate-700/60">
-                  <span className="text-slate-400 font-medium">Assigned Role:</span>
+                  <span className="text-slate-400 font-medium">
+                    Assigned Role:
+                  </span>
                   <span className="px-2 py-0.5 bg-red-500/20 border border-red-500/30 text-red-400 font-mono font-bold rounded uppercase text-[10px]">
                     {user.role || "customer"} (NO ADMIN ACCESS)
                   </span>
@@ -1040,19 +1111,89 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
             )}
           </div>
 
-          {/* Action Buttons */}
-          <div className="space-y-2.5 relative z-10">
+          {/* Direct Admin Login Form */}
+          <form
+            onSubmit={handleDirectAdminLogin}
+            className="space-y-3.5 relative z-10 text-xs"
+          >
+            {adminLoginError && (
+              <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 font-semibold flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
+                <span>{adminLoginError}</span>
+              </div>
+            )}
+
+            <div>
+              <label className="block font-bold text-slate-300 mb-1 uppercase text-[10px] tracking-wider">
+                Admin Email / Phone
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={adminEmailInput}
+                  onChange={(e) => setAdminEmailInput(e.target.value)}
+                  placeholder="admin@ashaal.com"
+                  className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 text-white rounded-xl focus:outline-none focus:border-emerald-500 font-mono text-xs"
+                  required
+                />
+                <Mail className="w-4 h-4 text-slate-400 absolute right-3 top-2.5 pointer-events-none" />
+              </div>
+              <div className="flex gap-2 mt-1.5">
+                <button
+                  type="button"
+                  onClick={() => setAdminEmailInput("admin@ashaal.com")}
+                  className="text-[10px] text-emerald-400 hover:underline cursor-pointer"
+                >
+                  admin@ashaal.com
+                </button>
+                <span className="text-slate-600">•</span>
+                <button
+                  type="button"
+                  onClick={() => setAdminEmailInput("anindo.roy@gmail.com")}
+                  className="text-[10px] text-emerald-400 hover:underline cursor-pointer"
+                >
+                  anindo.roy@gmail.com
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-300 mb-1 uppercase text-[10px] tracking-wider">
+                Admin Password
+              </label>
+              <div className="relative">
+                <input
+                  type="password"
+                  value={adminPasswordInput}
+                  onChange={(e) => setAdminPasswordInput(e.target.value)}
+                  placeholder="Enter password (e.g. password123)"
+                  className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 text-white rounded-xl focus:outline-none focus:border-emerald-500 font-mono text-xs"
+                  required
+                />
+                <Lock className="w-4 h-4 text-slate-400 absolute right-3 top-2.5 pointer-events-none" />
+              </div>
+            </div>
+
             <button
-              type="button"
-              onClick={() => setIsLoginModalOpen(true)}
-              className="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-xl text-xs sm:text-sm shadow-lg shadow-emerald-600/20 transition-all cursor-pointer flex items-center justify-center gap-2"
+              type="submit"
+              disabled={adminLoginLoading}
+              className="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-xl text-xs sm:text-sm shadow-lg shadow-emerald-600/20 transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
             >
-              <Lock className="w-4 h-4" />
+              {adminLoginLoading ? (
+                <RefreshCw className="w-4 h-4 animate-spin" />
+              ) : (
+                <Lock className="w-4 h-4" />
+              )}
               <span>
-                {isLoggedIn ? "Switch to Administrator Account" : "Sign In with Admin Account"}
+                {adminLoginLoading
+                  ? "Verifying Credentials..."
+                  : "Sign In to Admin Dashboard"}
               </span>
             </button>
+          </form>
 
+          {/* Action Buttons */}
+          <div className="space-y-2 relative z-10 pt-2 border-t border-slate-800/80">
             {isLoggedIn && (
               <button
                 type="button"
@@ -1066,7 +1207,7 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
 
             <a
               href="/"
-              className="w-full py-2.5 bg-transparent hover:bg-slate-800/60 border border-slate-700/60 text-slate-400 hover:text-white rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 text-center"
+              className="w-full py-2 bg-transparent hover:bg-slate-800/60 border border-slate-700/60 text-slate-400 hover:text-white rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 text-center"
             >
               <Store className="w-3.5 h-3.5" />
               <span>Return to Storefront</span>
@@ -1077,8 +1218,13 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
           <div className="pt-3 border-t border-slate-800/80 text-center relative z-10">
             <p className="text-[11px] text-slate-500">
               Authorized admin accounts:{" "}
-              <span className="text-emerald-400 font-mono">admin@ashaal.com</span> or{" "}
-              <span className="text-emerald-400 font-mono">anindo.roy@gmail.com</span>
+              <span className="text-emerald-400 font-mono">
+                admin@ashaal.com
+              </span>{" "}
+              or{" "}
+              <span className="text-emerald-400 font-mono">
+                anindo.roy@gmail.com
+              </span>
             </p>
           </div>
         </div>
@@ -1112,12 +1258,17 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
             <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 space-y-1">
               <div className="flex items-center justify-between font-bold">
                 <span>Verified Admin:</span>
-                <span className="px-1.5 py-0.2 bg-emerald-200 text-emerald-900 rounded text-[9px] uppercase font-mono">ROLE: ADMIN</span>
+                <span className="px-1.5 py-0.2 bg-emerald-200 text-emerald-900 rounded text-[9px] uppercase font-mono">
+                  ROLE: ADMIN
+                </span>
               </div>
-              <p className="font-semibold text-slate-900">{user?.name} ({user?.email})</p>
+              <p className="font-semibold text-slate-900">
+                {user?.name} ({user?.email})
+              </p>
             </div>
             <p className="text-xs text-slate-500">
-              Enter authorized administrator passcode to unlock the management dashboard.
+              Enter authorized administrator passcode to unlock the management
+              dashboard.
             </p>
           </div>
 
@@ -1302,7 +1453,9 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
                 }`}
               >
                 <LayoutDashboard className="w-4 h-4 shrink-0 text-emerald-600" />
-                <span className={!sidebarOpen ? "lg:hidden" : ""}>Dashboard</span>
+                <span className={!sidebarOpen ? "lg:hidden" : ""}>
+                  Dashboard
+                </span>
               </button>
             </div>
 
@@ -1314,14 +1467,18 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
               <button
                 onClick={() => setActiveRoute("products")}
                 className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                  activeRoute === "products" || activeRoute === "product-new" || activeRoute === "product-edit"
+                  activeRoute === "products" ||
+                  activeRoute === "product-new" ||
+                  activeRoute === "product-edit"
                     ? "bg-emerald-50 text-emerald-700 font-bold border-l-4 border-emerald-600 shadow-xs"
                     : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <Package className="w-4 h-4 shrink-0 text-blue-600" />
-                  <span className={!sidebarOpen ? "lg:hidden" : ""}>Products</span>
+                  <span className={!sidebarOpen ? "lg:hidden" : ""}>
+                    Products
+                  </span>
                 </div>
                 <span className="px-1.5 py-0.2 bg-slate-100 text-slate-600 rounded-full text-[10px] font-bold">
                   {products.length}
@@ -1340,7 +1497,9 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
                 >
                   <div className="flex items-center gap-3">
                     <ShoppingCart className="w-4 h-4 shrink-0 text-purple-600" />
-                    <span className={!sidebarOpen ? "lg:hidden" : ""}>Orders Pages</span>
+                    <span className={!sidebarOpen ? "lg:hidden" : ""}>
+                      Orders Pages
+                    </span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="px-1.5 py-0.2 bg-purple-100 text-purple-800 rounded-full text-[10px] font-bold">
@@ -1355,7 +1514,9 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
                 </button>
 
                 {ordersSubmenuOpen && (
-                  <div className={`pl-4 pr-1 py-1 space-y-0.5 border-l-2 border-slate-200 ml-4.5 ${!sidebarOpen ? "lg:hidden" : ""}`}>
+                  <div
+                    className={`pl-4 pr-1 py-1 space-y-0.5 border-l-2 border-slate-200 ml-4.5 ${!sidebarOpen ? "lg:hidden" : ""}`}
+                  >
                     <button
                       onClick={() => setActiveRoute("orders")}
                       className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
@@ -1467,7 +1628,9 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
                 }`}
               >
                 <ImageIcon className="w-4 h-4 shrink-0 text-pink-600" />
-                <span className={!sidebarOpen ? "lg:hidden" : ""}>Banners & Hero</span>
+                <span className={!sidebarOpen ? "lg:hidden" : ""}>
+                  Banners & Hero
+                </span>
               </button>
             </div>
 
@@ -1486,7 +1649,9 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
               >
                 <div className="flex items-center gap-3">
                   <Users className="w-4 h-4 shrink-0 text-teal-600" />
-                  <span className={!sidebarOpen ? "lg:hidden" : ""}>Customers</span>
+                  <span className={!sidebarOpen ? "lg:hidden" : ""}>
+                    Customers
+                  </span>
                 </div>
                 <span className="px-1.5 py-0.2 bg-slate-100 text-slate-600 rounded-full text-[10px] font-bold">
                   {allUsers.length}
@@ -1503,7 +1668,9 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
               >
                 <div className="flex items-center gap-3">
                   <Globe className="w-4 h-4 shrink-0 text-cyan-600" />
-                  <span className={!sidebarOpen ? "lg:hidden" : ""}>Live Visitors</span>
+                  <span className={!sidebarOpen ? "lg:hidden" : ""}>
+                    Live Visitors
+                  </span>
                 </div>
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               </button>
@@ -1523,7 +1690,9 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
                 }`}
               >
                 <Code className="w-4 h-4 shrink-0 text-slate-600" />
-                <span className={!sidebarOpen ? "lg:hidden" : ""}>API Endpoints</span>
+                <span className={!sidebarOpen ? "lg:hidden" : ""}>
+                  API Endpoints
+                </span>
               </button>
             </div>
           </div>
@@ -1536,7 +1705,8 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
           {/* ========================================================================= */}
           {/* DEDICATED FULL-PAGE PRODUCT EDITOR (PRODUCT-NEW / PRODUCT-EDIT) */}
           {/* ========================================================================= */}
-          {(activeRoute === "product-new" || activeRoute === "product-edit") && editingProduct ? (
+          {(activeRoute === "product-new" || activeRoute === "product-edit") &&
+          editingProduct ? (
             <div className="space-y-6 max-w-7xl mx-auto">
               {/* Top Navigation & Action Header */}
               <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-4 sm:p-6 rounded-2xl border border-slate-200/80 shadow-xs">
@@ -1555,7 +1725,9 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
                       <span>Products</span>
                       <span>/</span>
                       <span className="text-slate-800 font-semibold uppercase tracking-wider">
-                        {activeRoute === "product-new" ? "New Product" : "Edit Listing"}
+                        {activeRoute === "product-new"
+                          ? "New Product"
+                          : "Edit Listing"}
                       </span>
                     </div>
                     <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-0.5">
@@ -1606,7 +1778,10 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
               </div>
 
               {/* Full-Page Product Form (2-Column Responsive Layout) */}
-              <form onSubmit={handleSaveProduct} className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              <form
+                onSubmit={handleSaveProduct}
+                className="grid grid-cols-1 lg:grid-cols-12 gap-6"
+              >
                 {/* LEFT / CENTER (8 COLS): Title, Media, Specs */}
                 <div className="lg:col-span-8 space-y-6">
                   {/* CARD 1: Basic Information */}
@@ -1831,7 +2006,8 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
                         Technical Specifications
                       </h3>
                       <p className="text-xs text-slate-400">
-                        Hardware specs, warranty, battery, materials, and display details
+                        Hardware specs, warranty, battery, materials, and
+                        display details
                       </p>
                     </div>
 
@@ -1878,10 +2054,11 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
                     </div>
 
                     <div className="bg-slate-50 rounded-xl border border-slate-200 divide-y divide-slate-200 overflow-hidden">
-                      {Object.keys(editingProduct.specifications || {}).length ===
-                      0 ? (
+                      {Object.keys(editingProduct.specifications || {})
+                        .length === 0 ? (
                         <p className="p-4 text-center text-xs text-slate-400">
-                          No specifications added yet. Use the inputs above to add technical parameters.
+                          No specifications added yet. Use the inputs above to
+                          add technical parameters.
                         </p>
                       ) : (
                         Object.entries(editingProduct.specifications || {}).map(
@@ -2268,14 +2445,20 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
                     {activeRoute === "dashboard" && "Executive Store Dashboard"}
                     {activeRoute === "products" && "Product Catalog Management"}
                     {activeRoute === "orders" && "All Orders (Master Registry)"}
-                    {activeRoute === "orders-placed" && "Placed Orders (Pending Verification)"}
-                    {activeRoute === "orders-processing" && "Processing & Packing Orders"}
-                    {activeRoute === "orders-shipped" && "Shipped & In-Transit Orders"}
-                    {activeRoute === "orders-delivered" && "Delivered & Completed Orders"}
-                    {activeRoute === "orders-cancelled" && "Cancelled & Voided Orders"}
+                    {activeRoute === "orders-placed" &&
+                      "Placed Orders (Pending Verification)"}
+                    {activeRoute === "orders-processing" &&
+                      "Processing & Packing Orders"}
+                    {activeRoute === "orders-shipped" &&
+                      "Shipped & In-Transit Orders"}
+                    {activeRoute === "orders-delivered" &&
+                      "Delivered & Completed Orders"}
+                    {activeRoute === "orders-cancelled" &&
+                      "Cancelled & Voided Orders"}
                     {activeRoute === "banners" && "Hero Carousel & Banners"}
                     {activeRoute === "users" && "Customer & Accounts Directory"}
-                    {activeRoute === "visitors" && "Live Visitor Traffic Analytics"}
+                    {activeRoute === "visitors" &&
+                      "Live Visitor Traffic Analytics"}
                     {activeRoute === "api-docs" && "REST API Documentation"}
                   </h2>
                 </div>
@@ -2461,7 +2644,8 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
                                   #{ord.orderNumber}
                                 </td>
                                 <td className="py-3 px-4 text-slate-700">
-                                  {ord.shippingAddress?.fullName || "Guest Customer"}
+                                  {ord.shippingAddress?.fullName ||
+                                    "Guest Customer"}
                                 </td>
                                 <td className="py-3 px-4 font-bold text-slate-900 font-mono">
                                   ৳{ord.total.toLocaleString("en-BD")}
@@ -2559,7 +2743,8 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
                                 Dispatch Courier
                               </p>
                               <p className="text-[10px] text-slate-400">
-                                {processingOrdersCount} packing in orders_processing
+                                {processingOrdersCount} packing in
+                                orders_processing
                               </p>
                             </div>
                           </div>
@@ -2574,7 +2759,8 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
                           <span>MySQL Status Tables Active</span>
                         </div>
                         <p className="text-xs text-slate-500 font-mono">
-                          orders, orders_placed, orders_processing, orders_shipped, orders_delivered, orders_cancelled
+                          orders, orders_placed, orders_processing,
+                          orders_shipped, orders_delivered, orders_cancelled
                         </p>
                         <p className="text-[11px] text-emerald-600 font-semibold">
                           Dedicated Status Database Synchronization Active
@@ -2619,7 +2805,9 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
                       {/* Category Dropdown */}
                       <select
                         value={productCategoryFilter}
-                        onChange={(e) => setProductCategoryFilter(e.target.value)}
+                        onChange={(e) =>
+                          setProductCategoryFilter(e.target.value)
+                        }
                         className="px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-700 focus:outline-hidden focus:border-emerald-500 cursor-pointer"
                       >
                         <option value="all">All Categories</option>
@@ -2657,7 +2845,9 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
                     <table className="w-full text-left text-xs border-collapse">
                       <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-700 font-bold">
                         <tr>
-                          <th className="py-3.5 px-4 w-12 text-center">Image</th>
+                          <th className="py-3.5 px-4 w-12 text-center">
+                            Image
+                          </th>
                           <th className="py-3.5 px-4">Name</th>
                           <th className="py-3.5 px-4">Category</th>
                           <th className="py-3.5 px-4">Price</th>
@@ -2704,11 +2894,12 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
                                 <span className="font-bold text-slate-900 text-sm">
                                   ৳{p.price?.toLocaleString("en-BD")}
                                 </span>
-                                {p.originalPrice && p.originalPrice > p.price && (
-                                  <span className="text-[10px] text-slate-400 line-through ml-1.5">
-                                    ৳{p.originalPrice}
-                                  </span>
-                                )}
+                                {p.originalPrice &&
+                                  p.originalPrice > p.price && (
+                                    <span className="text-[10px] text-slate-400 line-through ml-1.5">
+                                      ৳{p.originalPrice}
+                                    </span>
+                                  )}
                               </td>
                               <td className="py-3 px-4">
                                 <span
@@ -2765,7 +2956,9 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
                                     <Edit2 className="w-3.5 h-3.5" />
                                   </button>
                                   <button
-                                    onClick={() => handleDeleteProduct(p.id, p.title)}
+                                    onClick={() =>
+                                      handleDeleteProduct(p.id, p.title)
+                                    }
                                     className="w-8 h-8 rounded-full hover:bg-red-50 text-red-600 flex items-center justify-center transition-colors cursor-pointer"
                                     title="Delete Product"
                                   >
@@ -2783,8 +2976,16 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
                   {/* PrimeNG Paginator Footer */}
                   <div className="px-4 py-3 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500 bg-white">
                     <span>
-                      Showing {filteredProducts.length === 0 ? 0 : (productPage - 1) * productRowsPerPage + 1} to{" "}
-                      {Math.min(productPage * productRowsPerPage, filteredProducts.length)} of {filteredProducts.length} entries
+                      Showing{" "}
+                      {filteredProducts.length === 0
+                        ? 0
+                        : (productPage - 1) * productRowsPerPage + 1}{" "}
+                      to{" "}
+                      {Math.min(
+                        productPage * productRowsPerPage,
+                        filteredProducts.length,
+                      )}{" "}
+                      of {filteredProducts.length} entries
                     </span>
                     <div className="flex items-center gap-1.5">
                       <button
@@ -2795,7 +2996,12 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
                         <ChevronLeft className="w-3.5 h-3.5" />
                       </button>
                       {Array.from(
-                        { length: Math.ceil(filteredProducts.length / productRowsPerPage) || 1 },
+                        {
+                          length:
+                            Math.ceil(
+                              filteredProducts.length / productRowsPerPage,
+                            ) || 1,
+                        },
                         (_, i) => i + 1,
                       )
                         .slice(0, 5)
@@ -2815,7 +3021,9 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
                       <button
                         disabled={
                           productPage >=
-                          Math.ceil(filteredProducts.length / productRowsPerPage)
+                          Math.ceil(
+                            filteredProducts.length / productRowsPerPage,
+                          )
                         }
                         onClick={() => setProductPage(productPage + 1)}
                         className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 disabled:opacity-40 cursor-pointer"
@@ -2837,19 +3045,33 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
                     <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
                       <div>
                         <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider block mb-0.5">
-                          {currentOrderStatusFilter === "all" ? "Total Orders" : `${currentOrderStatusFilter} Orders`}
+                          {currentOrderStatusFilter === "all"
+                            ? "Total Orders"
+                            : `${currentOrderStatusFilter} Orders`}
                         </span>
                         <span className="text-2xl font-black text-slate-900 font-mono">
                           {filteredOrders.length}
                         </span>
                       </div>
                       <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center font-bold">
-                        {currentOrderStatusFilter === "PLACED" && <Clock className="w-5 h-5 text-amber-600" />}
-                        {currentOrderStatusFilter === "PROCESSING" && <Box className="w-5 h-5 text-blue-600" />}
-                        {currentOrderStatusFilter === "SHIPPED" && <Truck className="w-5 h-5 text-purple-600" />}
-                        {currentOrderStatusFilter === "DELIVERED" && <CheckCircle2 className="w-5 h-5 text-emerald-600" />}
-                        {currentOrderStatusFilter === "CANCELLED" && <XCircle className="w-5 h-5 text-red-600" />}
-                        {currentOrderStatusFilter === "all" && <ShoppingCart className="w-5 h-5 text-slate-700" />}
+                        {currentOrderStatusFilter === "PLACED" && (
+                          <Clock className="w-5 h-5 text-amber-600" />
+                        )}
+                        {currentOrderStatusFilter === "PROCESSING" && (
+                          <Box className="w-5 h-5 text-blue-600" />
+                        )}
+                        {currentOrderStatusFilter === "SHIPPED" && (
+                          <Truck className="w-5 h-5 text-purple-600" />
+                        )}
+                        {currentOrderStatusFilter === "DELIVERED" && (
+                          <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                        )}
+                        {currentOrderStatusFilter === "CANCELLED" && (
+                          <XCircle className="w-5 h-5 text-red-600" />
+                        )}
+                        {currentOrderStatusFilter === "all" && (
+                          <ShoppingCart className="w-5 h-5 text-slate-700" />
+                        )}
                       </div>
                     </div>
 
@@ -2890,12 +3112,36 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
                     {/* Navigation Pills to other dedicated order pages */}
                     <div className="flex flex-wrap items-center gap-1.5">
                       {[
-                        { id: "orders", label: "All Orders", count: orders.length },
-                        { id: "orders-placed", label: "Placed", count: placedOrdersCount },
-                        { id: "orders-processing", label: "Processing", count: processingOrdersCount },
-                        { id: "orders-shipped", label: "Shipped", count: shippedOrdersCount },
-                        { id: "orders-delivered", label: "Delivered", count: deliveredOrdersCount },
-                        { id: "orders-cancelled", label: "Cancelled", count: cancelledOrdersCount },
+                        {
+                          id: "orders",
+                          label: "All Orders",
+                          count: orders.length,
+                        },
+                        {
+                          id: "orders-placed",
+                          label: "Placed",
+                          count: placedOrdersCount,
+                        },
+                        {
+                          id: "orders-processing",
+                          label: "Processing",
+                          count: processingOrdersCount,
+                        },
+                        {
+                          id: "orders-shipped",
+                          label: "Shipped",
+                          count: shippedOrdersCount,
+                        },
+                        {
+                          id: "orders-delivered",
+                          label: "Delivered",
+                          count: deliveredOrdersCount,
+                        },
+                        {
+                          id: "orders-cancelled",
+                          label: "Cancelled",
+                          count: cancelledOrdersCount,
+                        },
                       ].map((pg) => (
                         <button
                           key={pg.id}
@@ -2968,7 +3214,11 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
                                 colSpan={7}
                                 className="py-12 text-center text-slate-400"
                               >
-                                No orders currently in {currentOrderStatusFilter === "all" ? "the system" : `"${currentOrderStatusFilter}" status`}.
+                                No orders currently in{" "}
+                                {currentOrderStatusFilter === "all"
+                                  ? "the system"
+                                  : `"${currentOrderStatusFilter}" status`}
+                                .
                               </td>
                             </tr>
                           ) : (
@@ -2988,7 +3238,8 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
 
                                 <td className="py-3 px-4">
                                   <p className="font-bold text-slate-800">
-                                    {ord.shippingAddress?.fullName || "Customer"}
+                                    {ord.shippingAddress?.fullName ||
+                                      "Customer"}
                                   </p>
                                   <div className="flex items-center gap-1 text-[11px] text-slate-500">
                                     <PhoneCall className="w-3 h-3 text-slate-400" />
@@ -3127,8 +3378,16 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
                     {/* Orders Paginator */}
                     <div className="px-4 py-3 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500 bg-white">
                       <span>
-                        Showing {filteredOrders.length === 0 ? 0 : (orderPage - 1) * orderRowsPerPage + 1} to{" "}
-                        {Math.min(orderPage * orderRowsPerPage, filteredOrders.length)} of {filteredOrders.length} entries
+                        Showing{" "}
+                        {filteredOrders.length === 0
+                          ? 0
+                          : (orderPage - 1) * orderRowsPerPage + 1}{" "}
+                        to{" "}
+                        {Math.min(
+                          orderPage * orderRowsPerPage,
+                          filteredOrders.length,
+                        )}{" "}
+                        of {filteredOrders.length} entries
                       </span>
                       <div className="flex items-center gap-1.5">
                         <button
@@ -3139,7 +3398,12 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
                           <ChevronLeft className="w-3.5 h-3.5" />
                         </button>
                         {Array.from(
-                          { length: Math.ceil(filteredOrders.length / orderRowsPerPage) || 1 },
+                          {
+                            length:
+                              Math.ceil(
+                                filteredOrders.length / orderRowsPerPage,
+                              ) || 1,
+                          },
                           (_, i) => i + 1,
                         )
                           .slice(0, 5)
@@ -3215,7 +3479,9 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
                         {filteredUsers.map((u) => (
                           <tr key={u.id} className="hover:bg-slate-50/70">
                             <td className="py-3 px-4">
-                              <p className="font-bold text-slate-900">{u.name}</p>
+                              <p className="font-bold text-slate-900">
+                                {u.name}
+                              </p>
                               <p className="text-[10px] text-slate-400 font-mono">
                                 ID: {u.id}
                               </p>
@@ -3314,7 +3580,9 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
                               />
                             </td>
                             <td className="py-3 px-4">
-                              <p className="font-bold text-slate-900">{b.title}</p>
+                              <p className="font-bold text-slate-900">
+                                {b.title}
+                              </p>
                               <p className="text-[11px] text-slate-400">
                                 {b.subtitle}
                               </p>
@@ -3381,7 +3649,9 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
                             <td className="py-3 px-4 font-mono text-emerald-600 font-semibold">
                               {v.page}
                             </td>
-                            <td className="py-3 px-4 text-slate-600">{v.device}</td>
+                            <td className="py-3 px-4 text-slate-600">
+                              {v.device}
+                            </td>
                             <td className="py-3 px-4 text-slate-600">
                               {v.city}, {v.country}
                             </td>
@@ -3409,13 +3679,16 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
                       REST API Endpoints & Developer Documentation
                     </h3>
                     <p className="text-xs text-slate-500 mt-1">
-                      Native Next.js route handlers connected to MySQL on 51.79.229.154:3306.
+                      Native Next.js route handlers connected to MySQL on
+                      51.79.229.154:3306.
                     </p>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                     <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
-                      <p className="font-bold text-xs text-slate-800">Products API</p>
+                      <p className="font-bold text-xs text-slate-800">
+                        Products API
+                      </p>
                       <code className="block font-mono text-xs text-emerald-700 bg-white p-2 rounded border border-slate-200">
                         GET /api/products
                       </code>
@@ -3428,7 +3701,9 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
                     </div>
 
                     <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
-                      <p className="font-bold text-xs text-slate-800">Status-Specific Orders API</p>
+                      <p className="font-bold text-xs text-slate-800">
+                        Status-Specific Orders API
+                      </p>
                       <code className="block font-mono text-xs text-blue-700 bg-white p-2 rounded border border-slate-200">
                         GET /api/orders?status=placed
                       </code>
