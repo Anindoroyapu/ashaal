@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { useApp } from "../context/AppContext";
+import { useApp } from "@/context/AppContext";
 import {
   Product,
   Order,
@@ -10,8 +10,8 @@ import {
   UserProfile,
   ProductVariation,
   Seller,
-} from "../types";
-import { CATEGORIES_DATA } from "../data/categoriesData";
+} from "@/types";
+import { CATEGORIES_DATA } from "@/data/categoriesData";
 import {
   saveProductToFirestore,
   deleteProductFromFirestore,
@@ -24,8 +24,8 @@ import {
   saveUserToFirestore,
   seedInitialUsers,
   fetchVisitors,
-} from "../services/firestoreService";
-import { SEO } from "../components/SEO";
+} from "@/services/firestoreService";
+import { SEO } from "@/components/SEO";
 import {
   LayoutDashboard,
   Package,
