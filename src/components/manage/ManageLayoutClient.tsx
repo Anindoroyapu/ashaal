@@ -15,11 +15,14 @@ import { CATEGORIES_DATA } from "../data/categoriesData";
 import {
   saveProductToFirestore,
   deleteProductFromFirestore,
+  seedInitialProducts,
+  updateOrderStatusInFirestore,
   updateOrderDetailsInFirestore,
   deleteOrderFromFirestore,
   saveBannerToFirestore,
   deleteBannerFromFirestore,
   saveUserToFirestore,
+  seedInitialUsers,
   fetchVisitors,
 } from "../services/firestoreService";
 import { SEO } from "../components/SEO";
@@ -196,10 +199,10 @@ export interface AdminManagePageProps {
 export const ManageLayoutClient = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
   const pathname = usePathname();
-  /* 
-  initialRoute = "dashboard",
-  productId,
-}) => {
+  const hideLayout = false;
+  const initialRoute = "dashboard";
+  const productId = null;
+
   const {
     user,
     isLoggedIn,
@@ -1049,7 +1052,7 @@ export const ManageLayoutClient = ({ children }: { children: React.ReactNode }) 
   // =========================================================================
   // 1. STRICT SECURITY GATEKEEPER: ROLE MUST BE ADMIN
   // =========================================================================
-  if (!isAuthorizedAdmin && !hideLayout) {
+  if (!isAuthorizedAdmin) {
     return (
       <div className="min-h-screen bg-[#0f172a] flex flex-col justify-center items-center p-4 font-sans antialiased text-white selection:bg-red-500 selection:text-white">
         <SEO
@@ -1257,7 +1260,7 @@ export const ManageLayoutClient = ({ children }: { children: React.ReactNode }) 
   // =========================================================================
   // 2. PASSCODE 2FA SCREEN (FOR VERIFIED ADMINS)
   // =========================================================================
-  if (!isAuthenticated && !hideLayout) {
+  if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-[#f8fafc] flex flex-col justify-center items-center p-4 font-sans antialiased text-slate-800">
         <SEO
