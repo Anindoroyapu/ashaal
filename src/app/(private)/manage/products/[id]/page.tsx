@@ -6,5 +6,5 @@ export default async function Page({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  return <AdminManagePage initialRoute="product-edit" productId={id} />;
+  return <AdminManagePage hideLayout={true} initialRoute="product-edit" productId={id} />;
 }

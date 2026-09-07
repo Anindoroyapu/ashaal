@@ -1,5 +1,5 @@
 import { AdminManagePage } from '@/views/AdminManagePage';
 
 export default function Page() {
-  return <AdminManagePage initialRoute="orders-delivered" />;
+  return <AdminManagePage hideLayout={true} hideLayout={true} initialRoute="orders-delivered" />;
 }
