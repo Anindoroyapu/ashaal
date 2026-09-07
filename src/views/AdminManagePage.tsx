@@ -190,6 +190,7 @@ export type NavRoute =
   | "product-edit";
 
 export interface AdminManagePageProps {
+  hideLayout?: boolean;
   initialRoute?: NavRoute;
   productId?: string;
 }
@@ -1027,7 +1028,7 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
   // =========================================================================
   // 1. STRICT SECURITY GATEKEEPER: ROLE MUST BE ADMIN
   // =========================================================================
-  if (!isAuthorizedAdmin) {
+  if (!isAuthorizedAdmin && !hideLayout) {
     return (
       <div className="min-h-screen bg-[#0f172a] flex flex-col justify-center items-center p-4 font-sans antialiased text-white selection:bg-red-500 selection:text-white">
         <SEO
@@ -1235,7 +1236,7 @@ export const AdminManagePage: React.FC<AdminManagePageProps> = ({
   // =========================================================================
   // 2. PASSCODE 2FA SCREEN (FOR VERIFIED ADMINS)
   // =========================================================================
-  if (!isAuthenticated) {
+  if (!isAuthenticated && !hideLayout) {
     return (
       <div className="min-h-screen bg-[#f8fafc] flex flex-col justify-center items-center p-4 font-sans antialiased text-slate-800">
         <SEO

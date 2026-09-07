@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Suspense } from "react";
 import { AppProvider } from "@/context/AppContext";
-import { AppLayoutClient } from "@/components/AppLayoutClient";
 
 const SITE_URL = "https://ashaal.com.bd";
 
@@ -249,7 +248,7 @@ export default function RootLayout({
       <body className="antialiased font-sans">
         <Suspense fallback={<div className="min-h-screen bg-[#eff0f5]" />}>
           <AppProvider>
-            <AppLayoutClient>{children}</AppLayoutClient>
+            {children}
           </AppProvider>
         </Suspense>
       </body>
