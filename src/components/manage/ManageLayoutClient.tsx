@@ -1,28 +1,17 @@
 "use client";
-
 import React, { useState, useMemo, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useApp } from "@/context/AppContext";
-import {
-  Product,
-  Order,
-  Banner,
-  UserProfile,
-  ProductVariation,
-  Seller,
-} from "@/types";
+import { Product, Order, Banner, UserProfile, Seller } from "@/types";
 import { CATEGORIES_DATA } from "@/data/categoriesData";
 import {
   saveProductToFirestore,
   deleteProductFromFirestore,
-  seedInitialProducts,
-  updateOrderStatusInFirestore,
   updateOrderDetailsInFirestore,
   deleteOrderFromFirestore,
   saveBannerToFirestore,
   deleteBannerFromFirestore,
   saveUserToFirestore,
-  seedInitialUsers,
   fetchVisitors,
 } from "@/services/firestoreService";
 import { SEO } from "@/components/SEO";
@@ -31,78 +20,26 @@ import {
   Package,
   ShoppingCart,
   Image as ImageIcon,
-  Plus,
-  Edit2,
-  Trash2,
   Search,
-  CheckCircle,
-  Clock,
-  Eye,
   Printer,
-  Sparkles,
   Lock,
   LogOut,
   RefreshCw,
-  Zap,
-  Tag,
-  DollarSign,
-  Box,
-  Layers,
-  Phone,
-  MapPin,
-  Check,
   AlertCircle,
-  TrendingUp,
   X,
-  ExternalLink,
   ShieldCheck,
   ShieldAlert,
   Menu,
-  Calendar,
-  User,
   ChevronDown,
   ChevronRight,
-  Camera,
-  HeartHandshake,
   Users,
   Mail,
-  HelpCircle,
-  Folder,
-  Settings,
   Globe,
-  Database,
-  Copy,
   Code,
   Store,
-  SlidersHorizontal,
-  Percent,
-  Truck,
-  Info,
-  ListPlus,
-  FileText,
-  CopyPlus,
   ArrowUpRight,
-  Flame,
-  CheckSquare,
-  BarChart3,
-  Layers3,
   PhoneCall,
   MessageSquare,
-  CheckCircle2,
-  Navigation,
-  AlertTriangle,
-  ChevronLeft,
-  Filter,
-  Download,
-  Bell,
-  ArrowUpDown,
-  ArrowLeft,
-  Save,
-  Undo2,
-  CheckCheck,
-  PackageCheck,
-  Send,
-  XCircle,
 } from "lucide-react";
 
 const ADMIN_STORAGE_KEY = "ash_admin_auth";
@@ -196,25 +133,26 @@ export interface AdminManagePageProps {
   productId?: string;
 }
 
-export const ManageLayoutClient = ({ children }: { children: React.ReactNode }) => {
+export const ManageLayoutClient = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
   const router = useRouter();
   const pathname = usePathname();
   const hideLayout = false;
-  const initialRoute = "dashboard";
+  let initialRoute: string = "dashboard";
   const productId = null;
 
   const {
     user,
     isLoggedIn,
-    setIsLoginModalOpen,
     logout,
     products,
     orders,
-    banners,
     allUsers,
     showToast,
     t,
-    language,
     deleteUserAccount,
   } = useApp();
 
@@ -255,15 +193,19 @@ export const ManageLayoutClient = ({ children }: { children: React.ReactNode }) 
   const [authError, setAuthError] = useState<string>("");
 
   // Navigation route/tab
-  
-  let activeRoute = "dashboard";
+
+  let activeRoute: string = "dashboard";
   if (pathname.includes("/manage/products")) activeRoute = "products";
   if (pathname.includes("/manage/orders")) activeRoute = "orders";
   if (pathname.includes("/manage/orders/placed")) activeRoute = "orders-placed";
-  if (pathname.includes("/manage/orders/processing")) activeRoute = "orders-processing";
-  if (pathname.includes("/manage/orders/shipped")) activeRoute = "orders-shipped";
-  if (pathname.includes("/manage/orders/delivered")) activeRoute = "orders-delivered";
-  if (pathname.includes("/manage/orders/cancelled")) activeRoute = "orders-cancelled";
+  if (pathname.includes("/manage/orders/processing"))
+    activeRoute = "orders-processing";
+  if (pathname.includes("/manage/orders/shipped"))
+    activeRoute = "orders-shipped";
+  if (pathname.includes("/manage/orders/delivered"))
+    activeRoute = "orders-delivered";
+  if (pathname.includes("/manage/orders/cancelled"))
+    activeRoute = "orders-cancelled";
   if (pathname.includes("/manage/users")) activeRoute = "users";
   if (pathname.includes("/manage/banners")) activeRoute = "banners";
   if (pathname.includes("/manage/visitors")) activeRoute = "visitors";
@@ -272,10 +214,11 @@ export const ManageLayoutClient = ({ children }: { children: React.ReactNode }) 
   const setActiveRoute = (route) => {
     if (route === "dashboard") router.push("/manage");
     else if (route === "orders") router.push("/manage/orders");
-    else if (route.startsWith("orders-")) router.push("/manage/orders/" + route.split("-")[1]);
+    else if (route.startsWith("orders-"))
+      router.push("/manage/orders/" + route.split("-")[1]);
     else router.push("/manage/" + route);
   };
-  
+
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
   const [ordersSubmenuOpen, setOrdersSubmenuOpen] = useState<boolean>(true);
 

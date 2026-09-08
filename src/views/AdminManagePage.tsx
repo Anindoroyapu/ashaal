@@ -198,6 +198,7 @@ export interface AdminManagePageProps {
 export const AdminManagePage: React.FC<AdminManagePageProps> = ({
   initialRoute = "dashboard",
   productId,
+hideLayout = false,
 }) => {
   const {
     user,
