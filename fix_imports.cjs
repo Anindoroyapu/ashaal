@@ -1,11 +1,18 @@
 const fs = require('fs');
-let code = fs.readFileSync('src/components/manage/ManageLayoutClient.tsx', 'utf8');
 
-code = code.replace(/from "\.\.\/context/g, 'from "@/context');
-code = code.replace(/from "\.\.\/types/g, 'from "@/types');
-code = code.replace(/from "\.\.\/data/g, 'from "@/data');
-code = code.replace(/from "\.\.\/services/g, 'from "@/services');
-code = code.replace(/from "\.\.\/components/g, 'from "@/components');
+function addImport(file, importStmt) {
+  let code = fs.readFileSync(file, 'utf8');
+  if (!code.includes(importStmt)) {
+    code = code.replace(
+      /import React([^;]+);|import React(.*)from ["']react["'];/, 
+      match => match + '\n' + importStmt
+    );
+    fs.writeFileSync(file, code);
+  }
+}
 
-fs.writeFileSync('src/components/manage/ManageLayoutClient.tsx', code);
+addImport('src/context/AppContext.tsx', 'import { getEffectivePrice } from "@/utils/productUtils";');
+addImport('src/views/ProductDetailPage.tsx', 'import { getEffectivePrice, getEffectiveStock } from "@/utils/productUtils";');
+addImport('src/views/CartPage.tsx', 'import { getEffectivePrice } from "@/utils/productUtils";');
+addImport('src/views/CheckoutPage.tsx', 'import { getEffectivePrice } from "@/utils/productUtils";');
 console.log('Fixed imports');

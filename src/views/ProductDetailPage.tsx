@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { getEffectivePrice, getEffectiveStock } from "@/utils/productUtils";
 import { useParams } from "next/navigation";
 import { useApp } from "../context/AppContext";
 import { ProductCard } from "../components/ProductCard";
@@ -80,7 +81,7 @@ export const ProductDetailPage: React.FC = () => {
     const initial: Record<string, string> = {};
     if (product.variations) {
       product.variations.forEach((v) => {
-        initial[v.name] = v.options[0];
+        initial[v.name] = typeof v.options[0] === "string" ? v.options[0] : v.options[0].name;
       });
     }
     return initial;
@@ -110,7 +111,7 @@ export const ProductDetailPage: React.FC = () => {
     const initial: Record<string, string> = {};
     if (product.variations) {
       product.variations.forEach((v) => {
-        initial[v.name] = v.options[0];
+        initial[v.name] = typeof v.options[0] === "string" ? v.options[0] : v.options[0].name;
       });
     }
     setSelectedVariations(initial);
@@ -538,7 +539,7 @@ export const ProductDetailPage: React.FC = () => {
             <div className="bg-green-50/60 p-3.5 space-y-2">
               <div className="flex items-baseline gap-2.5">
                 <span className="text-2xl sm:text-3xl font-black text-[#16a34a]">
-                  {formatPrice(product.final_price || product.price)}
+                  {formatPrice(getEffectivePrice(product, selectedVariations))}
                 </span>
                 {product.discountPercentage > 0 && (
                   <>
@@ -638,7 +639,7 @@ export const ProductDetailPage: React.FC = () => {
                       <span className="font-semibold text-gray-600">
                         {v.name}:{" "}
                         <strong className="text-gray-900">
-                          {selectedVariations[v.name] || v.options[0]}
+                          {selectedVariations[v.name] || (typeof v.options[0] === "string" ? v.options[0] : v.options[0].name)}
                         </strong>
                       </span>
                       <span className="text-[11px] text-gray-400">
@@ -648,13 +649,13 @@ export const ProductDetailPage: React.FC = () => {
                     <div className="flex flex-wrap gap-2">
                       {v.options.map((opt, optIdx) => {
                         const isSelected =
-                          (selectedVariations[v.name] || v.options[0]) === opt;
+                          (selectedVariations[v.name] || (typeof v.options[0] === "string" ? v.options[0] : v.options[0].name)) === (typeof opt === "string" ? opt : opt.name);
                         return (
                           <button
-                            key={opt}
+                            key={typeof opt === "string" ? opt : opt.name}
                             type="button"
                             onClick={() =>
-                              handleVariationSelect(v.name, opt, optIdx)
+                              handleVariationSelect(v.name, typeof opt === "string" ? opt : opt.name, optIdx)
                             }
                             className={`px-3 py-1.5 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
                               isSelected
@@ -665,7 +666,7 @@ export const ProductDetailPage: React.FC = () => {
                             {isSelected && (
                               <CheckCircle2 className="w-3.5 h-3.5 text-white" />
                             )}
-                            <span>{opt}</span>
+                            <span>{typeof opt === "string" ? opt : opt.name}</span>
                           </button>
                         );
                       })}

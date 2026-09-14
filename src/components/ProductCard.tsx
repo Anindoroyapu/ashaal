@@ -40,7 +40,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     const defaultVars: Record<string, string> = {};
     if (product.variations) {
       product.variations.forEach((v) => {
-        defaultVars[v.name] = v.options[0];
+        defaultVars[v.name] = typeof v.options[0] === "string" ? v.options[0] : v.options[0].name;
       });
     }
     addToCart(product, 1, defaultVars);

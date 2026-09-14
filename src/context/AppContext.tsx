@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { getEffectivePrice } from "@/utils/productUtils";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import {
   Product,
@@ -883,7 +884,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   ): Order => {
     const selectedItems = cart.filter((i) => i.selected);
     const subtotal = selectedItems.reduce(
-      (sum, i) => sum + i.product.price * i.quantity,
+      (sum, i) => sum + getEffectivePrice(i.product, i.selectedVariations) * i.quantity,
       0,
     );
     const shippingFee = selectedItems.some((i) => !i.product.isFreeDelivery)

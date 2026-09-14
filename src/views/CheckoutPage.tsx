@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { getEffectivePrice } from "@/utils/productUtils";
 import { useApp } from '../context/AppContext';
 import { DeliveryAddress } from '../types';
 import { SEO } from '../components/SEO';
@@ -322,7 +323,7 @@ export const CheckoutPage: React.FC = () => {
                     </p>
                     <p className="text-[11px] text-gray-500">Qty: {item.quantity}</p>
                   </div>
-                  <span className="font-bold text-gray-900">{formatPrice(item.product.price * item.quantity)}</span>
+                  <span className="font-bold text-gray-900">{formatPrice(getEffectivePrice(item.product, item.selectedVariations) * item.quantity)}</span>
                 </div>
               ))}
             </div>

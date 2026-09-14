@@ -576,14 +576,35 @@ hideLayout = false,
     });
   };
 
-  const handleAddVariationOption = (idx: number, option: string) => {
-    if (!option.trim()) return;
+  const handleAddVariationOption = (idx: number) => {
     setEditingProduct(prev => {
       if (!prev || !prev.variations) return prev;
       const newVars = [...prev.variations];
-      if (!newVars[idx].options.includes(option.trim())) {
-        newVars[idx] = { ...newVars[idx], options: [...newVars[idx].options, option.trim()] };
+      newVars[idx] = { 
+        ...newVars[idx], 
+        options: [...newVars[idx].options, { name: "", price: undefined, stock: undefined }] 
+      };
+      return { ...prev, variations: newVars };
+    });
+  };
+
+  const handleUpdateVariationOption = (varIdx: number, optIdx: number, field: string, value: any) => {
+    setEditingProduct(prev => {
+      if (!prev || !prev.variations) return prev;
+      const newVars = [...prev.variations];
+      const newOptions = [...newVars[varIdx].options];
+      
+      let opt = newOptions[optIdx];
+      if (typeof opt === 'string') {
+        opt = { name: opt };
+      } else {
+        opt = { ...opt };
       }
+      
+      (opt as any)[field] = value;
+      newOptions[optIdx] = opt;
+      
+      newVars[varIdx] = { ...newVars[varIdx], options: newOptions };
       return { ...prev, variations: newVars };
     });
   };
@@ -2215,14 +2236,13 @@ hideLayout = false,
                       )}
                     </div>
                   </div>
-                </div>
 
-                                  {/* CARD 3.5: Product Variations */}
+                  {/* CARD 3.5: Product Variations */}
                   <div className="bg-white rounded-2xl border border-slate-200/80 p-6 space-y-4 shadow-xs">
                     <div className="border-b border-slate-100 pb-3 flex justify-between items-center">
                       <div>
                         <h3 className="text-sm font-bold text-slate-900">Product Variations</h3>
-                        <p className="text-xs text-slate-400">Add colors, sizes, or other options</p>
+                        <p className="text-xs text-slate-400">Add colors, sizes, or other options with specific prices/stock</p>
                       </div>
                       <button type="button" onClick={handleAddVariation} className="px-3 py-1.5 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 rounded-lg text-xs font-bold transition-colors cursor-pointer">
                         + Add Variation
@@ -2234,61 +2254,82 @@ hideLayout = false,
                     )}
 
                     {editingProduct.variations?.map((variation, vIdx) => (
-                      <div key={variation.id} className="p-4 border border-slate-200 rounded-xl bg-slate-50 space-y-3">
-                        <div className="flex items-center gap-2">
-                          <input 
-                            type="text" 
-                            placeholder="Variation Name (e.g., Color, Size)" 
-                            value={variation.name}
-                            onChange={(e) => handleUpdateVariationName(vIdx, e.target.value)}
-                            className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-xs font-semibold focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
-                          />
-                          <button type="button" onClick={() => handleRemoveVariation(vIdx)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg font-bold text-xs" title="Remove Variation">
+                      <div key={variation.id} className="p-5 border border-slate-200 rounded-xl bg-slate-50 space-y-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1 space-y-1.5">
+                            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Variation Type</label>
+                            <input 
+                              type="text" 
+                              placeholder="e.g., Color, Size, Storage" 
+                              value={variation.name}
+                              onChange={(e) => handleUpdateVariationName(vIdx, e.target.value)}
+                              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 bg-white"
+                            />
+                          </div>
+                          <button type="button" onClick={() => handleRemoveVariation(vIdx)} className="p-2.5 mt-5 text-red-500 hover:bg-red-100 rounded-lg font-bold text-xs transition-colors" title="Remove Variation">
                             Remove
                           </button>
                         </div>
                         
-                        <div>
-                          <p className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Options</p>
-                          <div className="flex flex-wrap gap-2 mb-2">
-                            {variation.options.map((opt, oIdx) => (
-                              <span key={oIdx} className="px-2.5 py-1 bg-white border border-slate-200 rounded-md text-xs font-medium flex items-center gap-1.5 shadow-sm">
-                                {opt}
-                                <button type="button" onClick={() => handleRemoveVariationOption(vIdx, oIdx)} className="text-slate-400 hover:text-red-500 font-bold ml-1">x</button>
-                              </span>
-                            ))}
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Options</label>
                           </div>
-                          <div className="flex gap-2">
-                            <input 
-                              type="text" 
-                              placeholder="Add option (e.g., Red, XL) and press Enter" 
-                              className="flex-1 px-3 py-1.5 border border-slate-300 rounded-lg text-xs"
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                  e.preventDefault();
-                                  handleAddVariationOption(vIdx, e.currentTarget.value);
-                                  e.currentTarget.value = '';
-                                }
-                              }}
-                            />
-                            <button 
-                              type="button" 
-                              className="px-3 py-1.5 bg-slate-800 text-white rounded-lg text-xs font-bold"
-                              onClick={(e) => {
-                                const input = e.currentTarget.previousElementSibling as HTMLInputElement;
-                                if (input) {
-                                  handleAddVariationOption(vIdx, input.value);
-                                  input.value = '';
-                                }
-                              }}
-                            >
-                              Add
-                            </button>
+                          
+                          <div className="space-y-2">
+                            {variation.options.map((opt, oIdx) => {
+                              const optName = typeof opt === 'string' ? opt : opt.name;
+                              const optPrice = typeof opt === 'string' ? '' : opt.price ?? '';
+                              const optStock = typeof opt === 'string' ? '' : opt.stock ?? '';
+                              
+                              return (
+                                <div key={oIdx} className="flex flex-wrap sm:flex-nowrap items-center gap-2 bg-white p-2 border border-slate-200 rounded-lg shadow-sm">
+                                  <input 
+                                    type="text" 
+                                    placeholder="Option Name (e.g. Red, XL)" 
+                                    value={optName}
+                                    onChange={(e) => handleUpdateVariationOption(vIdx, oIdx, 'name', e.target.value)}
+                                    className="flex-1 min-w-[120px] px-3 py-1.5 border border-slate-200 rounded-md text-xs focus:border-emerald-500"
+                                  />
+                                  <input 
+                                    type="number" 
+                                    placeholder="Override Price (৳)" 
+                                    value={optPrice}
+                                    onChange={(e) => handleUpdateVariationOption(vIdx, oIdx, 'price', e.target.value ? Number(e.target.value) : undefined)}
+                                    className="w-[130px] px-3 py-1.5 border border-slate-200 rounded-md text-xs focus:border-emerald-500"
+                                    title="Leave blank to use base price"
+                                  />
+                                  <input 
+                                    type="number" 
+                                    placeholder="Override Stock" 
+                                    value={optStock}
+                                    onChange={(e) => handleUpdateVariationOption(vIdx, oIdx, 'stock', e.target.value ? Number(e.target.value) : undefined)}
+                                    className="w-[120px] px-3 py-1.5 border border-slate-200 rounded-md text-xs focus:border-emerald-500"
+                                    title="Leave blank to use base stock"
+                                  />
+                                  <button type="button" onClick={() => handleRemoveVariationOption(vIdx, oIdx)} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                                  </button>
+                                </div>
+                              );
+                            })}
                           </div>
+                          
+                          <button 
+                            type="button" 
+                            onClick={() => handleAddVariationOption(vIdx)}
+                            className="text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 mt-2 cursor-pointer"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                            Add Option
+                          </button>
                         </div>
                       </div>
                     ))}
                   </div>
+
+                
+                </div>
 
                 {/* RIGHT SIDEBAR (4 COLS): Pricing, Inventory, Categorization, Badges */}
                 <div className="lg:col-span-4 space-y-6">

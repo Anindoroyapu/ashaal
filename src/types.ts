@@ -1,9 +1,15 @@
 export type Language = 'EN' | 'BN';
 
+export interface ProductVariationOption {
+  name: string;
+  price?: number;
+  stock?: number;
+}
+
 export interface ProductVariation {
   id: string;
   name: string;
-  options: string[];
+  options: (string | ProductVariationOption)[];
 }
 
 export interface Review {

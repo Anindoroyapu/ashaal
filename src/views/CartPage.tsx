@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { getEffectivePrice } from "@/utils/productUtils";
 import { useApp } from '../context/AppContext';
 import { CartItem } from '../types';
 import { SEO } from '../components/SEO';
@@ -187,7 +188,7 @@ export const CartPage: React.FC = () => {
 
                       <div className="flex items-center gap-2 pt-1">
                         <span className="text-sm sm:text-base font-black text-[#16a34a]">
-                          {formatPrice(item.product.price)}
+                          {formatPrice(getEffectivePrice(item.product, item.selectedVariations))}
                         </span>
                         {item.product.discountPercentage > 0 && (
                           <span className="text-xs text-gray-400 line-through">
