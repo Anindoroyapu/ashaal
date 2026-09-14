@@ -508,6 +508,7 @@ hideLayout = false,
       "100% Genuine and authentic product imported under Ashaal guarantee.\nPremium quality material with durable finish and high reliability.\nComes with official manufacturer warranty and dedicated customer support.",
     );
     setActiveRoute("product-new");
+    if (typeof window !== "undefined") window.history.pushState(null, "", "/manage/products/new");
   };
 
   // Open Full-Page Product Editor
@@ -519,6 +520,7 @@ hideLayout = false,
         : p.description || "",
     );
     setActiveRoute("product-edit");
+    if (typeof window !== "undefined" && p?.id) window.history.pushState(null, "", `/manage/products/${p.id}`);
   };
 
   // Duplicate Product
@@ -539,6 +541,7 @@ hideLayout = false,
         : cloned.description || "",
     );
     setActiveRoute("product-new");
+    if (typeof window !== "undefined") window.history.pushState(null, "", "/manage/products/new");
     showToast(`Cloned "${p.title}" as new product draft`);
   };
 
@@ -692,7 +695,7 @@ hideLayout = false,
         `Product "${productToSave.title}" saved successfully to MySQL!`,
       );
       // Return to products table view
-      setActiveRoute("products");
+      { setActiveRoute("products"); if (typeof window !== "undefined") window.history.pushState(null, "", "/manage/products"); };
       setEditingProduct(null);
     } catch (err) {
       alert("Error saving product: " + String(err));
@@ -1566,7 +1569,7 @@ hideLayout = false,
                 E-Commerce
               </p>
               <button
-                onClick={() => setActiveRoute("products")}
+                onClick={() => { setActiveRoute("products"); if (typeof window !== "undefined") window.history.pushState(null, "", "/manage/products"); }}
                 className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                   activeRoute === "products" ||
                   activeRoute === "product-new" ||
@@ -1814,7 +1817,7 @@ hideLayout = false,
                 <div className="flex items-center gap-4">
                   <button
                     type="button"
-                    onClick={() => setActiveRoute("products")}
+                    onClick={() => { setActiveRoute("products"); if (typeof window !== "undefined") window.history.pushState(null, "", "/manage/products"); }}
                     className="w-10 h-10 rounded-xl border border-slate-200 hover:bg-slate-100 flex items-center justify-center text-slate-600 transition-colors cursor-pointer"
                     title="Back to Products"
                   >
@@ -1843,7 +1846,7 @@ hideLayout = false,
                 <div className="flex items-center gap-2.5">
                   <button
                     type="button"
-                    onClick={() => setActiveRoute("products")}
+                    onClick={() => { setActiveRoute("products"); if (typeof window !== "undefined") window.history.pushState(null, "", "/manage/products"); }}
                     className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
                   >
                     <Undo2 className="w-4 h-4" />
@@ -2589,7 +2592,7 @@ hideLayout = false,
                   <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => setActiveRoute("products")}
+                      onClick={() => { setActiveRoute("products"); if (typeof window !== "undefined") window.history.pushState(null, "", "/manage/products"); }}
                       className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold cursor-pointer text-center"
                     >
                       Cancel
