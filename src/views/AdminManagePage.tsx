@@ -272,6 +272,50 @@ hideLayout = false,
     null,
   );
   const [isSavingProduct, setIsSavingProduct] = useState<boolean>(false);
+
+  const [isUploadingImage, setIsUploadingImage] = useState<boolean>(false);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, isGallery: boolean) => {
+    if (!editingProduct) return;
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingImage(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.success) {
+        if (isGallery) {
+          setEditingProduct({
+            ...editingProduct,
+            images: [...(editingProduct.images || []), data.url]
+          });
+        } else {
+          setEditingProduct({
+            ...editingProduct,
+            mainImage: data.url
+          });
+        }
+      } else {
+        alert("Upload failed: " + data.error);
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Error uploading image");
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+
+
+
   const [newGalleryImageUrl, setNewGalleryImageUrl] = useState<string>("");
   const [featuresText, setFeaturesText] = useState<string>("");
   const [newSpecKey, setNewSpecKey] = useState<string>("");
@@ -498,7 +542,62 @@ hideLayout = false,
     showToast(`Cloned "${p.title}" as new product draft`);
   };
 
+
+  // Variations handlers
+  const handleAddVariation = () => {
+    const newVar = { id: `var-${Date.now()}`, name: "", options: [] };
+    setEditingProduct(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        variations: [...(prev.variations || []), newVar]
+      };
+    });
+  };
+
+  const handleUpdateVariationName = (idx: number, name: string) => {
+    setEditingProduct(prev => {
+      if (!prev || !prev.variations) return prev;
+      const newVars = [...prev.variations];
+      newVars[idx] = { ...newVars[idx], name };
+      return { ...prev, variations: newVars };
+    });
+  };
+
+  const handleRemoveVariation = (idx: number) => {
+    setEditingProduct(prev => {
+      if (!prev || !prev.variations) return prev;
+      const newVars = [...prev.variations];
+      newVars.splice(idx, 1);
+      return { ...prev, variations: newVars };
+    });
+  };
+
+  const handleAddVariationOption = (idx: number, option: string) => {
+    if (!option.trim()) return;
+    setEditingProduct(prev => {
+      if (!prev || !prev.variations) return prev;
+      const newVars = [...prev.variations];
+      if (!newVars[idx].options.includes(option.trim())) {
+        newVars[idx] = { ...newVars[idx], options: [...newVars[idx].options, option.trim()] };
+      }
+      return { ...prev, variations: newVars };
+    });
+  };
+
+  const handleRemoveVariationOption = (varIdx: number, optIdx: number) => {
+    setEditingProduct(prev => {
+      if (!prev || !prev.variations) return prev;
+      const newVars = [...prev.variations];
+      const newOptions = [...newVars[varIdx].options];
+      newOptions.splice(optIdx, 1);
+      newVars[varIdx] = { ...newVars[varIdx], options: newOptions };
+      return { ...prev, variations: newVars };
+    });
+  };
+
   // Save Product (from dedicated page)
+
   const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingProduct?.title || !editingProduct?.price) {
@@ -1322,7 +1421,7 @@ hideLayout = false,
   // MAIN DASHBOARD LAYOUT (Sakai / PrimeNG Layout)
   // =========================================================================
   return (
-    <div className="min-h-screen bg-[#f8fafc] font-sans antialiased text-slate-800 flex flex-col selection:bg-emerald-100 selection:text-emerald-900">
+    <div className={hideLayout ? "flex-1 flex flex-col h-full w-full" : "min-h-screen bg-[#f8fafc] font-sans antialiased text-slate-800 flex flex-col selection:bg-emerald-100 selection:text-emerald-900"}>
       <SEO
         title="Admin Dashboard | Ashaal Management"
         description="Ashaal Management Portal"
@@ -1331,7 +1430,7 @@ hideLayout = false,
       {/* ========================================================================= */}
       {/* PRIMENG TOPBAR (layout-topbar) */}
       {/* ========================================================================= */}
-      <header className="h-16 bg-white border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 shadow-xs">
+      {!hideLayout && (<header className="h-16 bg-white border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 shadow-xs">
         {/* Left: Brand & Sidebar Toggle */}
         <div className="flex items-center gap-3 sm:gap-4">
           <button
@@ -1426,7 +1525,7 @@ hideLayout = false,
             </button>
           </div>
         </div>
-      </header>
+      </header>)}
 
       {/* ========================================================================= */}
       {/* MAIN CONTAINER (Sidebar + Content) */}
@@ -1435,7 +1534,7 @@ hideLayout = false,
         {/* ========================================================================= */}
         {/* PRIMENG SIDEBAR (layout-sidebar) */}
         {/* ========================================================================= */}
-        <aside
+        {!hideLayout && (<aside
           className={`${
             sidebarOpen ? "w-64" : "w-0 lg:w-20"
           } bg-white border-r border-slate-200/80 shrink-0 transition-all duration-300 flex flex-col z-20 overflow-y-auto`}
@@ -1698,7 +1797,7 @@ hideLayout = false,
               </button>
             </div>
           </div>
-        </aside>
+        </aside>)}
 
         {/* ========================================================================= */}
         {/* PRIMENG MAIN CONTENT AREA (layout-main) */}
@@ -1907,21 +2006,31 @@ hideLayout = false,
                       <div className="md:col-span-8 space-y-3">
                         <div className="space-y-1.5">
                           <label className="block text-xs font-bold text-slate-700">
-                            Primary Cover Image URL *
+                            Primary Cover Image (Upload or URL) *
                           </label>
-                          <input
-                            type="url"
-                            required
-                            value={editingProduct.mainImage || ""}
-                            onChange={(e) =>
-                              setEditingProduct({
-                                ...editingProduct,
-                                mainImage: e.target.value,
-                              })
-                            }
-                            placeholder="https://images.unsplash.com/..."
-                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 text-slate-900 font-mono text-xs rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:bg-white"
-                          />
+                          <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => handleFileUpload(e, false)}
+                              className="w-full sm:w-1/2 px-2 py-2 bg-slate-50 border border-slate-300 text-slate-900 text-xs rounded-xl cursor-pointer"
+                              disabled={isUploadingImage}
+                            />
+                            <span className="text-xs font-bold text-slate-400">OR</span>
+                            <input
+                              type="text"
+                              value={editingProduct.mainImage || ""}
+                              onChange={(e) =>
+                                setEditingProduct({
+                                  ...editingProduct,
+                                  mainImage: e.target.value,
+                                })
+                              }
+                              placeholder="Paste URL..."
+                              className="w-full sm:w-1/2 px-4 py-2.5 bg-slate-50 border border-slate-300 text-slate-900 font-mono text-xs rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:bg-white"
+                            />
+                          </div>
+                          {isUploadingImage && <p className="text-xs text-blue-600 font-bold animate-pulse mt-1">Uploading...</p>}
                         </div>
 
                         <div>
@@ -1958,22 +2067,35 @@ hideLayout = false,
                       </div>
 
                       <div className="flex gap-2">
-                        <input
-                          type="url"
-                          value={newGalleryImageUrl}
-                          onChange={(e) =>
-                            setNewGalleryImageUrl(e.target.value)
-                          }
-                          placeholder="Paste additional gallery image URL..."
-                          className="flex-1 px-4 py-2 bg-slate-50 border border-slate-300 text-slate-900 font-mono text-xs rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:bg-white"
-                        />
-                        <button
-                          type="button"
-                          onClick={handleAddGalleryImage}
-                          className="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold cursor-pointer"
-                        >
-                          Add Image
-                        </button>
+                        <div className="flex flex-col w-full gap-2">
+                          <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center w-full">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => handleFileUpload(e, true)}
+                              className="flex-1 px-2 py-1.5 bg-slate-50 border border-slate-300 text-slate-900 text-xs rounded-xl cursor-pointer"
+                              disabled={isUploadingImage}
+                            />
+                            <span className="text-xs font-bold text-slate-400">OR</span>
+                            <div className="flex flex-1 gap-2 w-full">
+                              <input type="text" value={newGalleryImageUrl}
+                                onChange={(e) =>
+                                  setNewGalleryImageUrl(e.target.value)
+                                }
+                                placeholder="Paste URL..."
+                                className="flex-1 px-4 py-2 bg-slate-50 border border-slate-300 text-slate-900 font-mono text-xs rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:bg-white"
+                              />
+                              <button
+                                type="button"
+                                onClick={handleAddGalleryImage}
+                                className="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold cursor-pointer whitespace-nowrap"
+                              >
+                                Add URL
+                              </button>
+                            </div>
+                          </div>
+                          {isUploadingImage && <p className="text-xs text-blue-600 font-bold animate-pulse">Uploading gallery image...</p>}
+                        </div>
                       </div>
 
                       <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 pt-2">
@@ -2091,6 +2213,79 @@ hideLayout = false,
                     </div>
                   </div>
                 </div>
+
+                                  {/* CARD 3.5: Product Variations */}
+                  <div className="bg-white rounded-2xl border border-slate-200/80 p-6 space-y-4 shadow-xs">
+                    <div className="border-b border-slate-100 pb-3 flex justify-between items-center">
+                      <div>
+                        <h3 className="text-sm font-bold text-slate-900">Product Variations</h3>
+                        <p className="text-xs text-slate-400">Add colors, sizes, or other options</p>
+                      </div>
+                      <button type="button" onClick={handleAddVariation} className="px-3 py-1.5 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 rounded-lg text-xs font-bold transition-colors cursor-pointer">
+                        + Add Variation
+                      </button>
+                    </div>
+                    
+                    {(!editingProduct.variations || editingProduct.variations.length === 0) && (
+                      <p className="text-xs text-slate-500 text-center py-4">No variations added. This product has only one standard option.</p>
+                    )}
+
+                    {editingProduct.variations?.map((variation, vIdx) => (
+                      <div key={variation.id} className="p-4 border border-slate-200 rounded-xl bg-slate-50 space-y-3">
+                        <div className="flex items-center gap-2">
+                          <input 
+                            type="text" 
+                            placeholder="Variation Name (e.g., Color, Size)" 
+                            value={variation.name}
+                            onChange={(e) => handleUpdateVariationName(vIdx, e.target.value)}
+                            className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-xs font-semibold focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                          />
+                          <button type="button" onClick={() => handleRemoveVariation(vIdx)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg font-bold text-xs" title="Remove Variation">
+                            Remove
+                          </button>
+                        </div>
+                        
+                        <div>
+                          <p className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Options</p>
+                          <div className="flex flex-wrap gap-2 mb-2">
+                            {variation.options.map((opt, oIdx) => (
+                              <span key={oIdx} className="px-2.5 py-1 bg-white border border-slate-200 rounded-md text-xs font-medium flex items-center gap-1.5 shadow-sm">
+                                {opt}
+                                <button type="button" onClick={() => handleRemoveVariationOption(vIdx, oIdx)} className="text-slate-400 hover:text-red-500 font-bold ml-1">x</button>
+                              </span>
+                            ))}
+                          </div>
+                          <div className="flex gap-2">
+                            <input 
+                              type="text" 
+                              placeholder="Add option (e.g., Red, XL) and press Enter" 
+                              className="flex-1 px-3 py-1.5 border border-slate-300 rounded-lg text-xs"
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleAddVariationOption(vIdx, e.currentTarget.value);
+                                  e.currentTarget.value = '';
+                                }
+                              }}
+                            />
+                            <button 
+                              type="button" 
+                              className="px-3 py-1.5 bg-slate-800 text-white rounded-lg text-xs font-bold"
+                              onClick={(e) => {
+                                const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+                                if (input) {
+                                  handleAddVariationOption(vIdx, input.value);
+                                  input.value = '';
+                                }
+                              }}
+                            >
+                              Add
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
 
                 {/* RIGHT SIDEBAR (4 COLS): Pricing, Inventory, Categorization, Badges */}
                 <div className="lg:col-span-4 space-y-6">
