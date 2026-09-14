@@ -2263,6 +2263,7 @@ hideLayout = false,
                               placeholder="e.g., Color, Size, Storage" 
                               value={variation.name}
                               onChange={(e) => handleUpdateVariationName(vIdx, e.target.value)}
+                              onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
                               className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 bg-white"
                             />
                           </div>
@@ -2289,6 +2290,7 @@ hideLayout = false,
                                     placeholder="Option Name (e.g. Red, XL)" 
                                     value={optName}
                                     onChange={(e) => handleUpdateVariationOption(vIdx, oIdx, 'name', e.target.value)}
+                                    onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
                                     className="flex-1 min-w-[120px] px-3 py-1.5 border border-slate-200 rounded-md text-xs focus:border-emerald-500"
                                   />
                                   <input 
@@ -2296,6 +2298,7 @@ hideLayout = false,
                                     placeholder="Override Price (৳)" 
                                     value={optPrice}
                                     onChange={(e) => handleUpdateVariationOption(vIdx, oIdx, 'price', e.target.value ? Number(e.target.value) : undefined)}
+                                    onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
                                     className="w-[130px] px-3 py-1.5 border border-slate-200 rounded-md text-xs focus:border-emerald-500"
                                     title="Leave blank to use base price"
                                   />
@@ -2304,6 +2307,7 @@ hideLayout = false,
                                     placeholder="Override Stock" 
                                     value={optStock}
                                     onChange={(e) => handleUpdateVariationOption(vIdx, oIdx, 'stock', e.target.value ? Number(e.target.value) : undefined)}
+                                    onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
                                     className="w-[120px] px-3 py-1.5 border border-slate-200 rounded-md text-xs focus:border-emerald-500"
                                     title="Leave blank to use base stock"
                                   />
